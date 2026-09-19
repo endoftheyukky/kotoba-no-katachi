@@ -1,0 +1,79 @@
+/**
+ * 帯 — BAND
+ * A unit that repeats inside the title multiplies where it stands; the title
+ * becomes one long line crossing the page. A glyph whose parts lie side by
+ * side unfolds into a band of its parts.
+ */
+import { EM } from '../../glyph/font'
+import { PAGE } from '../../render/stage'
+import { contentGraphemes } from '../salience'
+import type { Mark, SpatialComposition, Unit } from '../types'
+import { allUnits, directions, centredLine, lineMarks, offCentre } from './common'
+
+export const band: SpatialComposition = {
+  id: 'band',
+  title: '帯',
+  rules: [
+    '題の一部が反復するとき（ささやき・許許・コーヒーのー）、反復する単位はその場で増殖し、題は紙面を端から端まで渡る一本の帯になる',
+    '帯は書き始めの側の縁に寄る。帯以外は白',
+    '部品が一方向に並んで切れる字（川）は、部品が紙面を渡る帯としてほどける。題がその一字であるか、四つ以上の部品が縞をなすときに限る。元の題は小さく帯の始まりに残る',
+  ],
+
+  fit(a, m) {
+    const f = m.primary.focus
+    if (m.primary.op === 'proliferation' && f.kind === 'repetition' && !f.whole)
+      return {
+        id: 'band',
+        score: f.contiguous ? 0.85 : 0.7,
+        grounds: [f.contiguous ? `「${f.value}」が直に続く → その場で増殖する帯` : `「${f.value}」が離れて反復する → 各所で伸びる帯`],
+      }
+    if (m.primary.op === 'decomposition' && f.kind === 'parts' && f.arrangement !== 'mixed' && f.parts.length >= 3) {
+      const single = contentGraphemes(a).length === 1
+      if (single || f.parts.length >= 4)
+        return { id: 'band', score: 0.8, grounds: [`「${a.graphemes[f.grapheme].char}」の${f.parts.length}部品が一方向に並ぶ${single ? '（題はこの一字）' : '（縞）'} → 部品の帯`] }
+    }
+    return null
+  },
+
+  realize(a, m, rng) {
+    const f = m.primary.focus
+    const { vertical } = directions(a)
+    const units = allUnits(m)
+
+    if (f.kind === 'repetition') {
+      const recurring = new Set(f.occurrences.flat())
+      const r = units.filter((u) => recurring.has(u.grapheme)).length
+      // 造形: the size of the band's characters
+      const target = Math.floor(PAGE / rng.range(80, 125))
+      const times = Math.max(2, Math.floor((target - units.length) / Math.max(1, r)) + 1)
+      const line: Unit[] = units.flatMap((u) => (recurring.has(u.grapheme) ? Array(times).fill(u) : [u]))
+      const s = PAGE / line.length
+      const across = s * rng.range(1.2, 3.4)
+      const start = vertical ? { x: PAGE - across, y: s / 2 } : { x: s / 2, y: across }
+      return lineMarks(a, line, start, s * 0.96)
+    }
+
+    if (f.kind === 'parts') {
+      const g = a.graphemes[f.grapheme]
+      const S = rng.range(0.6, 0.9) * PAGE
+      const k = S / EM
+      // the parts spread across the page along the direction of their cuts
+      const byX = f.arrangement === 'row'
+      const order = [...f.parts].sort((p, q) => (byX ? p.centroid.x - q.centroid.x : p.centroid.y - q.centroid.y))
+      const line = offCentre(rng)
+      const marks: Mark[] = order.map((p, i) => {
+        const t = ((i + 0.5) / order.length) * PAGE + rng.range(-0.03, 0.03) * PAGE
+        return byX
+          ? { char: g.char, x: t - p.centroid.x * k, y: line, size: S, keep: p.keep }
+          : { char: g.char, x: line, y: t - p.centroid.y * k, size: S, keep: p.keep }
+      })
+      // the whole title, small, where the band begins
+      const s = rng.range(0.045, 0.06) * PAGE
+      const at = byX
+        ? { x: vertical ? PAGE - s * 1.5 : s * 1.5, y: line + (line < PAGE / 2 ? 1 : -1) * S * 0.45 }
+        : { x: line + (line < PAGE / 2 ? 1 : -1) * S * 0.45, y: s * 1.5 }
+      return marks.concat(vertical ? lineMarks(a, units, at, s) : centredLine(a, units, at, s))
+    }
+    return []
+  },
+}

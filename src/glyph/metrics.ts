@@ -20,6 +20,18 @@ export interface Seam {
   share: [number, number]
 }
 
+/** The ink itself, cropped to its box: alpha 0–255, row-major. */
+export interface InkRaster {
+  w: number
+  h: number
+  data: Uint8Array
+  /** em coordinates (ink centre = origin) of the raster's top-left corner */
+  left: number
+  top: number
+  /** em units per pixel */
+  px: number
+}
+
 export interface GlyphMetrics {
   /** pen origin (baseline start) relative to the ink centre, em units */
   pen: { x: number; y: number }
@@ -34,6 +46,9 @@ export interface GlyphMetrics {
   /** coarse ink map over the ink box: GRID × GRID coverage 0–1, row-major, top→bottom */
   grid: number[][]
   seam: Seam
+  ink: InkRaster
+  /** separate islands of ink (connected components holding at least 1.5% of the ink) */
+  islands: number
 }
 
 const PX = 200
@@ -41,6 +56,10 @@ const BANDS = 40
 export const GRID = 24
 let canvas: HTMLCanvasElement | null = null
 
+/**
+ * Measure a glyph of the fixed font. The font must already be loaded
+ * (GlyphLibrary.prepare ensures it).
+ */
 export function measure(char: string): GlyphMetrics {
   const size = PX * 3
   canvas ??= document.createElement('canvas')
@@ -76,6 +95,8 @@ export function measure(char: string): GlyphMetrics {
       cols: new Array(BANDS).fill(0),
       grid: Array.from({ length: GRID }, () => new Array(GRID).fill(0)),
       seam: { axis: 'x', at: 0, share: [0.5, 0.5] },
+      ink: { w: 0, h: 0, data: new Uint8Array(0), left: 0, top: 0, px: s },
+      islands: 0,
     }
   }
 
@@ -84,9 +105,11 @@ export function measure(char: string): GlyphMetrics {
   const colSum = new Float64Array(w)
   const rowSum = new Float64Array(h)
   const grid = Array.from({ length: GRID }, () => new Array(GRID).fill(0))
+  const raster = new Uint8Array(w * h)
   let total = 0
   for (let y = y0; y <= y1; y++)
     for (let x = x0; x <= x1; x++) {
+      raster[(y - y0) * w + (x - x0)] = data[(y * size + x) * 4 + 3]
       const a = data[(y * size + x) * 4 + 3] / 255
       colSum[x - x0] += a
       rowSum[y - y0] += a
@@ -115,15 +138,51 @@ export function measure(char: string): GlyphMetrics {
     cols: bands(colSum),
     grid,
     seam: { axis, at, share: [first / total, 1 - first / total] },
+    ink: { w, h, data: raster, left: (x0 - cx) * s, top: (y0 - cy) * s, px: s },
+    islands: countIslands(raster, w, h),
   }
 }
 
-/** The thinnest place in the middle of the glyph; score = its ink relative to the average. */
-function valley(sums: Float64Array): { index: number; score: number } {
+/** Connected components of ink (8-neighbourhood), ignoring specks. */
+function countIslands(raster: Uint8Array, w: number, h: number): number {
+  const seen = new Uint8Array(w * h)
+  const sizes: number[] = []
+  const stack: number[] = []
+  let total = 0
+  for (let k = 0; k < w * h; k++) {
+    if (raster[k] <= 127 || seen[k]) continue
+    let size = 0
+    stack.push(k)
+    seen[k] = 1
+    while (stack.length) {
+      const q = stack.pop()!
+      size++
+      const x = q % w
+      const y = (q - x) / w
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx
+          const ny = y + dy
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue
+          const n = ny * w + nx
+          if (!seen[n] && raster[n] > 127) {
+            seen[n] = 1
+            stack.push(n)
+          }
+        }
+    }
+    sizes.push(size)
+    total += size
+  }
+  return sizes.filter((s) => s >= total * 0.015).length
+}
+
+/** The thinnest place in the middle of a profile; score = its ink relative to the average. */
+export function valley(sums: ArrayLike<number>, from = 0.28, to = 0.72): { index: number; score: number } {
   const n = sums.length
   if (n < 6) return { index: Math.floor(n / 2), score: 1 }
-  const lo = Math.floor(n * 0.28)
-  const hi = Math.ceil(n * 0.72)
+  const lo = Math.floor(n * from)
+  const hi = Math.ceil(n * to)
   const r = Math.max(1, Math.round(n * 0.02))
   let mean = 0
   for (let i = lo; i < hi; i++) mean += sums[i]

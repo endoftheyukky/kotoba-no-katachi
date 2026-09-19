@@ -23,10 +23,10 @@
  * final   one glyph, at the place where it was written last — near the end
  *         of the reading order, never at the centre. Everything else is white.
  */
-import { clamp } from '../../core/math'
-import { GlyphFigure } from '../../glyph/figure'
-import { cellAdjust } from '../../glyph/layout'
-import { PAGE } from '../../render/stage'
+import { clamp } from '../../../core/math'
+import { GlyphFigure } from '../../../glyph/figure'
+import { cellAdjust } from '../../../glyph/layout'
+import { PAGE } from '../../../render/stage'
 import type { Composition, Cue, PoeticRule } from '../types'
 
 interface Cell {

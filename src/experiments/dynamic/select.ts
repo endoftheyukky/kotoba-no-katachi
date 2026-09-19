@@ -3,8 +3,8 @@
  * (a word with recurring morae invites wear, a word crossing scripts invites
  * dispersion…); the seed decides among them, so a word always gets the same poem.
  */
-import type { Rng } from '../core/random'
-import type { Word } from '../language/types'
+import type { Rng } from '../../core/random'
+import type { Word } from './word'
 import { aperture } from './rules/aperture'
 import { disperse } from './rules/disperse'
 import { wear } from './rules/wear'

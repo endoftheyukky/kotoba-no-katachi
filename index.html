@@ -3,13 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>具体詩 試作</title>
+    <title>具体詩</title>
   </head>
   <body data-state="idle">
-    <div id="stage"></div>
+    <main id="stage"></main>
     <form id="entry" autocomplete="off">
-      <input id="word" lang="ja" maxlength="8" spellcheck="false" aria-label="ことば" />
-      <button type="submit" aria-label="はじめる">→</button>
+      <input id="title" lang="ja" maxlength="16" spellcheck="false" placeholder="題" aria-label="題" />
+      <input id="reading" lang="ja" maxlength="40" spellcheck="false" placeholder="よみ（任意）" aria-label="よみ（任意）" />
+      <button type="submit" aria-label="生成">→</button>
+      <button type="button" id="save" aria-label="PNGで保存">PNG</button>
     </form>
     <script type="module" src="/src/main.ts"></script>
   </body>

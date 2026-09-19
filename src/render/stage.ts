@@ -54,4 +54,17 @@ export class Stage {
     const els = rects.map((r) => this.el('rect', { x: r.x, y: r.y, width: r.w, height: r.h }, cp))
     return { url: `url(#${id})`, rects: els }
   }
+
+  /**
+   * A subtractive mask in the user space of the element that uses it:
+   * everything is kept except what is drawn into `cut`.
+   */
+  mask(extent: number): { url: string; cut: SVGGElement } {
+    const id = `m${ids++}`
+    const box = { x: -extent, y: -extent, width: 2 * extent, height: 2 * extent }
+    const m = this.el('mask', { id, maskUnits: 'userSpaceOnUse', maskContentUnits: 'userSpaceOnUse', ...box }, this.defs)
+    this.el('rect', { ...box, fill: '#fff' }, m)
+    const cut = this.el('g', {}, m)
+    return { url: `url(#${id})`, cut }
+  }
 }

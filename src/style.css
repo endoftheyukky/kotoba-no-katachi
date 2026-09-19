@@ -2,7 +2,7 @@
 :root {
   --paper: #fff;
   --ink: #000;
-  --type: "Hiragino Kaku Gothic ProN", "Yu Gothic", YuGothic, "Noto Sans JP", Meiryo, sans-serif;
+  --type: "Noto Sans JP", sans-serif;
 }
 
 html,
@@ -20,11 +20,10 @@ body {
 
 #stage {
   position: fixed;
-  inset: 0;
+  inset: 0 0 72px;
 }
 
-#stage svg,
-.sheet .page svg {
+#stage svg {
   display: block;
   width: 100%;
   height: 100%;
@@ -39,14 +38,13 @@ body {
   transform: translate(-50%, -50%);
   display: flex;
   align-items: baseline;
-  gap: 0.8em;
-  transition: opacity 0.8s;
+  gap: 0.9em;
+  transition: opacity 0.6s;
 }
 
 #entry input,
 #entry button {
   font: inherit;
-  font-size: 20px;
   color: var(--ink);
   background: none;
   border: 0;
@@ -56,65 +54,56 @@ body {
 }
 
 #entry input {
-  width: 8em;
   text-align: center;
   border-bottom: 1px solid var(--ink);
 }
 
+#entry input::placeholder {
+  color: #bbb;
+}
+
+#title {
+  width: 9em;
+  font-size: 22px;
+}
+
+#reading {
+  width: 9em;
+  font-size: 13px;
+}
+
 #entry button {
+  font-size: 20px;
   cursor: pointer;
 }
 
-body[data-state="playing"] #entry,
-body[data-state="still"] #entry,
-body[data-state="sheet"] #entry {
-  opacity: 0;
-  pointer-events: none;
+#save {
+  display: none;
+  font-size: 12px !important;
+  letter-spacing: 0.1em;
 }
 
-/* After the poem: the entry returns, small and out of the way. */
-body[data-state="ended"] #entry {
+#title[aria-invalid="true"] {
+  border-bottom-style: dashed;
+}
+
+/* A page is shown: the entry steps aside, small. */
+body[data-state="shown"] #entry {
   top: auto;
-  bottom: 24px;
+  bottom: 20px;
   transform: translateX(-50%);
-  opacity: 0.25;
+  opacity: 0.3;
 }
 
-body[data-state="ended"] #entry:hover,
-body[data-state="ended"] #entry:focus-within {
+body[data-state="shown"] #entry:hover,
+body[data-state="shown"] #entry:focus-within {
   opacity: 1;
 }
 
-/* Study sheet (?state=all): not part of the work. Page edges are outlined
-   only here, so cropping by the page can be judged. */
-body[data-state="sheet"] {
-  overflow: auto;
+body[data-state="shown"] #save {
+  display: inline;
 }
 
-body[data-state="sheet"] #stage {
+body[data-state="idle"] #stage {
   display: none;
-}
-
-.sheet {
-  --cell: min(calc((100vw - 64px) / 3), calc((100vh - 24px) / var(--rows) - 32px));
-  display: grid;
-  grid-template-columns: repeat(3, var(--cell));
-  gap: 8px 16px;
-  justify-content: center;
-  padding: 12px;
-}
-
-.sheet figure {
-  margin: 0;
-}
-
-.sheet .page {
-  width: var(--cell);
-  height: var(--cell);
-  outline: 1px solid #d0d0d0;
-}
-
-.sheet figcaption {
-  font: 11px/20px ui-monospace, monospace;
-  color: #888;
 }

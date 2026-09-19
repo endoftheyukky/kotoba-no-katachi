@@ -1,4 +1,4 @@
-export type Script = 'hiragana' | 'katakana' | 'kanji' | 'mark' | 'other'
+export type Script = 'hiragana' | 'katakana' | 'kanji' | 'mark' | 'symbol' | 'other'
 
 export type Vowel = 'a' | 'i' | 'u' | 'e' | 'o'
 
@@ -28,7 +28,7 @@ export type Manner =
  * N      : moraic nasal ん
  * Q      : sokuon っ — a mora made of silence
  * R      : long vowel ー — a mora that prolongs the previous one
- * unread : a character whose reading this prototype does not know (kanji, latin…)
+ * unread : a character whose reading is not known (kanji without a given reading, latin…)
  */
 export type MoraKind = 'cv' | 'N' | 'Q' | 'R' | 'unread'
 
@@ -45,6 +45,7 @@ export interface Mora {
   text: string
   /** hiragana-normalised text, used to detect recurrence */
   key: string
+  /** graphemes this mora is written with (a kanji token's morae share all its graphemes) */
   graphemes: number[]
   kind: MoraKind
   onset: Onset
@@ -53,17 +54,23 @@ export interface Mora {
   palatal: boolean
   /** high vowel between voiceless consonants: whispered in ordinary speech */
   devoiced: boolean
-  /** duration in beats. Unread kanji count as two (the most common on-reading length). */
+  /** length in beats. An unread kanji counts as two (the most common on-reading length). */
   weight: number
+  /** token this mora belongs to (−1 when not tokenised) */
+  token?: number
 }
 
-export interface Word {
-  text: string
-  graphemes: Grapheme[]
-  morae: Mora[]
-  /** grapheme index → mora index */
-  moraOf: number[]
-  /** how often each mora (by key) occurs in the word */
-  count: Map<string, number>
-  direction: 'vertical' | 'horizontal'
+export type PartOfSpeech = 'noun' | 'particle' | 'conjunction' | 'verb' | 'adjective' | 'symbol' | 'other'
+
+export interface Token {
+  index: number
+  surface: string
+  /** grapheme range [start, end) */
+  start: number
+  end: number
+  pos: PartOfSpeech
+  /** conjugated form, when the segmenter can tell */
+  form?: 'imperative' | 'plain'
+  /** hiragana reading, when known */
+  reading?: string
 }

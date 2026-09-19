@@ -4,6 +4,7 @@
  *   root   page space   — may be clipped by a page-space window
  *   body   transform    — position, rotation, scale (em → page)
  *   local  em space     — may be clipped by em-space regions (fragments)
+ *   inner  em space     — may be masked: another glyph subtracted
  *   drawing             — from the GlyphSource
  *
  * One figure can be: normal text, a cropped glyph (crop), a glyph seen through
@@ -14,6 +15,16 @@ import { EM } from './font'
 import type { Axis } from './metrics'
 import type { GlyphSource } from './source'
 import type { Rect, Stage } from '../render/stage'
+
+/** another glyph removed from this one, placed in this glyph's em space */
+export interface Subtraction {
+  source: GlyphSource
+  dx: number
+  dy: number
+  scale: number
+  /** widening of the removed glyph, em units (stroke width) */
+  spread: number
+}
 
 export interface Placement {
   x: number
@@ -32,6 +43,7 @@ export class GlyphFigure {
   readonly root: SVGGElement
   private body: SVGGElement
   private local: SVGGElement
+  private inner: SVGGElement
   private transform = ''
   private visible = true
 
@@ -43,7 +55,8 @@ export class GlyphFigure {
     this.root = stage.el('g', {}, parent)
     this.body = stage.el('g', {}, this.root)
     this.local = stage.el('g', {}, this.body)
-    source.draw(this.local)
+    this.inner = stage.el('g', {}, this.local)
+    source.draw(this.inner)
   }
 
   place(p: Placement): this {
@@ -69,6 +82,15 @@ export class GlyphFigure {
   crop(rects: Rect[] | null): this {
     if (!rects) this.local.removeAttribute('clip-path')
     else this.local.setAttribute('clip-path', this.stage.clip(rects).url)
+    return this
+  }
+
+  /** Remove another glyph's ink from this one. */
+  subtract(s: Subtraction): this {
+    const mask = this.stage.mask(FAR)
+    const g = this.stage.el('g', { transform: `translate(${f(s.dx)} ${f(s.dy)}) scale(${s.scale.toFixed(4)})` }, mask.cut)
+    s.source.draw(g, { color: '#000', spread: s.spread / s.scale })
+    this.inner.setAttribute('mask', mask.url)
     return this
   }
 

@@ -27,13 +27,13 @@
  * final   the start composition again — same place, same scale — holding
  *         only the heavier fragment of every glyph.
  */
-import { Track, inOut, out } from '../../core/time'
-import { EM } from '../../glyph/font'
-import { GlyphFigure } from '../../glyph/figure'
-import { cellAdjust } from '../../glyph/layout'
-import type { GlyphMetrics } from '../../glyph/metrics'
-import type { Grapheme } from '../../language/types'
-import { CENTRE, PAGE } from '../../render/stage'
+import { Track, inOut, out } from '../time'
+import { EM } from '../../../glyph/font'
+import { GlyphFigure } from '../../../glyph/figure'
+import { cellAdjust } from '../../../glyph/layout'
+import type { GlyphMetrics } from '../../../glyph/metrics'
+import type { Grapheme } from '../../../language/types'
+import { CENTRE, PAGE } from '../../../render/stage'
 import type { Composition, Cue, PoeticRule } from '../types'
 
 const FIRM = 1

@@ -1,31 +1,28 @@
 /**
- * The only "NLP" in this prototype: split a word into graphemes and morae
+ * (dynamic study) The only "NLP" in this prototype: split a word into graphemes and morae
  * and read off a few properties a Japanese speaker hears without thinking —
  * mora count, っ as silence, ー as duration, vowel devoicing, recurrence.
  * Kanji readings are not guessed; they remain unread.
  */
-import { KANA, MANNER, SMALL, SMALL_GLIDE, SMALL_VOWEL, VOICELESS, toHiragana } from './kana'
-import type { Grapheme, Mora, MoraKind, Script, Word } from './types'
+import { KANA, MANNER, SMALL, SMALL_GLIDE, SMALL_VOWEL, VOICELESS, toHiragana } from '../../language/kana'
+import { scriptOf } from '../../language/script'
+import type { Grapheme, Mora, MoraKind, Script } from '../../language/types'
+
+export interface Word {
+  text: string
+  graphemes: Grapheme[]
+  morae: Mora[]
+  /** grapheme index → mora index */
+  moraOf: number[]
+  /** how often each mora (by key) occurs in the word */
+  count: Map<string, number>
+  direction: 'vertical' | 'horizontal'
+}
 
 export const MAX_GRAPHEMES = 8
 
 export function normalizeWord(input: string): string {
   return Array.from(input.normalize('NFC').replace(/\s+/g, '')).slice(0, MAX_GRAPHEMES).join('')
-}
-
-export function scriptOf(c: string): Script {
-  const cp = c.codePointAt(0)!
-  if (c === 'ー') return 'mark'
-  if (cp >= 0x3041 && cp <= 0x309f) return 'hiragana'
-  if (cp >= 0x30a0 && cp <= 0x30ff) return 'katakana'
-  if (
-    (cp >= 0x4e00 && cp <= 0x9fff) ||
-    (cp >= 0x3400 && cp <= 0x4dbf) ||
-    (cp >= 0xf900 && cp <= 0xfaff) ||
-    cp === 0x3005 // 々
-  )
-    return 'kanji'
-  return 'other'
 }
 
 export function analyze(text: string): Word {

@@ -1,7 +1,7 @@
-import type { Rng } from '../core/random'
-import type { GlyphLibrary } from '../glyph/source'
-import type { Word } from '../language/types'
-import type { Stage } from '../render/stage'
+import type { Rng } from '../../core/random'
+import type { GlyphLibrary } from '../../glyph/source'
+import type { Word } from './word'
+import type { Stage } from '../../render/stage'
 
 /**
  * A structural event in the poem: something happens to the language material.

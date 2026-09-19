@@ -1,8 +1,8 @@
-import { Rng, hash } from '../core/random'
-import { GlyphLibrary } from '../glyph/source'
-import { analyze } from '../language/analyze'
-import type { Word } from '../language/types'
-import { Stage } from '../render/stage'
+import { Rng, hash } from '../../core/random'
+import { GlyphLibrary } from '../../glyph/source'
+import { analyze } from './word'
+import type { Word } from './word'
+import { Stage } from '../../render/stage'
 import { chooseRule } from './select'
 import type { Composition, PoeticRule } from './types'
 

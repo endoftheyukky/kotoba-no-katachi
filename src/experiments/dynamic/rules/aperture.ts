@@ -24,14 +24,14 @@
  * final   the widest mora (the last one, if several tie) opens across the
  *         whole page; the others close. One glyph, too large to be read.
  */
-import { Track, inOut } from '../../core/time'
-import { EM } from '../../glyph/font'
-import { GlyphFigure } from '../../glyph/figure'
-import { GRID } from '../../glyph/metrics'
-import type { GlyphSource } from '../../glyph/source'
-import type { Manner, Mora, Vowel } from '../../language/types'
-import type { Rng } from '../../core/random'
-import { CENTRE, PAGE } from '../../render/stage'
+import { Track, inOut } from '../time'
+import { EM } from '../../../glyph/font'
+import { GlyphFigure } from '../../../glyph/figure'
+import { GRID } from '../../../glyph/metrics'
+import type { GlyphSource } from '../../../glyph/source'
+import type { Manner, Mora, Vowel } from '../../../language/types'
+import type { Rng } from '../../../core/random'
+import { CENTRE, PAGE } from '../../../render/stage'
 import type { Composition, Cue, PoeticRule } from '../types'
 
 /** relative degree of opening — an ordinal, poetic class */

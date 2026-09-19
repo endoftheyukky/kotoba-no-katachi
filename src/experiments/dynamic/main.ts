@@ -11,10 +11,11 @@
  *   &t=4.2                         show the page frozen at t seconds
  */
 import './style.css'
-import { normalizeWord } from './language/analyze'
-import { describe, prepare } from './poem/perform'
-import { RULES } from './poem/select'
-import type { StateName } from './poem/types'
+import '../../glyph/font-face'
+import { normalizeWord } from './word'
+import { describe, prepare } from './perform'
+import { RULES } from './select'
+import type { StateName } from './types'
 
 type State = 'idle' | 'playing' | 'ended' | 'still' | 'sheet'
 
