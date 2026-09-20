@@ -16,6 +16,7 @@
  * The seed only moves plastic (造形) decisions inside the chosen space.
  */
 import { Rng } from '../core/random'
+import { readInterior, type Interior } from '../glyph/interior'
 import { COMPONENTS, STROKES } from '../glyph/legibility'
 import { readInventory, readRelations, relate, RELATION_THRESHOLD, type GlyphRelation } from '../glyph/relation'
 import { GlyphLibrary } from '../glyph/source'
@@ -27,7 +28,7 @@ import { decomposition } from './operations/decomposition'
 import { proliferation } from './operations/proliferation'
 import { transformation } from './operations/transformation'
 import { poeticPotential, visualPotential } from './potential'
-import { scopeOf } from './scope'
+import { basisOf, scopeOf } from './scope'
 import { decideScale } from './scale'
 import { axis } from './spatial/axis'
 import { band } from './spatial/band'
@@ -64,6 +65,15 @@ export const MODIFIER_SALIENCE = 0.4
  * principle of the work.
  */
 export const DESCENT_FLOOR = 0.32
+/**
+ * Above this a layer is settled: what it offers is good enough that nothing
+ * below is consulted. Between the floor and here a layer holds the poem only
+ * if nothing deeper is decisively stronger — at least DECISIVE times its best
+ * and settled in its own right. Without this, a 0.33 relation between words
+ * would shut out a 0.80 structure in the ink for good. (v1 heuristics.)
+ */
+export const SETTLED = 0.6
+export const DECISIVE = 1.5
 const MATERIAL = new Set<OperationId>(['decomposition', 'transformation'])
 
 export async function analyze(input: TitleInput, segmenter?: Segmenter): Promise<Analysis> {
@@ -94,7 +104,10 @@ export async function analyze(input: TitleInput, segmenter?: Segmenter): Promise
     if (r.containment < RELATION_THRESHOLD) continue
     voicing.set(f.voiced, { ...r, kind: 'containment', origin: 'decomposition', score: r.containment })
   }
-  return { ...language, glyphs, glyphRelations, readables, voicing }
+  // the inside of each letterform: enclosed white, a form returning in it
+  const interiors = new Map<string, Interior>()
+  for (const c of letters.keys()) interiors.set(c, readInterior(glyphs.get(c).metrics))
+  return { ...language, glyphs, glyphRelations, readables, voicing, interiors }
 }
 
 export interface Force {
@@ -109,6 +122,7 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   const proposals = OPERATIONS.flatMap((op) => op.propose(a))
   for (const p of proposals) {
     p.scope = scopeOf(a, p.focus)
+    p.basis = basisOf(a, p.focus)
     p.visualPotential = visualPotential(a, p)
     p.poeticPotential = poeticPotential(p)
   }
@@ -123,20 +137,63 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   //   1  what the title writes, between words and between characters
   //   2  + a reading against a component the title never writes (exogenous)
   //   3  + the sound of the title
+  //   4  + the inside of its letterforms: white, a form returning in the ink
   //
   // A variant is free to read any layer: that is what a variant is for.
   const capable = proposals.filter((p) => p.roles.primary)
   const exogenous = proposals.filter((p) => p.origin === 'exogenous')
   const rank = (ps: Proposal[]) => [...ps].sort((p, q) => q.poeticPotential! - p.poeticPotential!)
   const written = capable.filter((p) => p.level <= 2)
+  const below = (n: number) => rank([...capable.filter((q) => q.level <= n), ...exogenous.filter((q) => q.level <= 2)])
   const layers = [
     written,
     rank([...written, ...exogenous.filter((p) => p.level <= 2)]),
-    rank([...written, ...exogenous.filter((p) => p.level <= 2), ...capable.filter((p) => p.level === 3)]),
+    below(3),
+    below(4),
     rank([...capable, ...exogenous]),
   ]
+  // Soft descent. A shallow layer is still preferred, but a merely adequate
+  // one no longer shuts the door for good: a candidate far below may take the
+  // poem when it is decisively stronger than what the upper layer offers.
   let descent = 0
-  while (descent < layers.length - 1 && (layers[descent][0]?.poeticPotential ?? 0) < DESCENT_FLOOR) descent++
+  let reason = ''
+  // the best a layer above the adopted one offered, where one reached the page
+  let overridden = 0
+  let held: string[] = []
+  const bestOf = (i: number) => layers[i][0]?.poeticPotential ?? 0
+  const deepP = layers[layers.length - 1][0]
+  const deepest = deepP?.poeticPotential ?? 0
+  while (descent < layers.length - 1) {
+    const upperP = layers[descent][0]
+    const upper = upperP?.poeticPotential ?? 0
+    if (upper >= SETTLED) {
+      reason = `第${descent + 1}層が ${upper.toFixed(2)} ≥ ${SETTLED}：ここで確定し、下の層は見ない`
+      break
+    }
+    if (upper < DESCENT_FLOOR) {
+      reason = `第${descent + 1}層の最良が ${upper.toFixed(2)} < ${DESCENT_FLOOR}：紙面に届かないので降りる`
+      descent++
+      continue
+    }
+    if (deepest >= upper * DECISIVE && deepest >= SETTLED) {
+      // A deeper candidate that reads the same observation again is not
+      // independent evidence but a second reading of what is already on the
+      // page: it may not displace it, however strong it measures.
+      const shared = (upperP?.basis ?? []).filter((b) => (deepP?.basis ?? []).includes(b))
+      if (shared.length) {
+        held = shared
+        reason = `第${descent + 1}層は ${upper.toFixed(2)}。下層に ${deepest.toFixed(2)} があるが、同じ観測（${shared.join('・')}）を読み直したものなので置き換えない`
+        break
+      }
+      overridden = upper
+      reason = `第${descent + 1}層は ${upper.toFixed(2)}（${DESCENT_FLOOR}〜${SETTLED}）だが、下層に独立した ${deepest.toFixed(2)} ≥ ${upper.toFixed(2)}×${DECISIVE} があり決定的に強い：降りる`
+      descent++
+      continue
+    }
+    reason = `第${descent + 1}層は ${upper.toFixed(2)}：下層に決定的に強いもの（${(upper * DECISIVE).toFixed(2)} 以上かつ ${SETTLED} 以上）がないので、浅い層を保つ`
+    break
+  }
+  if (!reason) reason = `最下層まで降りた（最良 ${bestOf(descent).toFixed(2)}）`
   const eligible = variant > 0 ? layers[layers.length - 1] : layers[descent]
   const ranked = force.op ? eligible.filter((p) => p.op === force.op) : eligible
   const primary = ranked[variant % ranked.length]
@@ -192,6 +249,7 @@ export function compose(a: Analysis, force: Force = {}): Composition {
     scale,
     parameters: placed.parameters ?? [],
     contract: placed.contract ?? null,
+    descent: { layer: descent + 1, reason, adopted: bestOf(descent), upper: overridden, deepest, held },
     absent: tokens.flat().filter((u) => u.absent).map((u) => u.grapheme),
     proposals,
     fits,

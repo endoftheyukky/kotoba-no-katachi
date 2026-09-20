@@ -3,6 +3,7 @@
  * What already repeats in the title is what the poem repeats.
  * (How the repetition occupies the page is the spatial composition's matter.)
  */
+import { arrangement } from '../../glyph/parts'
 import { toHiragana } from '../../language/kana'
 import { chanceOfRepeat, contentGraphemes, isRelationWord, salience } from '../salience'
 import type { PoeticOperation, Proposal } from '../types'
@@ -17,6 +18,8 @@ export const proliferation: PoeticOperation = {
     '反復が何もない題でも増殖は可能だが、題固有ではない：関係の強さ 0.25・固有性 0.05（最後の手段）',
     '音の反復（同じ拍・同じ子音・同じ母音）も反復である。ただし紙面に置くのは題が書いている字そのもので、音素の記号を新たに書くことはしない',
     '母音は五つしかないので偶然に重なる。顕著さの条件：拍の反復は2回から、子音は拍の6割、母音は拍の4分の3以上（v1の暫定値）。表記の反復がすでに同じ構造を捉えているときは候補を作らず、根拠を重ねるだけにする',
+    '一字の中で同じ形が戻ってくることも反復である（品の三つの口、羽の二つ、川の三画）：インクの島を正規化して互いに8割以上重なるときだけ。読める部品への分割（分解）とは別で、こちらは字として読めないインクの塊の関係を見ている',
+    '字の中の反復：関係の強さ ＝ 島どうしの似方。固有性 0.60（三つ以上で 0.70）。被覆 ＝ その字が内容字に占める割合',
   ],
 
   propose(a) {
@@ -92,6 +95,38 @@ export const proliferation: PoeticOperation = {
         evidence: [
           `同じ${label}「${f.value}」が${f.morae.length}回戻ってくる：題の拍の${(f.share * 100).toFixed(0)}%`,
           `紙面に置くのは、その音を担う題の字「${f.graphemes.map((i) => a.graphemes[i].char).join('」「')}」`,
+        ],
+      })
+    }
+
+    // 画（level 4）：一字の中で同じ形が戻ってくる
+    const done = new Set<string>()
+    for (const g of content) {
+      if (done.has(g.char)) continue
+      done.add(g.char)
+      const echo = a.interiors.get(g.char)?.echo
+      if (!echo) continue
+      const k = echo.members.length
+      out.push({
+        op: 'proliferation',
+        level: 4,
+        // the repetition is inside the character, not between characters
+        origin: 'intrinsic',
+        focus: {
+          kind: 'parts',
+          grapheme: g.index,
+          parts: echo.members,
+          readings: echo.members.map(() => null),
+          arrangement: arrangement(echo.members),
+          byReading: false,
+          echo: { similarity: echo.similarity },
+        },
+        linguisticSalience: salience(echo.similarity, k >= 3 ? 0.7 : 0.6, content.filter((o) => o.char === g.char).length / n),
+        roles: { primary: true, modifier: false },
+        relations: [`echoForm「${g.char}」${k}塊 類似${echo.similarity.toFixed(2)}`],
+        evidence: [
+          `「${g.char}」の中で同じ形が${k}回戻ってくる（インクの島どうしが${(echo.similarity * 100).toFixed(0)}%重なる）`,
+          '字としては読めない：読めるなら、それは部品への分解（字の層）の領分',
         ],
       })
     }

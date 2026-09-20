@@ -3,8 +3,53 @@
  * Words that are only relation, morae that are only silence, and negations
  * are written as the space they occupy.
  */
-import { RELATION_WORD_DISTINCTIVENESS, salience } from '../salience'
-import type { PoeticOperation } from '../types'
+import { clamp } from '../../core/math'
+import { contentGraphemes, RELATION_WORD_DISTINCTIVENESS, salience } from '../salience'
+import type { Analysis, PoeticOperation, Proposal } from '../types'
+
+/**
+ * 画（level 4）: the white a character's own strokes close in. Not a gap
+ * between strokes — the flood fill from outside cannot reach it, and it
+ * holds at least 8% of the ink box.
+ */
+function interiors(a: Analysis): Proposal[] {
+  const content = contentGraphemes(a)
+  const out: Proposal[] = []
+  const seen = new Set<string>()
+  for (const g of content) {
+    if (seen.has(g.char)) continue
+    seen.add(g.char)
+    const inside = a.interiors.get(g.char)
+    if (!inside?.counters.length) continue
+    const holes = inside.counters
+    const biggest = holes[0].area
+    const rhythm = holes.length >= 2 && inside.even >= 0.7
+    const rs = Math.max(Math.min(1, biggest / 0.25), rhythm ? 0.75 : 0)
+    const d = 0.45 + 0.35 * clamp((biggest - 0.08) / 0.3)
+    const carried = content.filter((o) => o.char === g.char).length
+    out.push({
+      op: 'absence',
+      level: 4,
+      // the white belongs to the character itself
+      origin: 'intrinsic',
+      focus: { kind: 'counter', grapheme: g.index, holes, arrangement: inside.arrangement, even: inside.even },
+      linguisticSalience: salience(rs, d, carried / Math.max(1, content.length)),
+      roles: { primary: true, modifier: false },
+      relations: [
+        `counter「${g.char}」×${holes.length} ${holes.map((h) => h.area.toFixed(2)).join('/')} ${inside.arrangement}`,
+      ],
+      evidence: [
+        `「${g.char}」の線は${holes.length}つの白を閉じ込めている（最大でインク箱の${(biggest * 100).toFixed(0)}%）`,
+        inside.arrangement === 'nested'
+          ? '白の中に白がある'
+          : holes.length > 1
+            ? `${holes.length}つの白は${(inside.even * 100).toFixed(0)}%まで等しい`
+            : '白は一つ',
+      ],
+    })
+  }
+  return out
+}
 
 export const absence: PoeticOperation = {
   id: 'absence',
@@ -15,6 +60,8 @@ export const absence: PoeticOperation = {
     '否定（ない・ず・不・無…）は、否定されたものの不在である：否定の語は空白として書かれる',
     '関係の強さ：否定 0.9、促音 0.6、関係語 0.6。固有性：否定 0.8、促音 0.5、関係語は語による（の 0.3 … または 0.6）。被覆：空白が題の内側にあって語を二つに分けるなら 1、端にあるなら 0.5',
     '空白は詰められない：失われた字の位置と大きさは、紙面に残る',
+    '字がすでに抱えている閉じた白（口の中、日の二つ、田の四つ）も、置かれていない場所である：それは画の隙間ではなく、線が閉じ込めた白で、インク箱の8%以上を占めるものだけを数える',
+    '閉じた白の関係の強さ ＝ 最大の白の大きさ（0.25で1）。等しい白が二つ以上あればそれ自体が律動なので0.75を下回らない。固有性は白が大きいほど高い（口0.47→0.80、日0.21→0.60、閾値付近→0.45）',
   ],
 
   propose(a) {
@@ -24,7 +71,9 @@ export const absence: PoeticOperation = {
     const negations = a.relations.flatMap((r) => (r.kind === 'negation' ? [r] : []))
     const silences = a.morae.filter((m) => m.kind === 'Q')
     const words = a.tokens.filter((t) => t.pos === 'particle' || t.pos === 'conjunction')
-    if (!negations.length && !silences.length && !words.length) return []
+    // the white a character holds does not depend on the title having a word
+    // or a beat to lose
+    if (!negations.length && !silences.length && !words.length) return interiors(a)
 
     const graphemes = [
       ...negations.flatMap((r) => r.graphemes),
@@ -47,9 +96,8 @@ export const absence: PoeticOperation = {
     const best = candidates.sort((x, y) => y.s.value - x.s.value)[0]
     const read = a.morae.filter((m) => m.kind !== 'unread')
 
-    return [
-      {
-        op: 'absence',
+    return [...interiors(a), {
+        op: 'absence' as const,
         level: best.level,
         origin: 'endogenous',
         focus: {

@@ -36,6 +36,12 @@ export const band: SpatialComposition = {
         score: 0.75,
         grounds: [`促音は拍としての沈黙 → ${f.beats}拍の等間隔の列に、${f.silentMorae.length}枡の空き`],
       }
+    if (f.kind === 'parts' && f.echo && f.arrangement !== 'mixed')
+      return {
+        id: 'band',
+        score: 0.75,
+        grounds: [`「${a.graphemes[f.grapheme].char}」の中で同じ形が${f.parts.length}回、一方向に戻る → 反復の帯`],
+      }
     if (m.primary.op === 'decomposition' && f.kind === 'parts' && f.arrangement !== 'mixed' && f.parts.length >= 3) {
       const single = contentGraphemes(a).length === 1
       if (single || f.parts.length >= 4)

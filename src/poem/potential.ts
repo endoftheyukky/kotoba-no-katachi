@@ -59,6 +59,12 @@ export function visualPotential(a: Analysis, p: Proposal): VisualPotential {
     case 'plain':
       return potential(1, 0.15, ['反復の根拠がなく、構造が生まれない'])
     case 'parts': {
+      // the same form returning inside one character: read as a repetition,
+      // not as parts that spell something
+      if (f.echo)
+        return potential(0.5 + 0.35 * f.echo.similarity, f.parts.length >= 3 ? 0.85 : 0.6, [
+          `同じ形が${f.parts.length}回戻る（類似 ${f.echo.similarity.toFixed(2)}）：字としては読めないが、反復としては見える`,
+        ])
       let legibility = 0
       const notes: string[] = []
       f.parts.forEach((part, i) => {
@@ -89,6 +95,18 @@ export function visualPotential(a: Analysis, p: Proposal): VisualPotential {
     case 'joint':
       // both sides stay written as they are; the joint shows as two poles
       return potential(1, 0.75, ['語幹と活用語尾は、どちらも字のまま二極に置ける'])
+    case 'counter': {
+      // The white is material only where something can be done with it. A
+      // character enlarged so that its hole shows is not yet a poem.
+      const others = a.graphemes.filter((g) => g.index !== f.grapheme && g.char.trim()).length
+      if (f.arrangement === 'nested')
+        return potential(1, 0.8, ['白の中に白がある：白どうしの関係が紙面に移せる'])
+      if (others > 0)
+        return potential(1, 0.8, [`閉じた白は場所である：題の残り${others}字をその中に置ける`])
+      if (f.holes.length >= 2 && f.even >= 0.7)
+        return potential(1, 0.75, [`${f.holes.length}つの等しい白が律動をなす`])
+      return potential(1, 0.25, ['白は一つきりで、その中に置くものもない：字を大きくして穴を見せるだけになる'])
+    }
     case 'absence': {
       // a gap is seen as a missing character only where written characters hold it on both sides
       const g = f.graphemes

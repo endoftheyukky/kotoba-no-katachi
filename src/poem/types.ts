@@ -12,6 +12,7 @@ import type { PartReading } from '../glyph/legibility'
 import type { GlyphMetrics } from '../glyph/metrics'
 import type { Arrangement, GlyphPart } from '../glyph/parts'
 import type { GlyphRelation } from '../glyph/relation'
+import type { Counter, CounterArrangement, Interior } from '../glyph/interior'
 import type { GlyphLibrary } from '../glyph/source'
 import type { LanguageAnalysis } from '../language/analysis'
 import type { Rect } from '../render/stage'
@@ -36,6 +37,8 @@ export interface Analysis extends LanguageAnalysis {
    * Keyed by the voiced character.
    */
   voicing: Map<string, GlyphRelation>
+  /** what the inside of each of the title's letterforms holds (glyph/interior.ts) */
+  interiors: Map<string, Interior>
 }
 
 /**
@@ -48,8 +51,12 @@ export interface Analysis extends LanguageAnalysis {
  *   2  字 — between characters: a repeated character, a mirrored title, one
  *      letterform read inside another, the parts a character falls into
  *   3  音 — sound: a voicing mark, a special mora, a marked echo
+ *   4  画 — the ink itself: white the strokes close in, the same form
+ *      returning inside one character. What is read here reads as nothing:
+ *      it is structure, not writing. (Level 2 covers what still reads as a
+ *      character; this is what is left when nothing does.)
  */
-export type FeatureLevel = 1 | 2 | 3
+export type FeatureLevel = 1 | 2 | 3 | 4
 
 /**
  * How much of the title a feature acts on.
@@ -145,6 +152,21 @@ export type Focus =
       readings: (PartReading | null)[]
       arrangement: Arrangement
       byReading: boolean
+      /**
+       * The parts are not what the character comes apart into but the same
+       * form returning inside it (品 three 口, 羽 two halves): a repetition,
+       * read in the ink and not in the writing.
+       */
+      echo?: { similarity: number }
+    }
+  /** white the strokes of one character close in */
+  | {
+      kind: 'counter'
+      grapheme: number
+      holes: Counter[]
+      arrangement: CounterArrangement
+      /** how alike the counters are in area */
+      even: number
     }
   /** two glyphs related in form */
   | {
@@ -171,6 +193,8 @@ export interface Proposal {
   level: FeatureLevel
   /** how much of the title it acts on — filled in by the composer (poem/scope.ts) */
   scope?: FeatureScope
+  /** the observations it rests on — filled in by the composer (poem/scope.ts) */
+  basis?: string[]
   op: OperationId
   origin: FeatureOrigin
   focus: Focus
@@ -428,6 +452,15 @@ export interface Composition {
   contract: Contract | null
   /** graphemes the poem writes as space, so a missing character can be explained */
   absent: number[]
+  /**
+   * Which layer of the descent the poem was built from, and why.
+   *   adopted   the best of the layer the poem was taken from
+   *   upper     the best a layer above it offered, where one reached the page
+   *   deepest   the best anywhere below
+   *   held      the observation a deeper reading shared, where that kept it
+   *             from displacing what was already read
+   */
+  descent: { layer: number; reason: string; adopted: number; upper: number; deepest: number; held: string[] }
   /** every proposal, ranked by salience */
   proposals: Proposal[]
   /** every space that could hold the material, ranked */

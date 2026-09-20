@@ -31,6 +31,8 @@ function targetOf(a: Analysis, f: Focus): number[] {
     }
     case 'absence':
       return f.graphemes
+    case 'counter':
+      return [f.grapheme]
     case 'joint': {
       const t = a.tokens[f.token]
       return seatsOf(a).filter((i) => i >= t.start && i < t.end)
@@ -54,5 +56,38 @@ export function scopeOf(a: Analysis, f: Focus): FeatureScope {
       kind === 'whole'
         ? '題そのものが対象：外に残るものがない'
         : `対象は「${chars(target)}」、題の残り「${chars(context)}」は文脈として紙面に留まる`,
+  }
+}
+
+/**
+ * What a proposal rests on, as a few tokens naming the observations it uses.
+ * Two proposals that name the same observation are not independent evidence:
+ * the islands of 川 read as parts, and the same islands read as a form
+ * returning, are one fact read twice. The descent uses this so that a deeper
+ * reading of what has already been read cannot displace it (poem/compose.ts).
+ *
+ * Deliberately small: a handful of strings, no provenance graph.
+ */
+export function basisOf(a: Analysis, f: Focus): string[] {
+  switch (f.kind) {
+    case 'repetition':
+      // a repetition of sound is an observation of the reading, not of the ink
+      return f.sound
+        ? [`sound:${f.sound.unit}:${f.sound.value}`]
+        : [...new Set(f.occurrences.flat().map((i) => `char:${a.graphemes[i]?.char ?? i}`))]
+    case 'parts':
+      // the islands or cuts of one glyph — whether read as parts or as an echo
+      return [`parts:${a.graphemes[f.grapheme].char}`]
+    case 'counter':
+      // the white those strokes close in: a different measurement of the same glyph
+      return [`counter:${a.graphemes[f.grapheme].char}`]
+    case 'pair':
+      return [`glyphs:${f.relation.inner}|${f.relation.outer}`]
+    case 'absence':
+      return f.graphemes.map((i) => `absent:${i}`)
+    case 'joint':
+      return [`joint:${f.token}`]
+    case 'plain':
+      return []
   }
 }

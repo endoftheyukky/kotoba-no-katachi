@@ -20,7 +20,14 @@ export const radial: SpatialComposition = {
 
   fit(a, m) {
     const f = m.primary.focus
-    if (m.primary.op !== 'decomposition' || f.kind !== 'parts' || f.arrangement !== 'mixed' || f.parts.length < 3) return null
+    if (f.kind !== 'parts' || f.arrangement !== 'mixed' || f.parts.length < 3) return null
+    if (f.echo)
+      return {
+        id: 'radial',
+        score: 0.75,
+        grounds: [`「${a.graphemes[f.grapheme].char}」の中で同じ形が${f.parts.length}回戻り、縦横に散る → 核からの放射`],
+      }
+    if (m.primary.op !== 'decomposition') return null
     const single = contentGraphemes(a).length === 1
     return {
       id: 'radial',

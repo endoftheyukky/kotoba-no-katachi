@@ -4,11 +4,13 @@
  * operations or salience. Generation is exactly that of the work.
  *
  *   /review.html
+ *   /review.html?set=probe
  */
 import './review.css'
 import '../glyph/font-face'
 import { analyze, compose } from '../poem/compose'
 import { renderSVG } from '../render/svg'
+import { PROBE_TITLES } from '../study/probes'
 import { STUDY_TITLES } from '../study/titles'
 import { normalizeTitle } from '../title'
 
@@ -17,7 +19,8 @@ async function main(): Promise<void> {
   document.body.append(list)
 
   // lay out every place first, so the sheet does not jump while pages are drawn
-  const slots = STUDY_TITLES.map((t) => {
+  const set = new URLSearchParams(location.search).get('set') === 'probe' ? PROBE_TITLES : STUDY_TITLES
+  const slots = set.map((t) => {
     const figure = document.createElement('figure')
     const page = document.createElement('div')
     page.className = 'page'

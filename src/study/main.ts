@@ -7,6 +7,7 @@
  *   /study.html?variant=1       the next alternative reading of each
  *   /study.html?only=嘘|海のあと  a subset
  *   /study.html?view=grid       pages only, as a contact sheet
+ *   /study.html?set=probe       the probe set instead of the development set
  */
 import './study.css'
 import '../glyph/font-face'
@@ -18,12 +19,15 @@ import { renderCanvas } from '../render/png'
 import { PAGE } from '../render/stage'
 import { renderSVG } from '../render/svg'
 import { normalizeTitle } from '../title'
+import { PROBE_TITLES } from './probes'
 import { STUDY_TITLES, type StudyTitle } from './titles'
 
 const params = new URLSearchParams(location.search)
 const variant = Number(params.get('variant') ?? 0)
 const only = params.get('only')?.split('|')
-const titles = only ? STUDY_TITLES.filter((t) => only.includes(t.text)) : STUDY_TITLES
+const probe = params.get('set') === 'probe'
+const set = probe ? PROBE_TITLES : STUDY_TITLES
+const titles = only ? set.filter((t) => only.includes(t.text)) : set
 const grid = params.get('view') === 'grid'
 
 const opTitle = (id: string) => OPERATIONS.find((o) => o.id === id)?.title ?? id
@@ -82,7 +86,7 @@ function proposalLine(p: Proposal, status: 'primary' | 'modifier' | 'offered', r
   const v = p.visualPotential
   li.append(
     el('span', 'op', opTitle(p.op)),
-    el('span', 'ground', `L${p.level} ${{ 1: '語', 2: '字', 3: '音' }[p.level]}`),
+    el('span', 'ground', `L${p.level} ${{ 1: '語', 2: '字', 3: '音', 4: '画' }[p.level]}`),
     el('span', 'sal', `poetic ${f2(p.poeticPotential ?? 0)}`),
     el('div', 'parts', `linguistic ${f2(s.value)} = rs ${f2(s.relationStrength)} · d ${f2(s.distinctiveness)} · cov ${f2(s.coverage)}`),
     el('div', 'parts', v ? `visual ${f2(v.value)} = legibility ${f2(v.legibility)} × structure ${f2(v.structure)}` : ''),
@@ -192,6 +196,16 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
       .join('\n') || '—',
   )
   box.append(dl)
+
+  box.append(el('h3', undefined, `feature descent — 第${c.descent.layer}層`))
+  box.append(
+    el(
+      'p',
+      'rel',
+      `採用 ${f2(c.descent.adopted)} · 上位 ${c.descent.upper ? f2(c.descent.upper) : '—'} · 最下層 ${f2(c.descent.deepest)}${c.descent.held.length ? ` · 同一観測で置換抑止（${c.descent.held.join('・')}）` : ''}`,
+    ),
+  )
+  box.append(el('p', 'rel', c.descent.reason))
 
   box.append(el('h3', undefined, 'primary operation'))
   const primary = el('ol', 'ops')
@@ -304,7 +318,7 @@ async function main(): Promise<void> {
   const header = el('header')
   header.append(
     el('h1', undefined, 'study sheet'),
-    el('p', undefined, `development set · ${titles.length} titles · variant ${variant} · the pages carry no text; what was read and decided is written beside them`),
+    el('p', undefined, `${probe ? 'probe set（特定のfeatureが設計どおり発火するかを見るための題。一般化の証拠ではない）' : 'development set'} · ${titles.length} titles · variant ${variant} · the pages carry no text; what was read and decided is written beside them`),
   )
   const list = el('main', grid ? 'grid' : undefined)
   document.body.append(header, list)
@@ -341,7 +355,7 @@ async function main(): Promise<void> {
     count(bySpace, spaceTitle(c.spatial.id))
     count(byPair, `${opTitle(c.primary.op)} / ${spaceTitle(c.spatial.id)}`)
     count(byScale, c.scale.regime)
-    count(byLevel, `L${c.primary.level} ${{ 1: '語', 2: '字', 3: '音' }[c.primary.level]}`)
+    count(byLevel, `L${c.primary.level} ${{ 1: '語', 2: '字', 3: '音', 4: '画' }[c.primary.level]}`)
     if (c.primary.level === 3)
       descended.push(`${t.text}（${c.primary.relations[0]?.split(' ')[0] ?? c.primary.op}）`)
     // the whole page, context included, is what a reader sees

@@ -5,7 +5,7 @@
 import { EM } from '../../glyph/font'
 import { PAGE } from '../../render/stage'
 import type { Analysis, Material, Mark, SpatialComposition, Unit, Vec } from '../types'
-import { allUnits, centredLine, directions, inside, lineMarks, offCentre, placeRegion } from './common'
+import { allUnits, centredLine, directions, inside, isWritten, lineMarks, offCentre, placeRegion, unitMarks } from './common'
 import { coordinated, dependencyBy } from './relations'
 
 interface Roles {
@@ -51,14 +51,56 @@ export const centre: SpatialComposition = {
     '「AのB」では、Bが紙面の重心を占め、Aは紙面の縁に小さく退く。「の」は二つの間の距離である',
     '字形の包含では、外の字から内の字を引いた残りが重心を占め、題そのものは縁に小さく置かれる',
     '重心は紙面の中央に置かない。周縁は重心から最も遠い縁に寄る',
+    '字がすでに抱えている閉じた白は、空いた場所である：その字は紙面いっぱいに書かれ、題の残りの字は白の中に、書かれた順に置かれる。白が二つ以上あれば一つずつ、余れば同じ白に重ねて置く',
   ],
 
   fit(a, m) {
+    const f = m.primary.focus
+    if (f.kind === 'counter') {
+      const others = a.graphemes.filter((g) => g.index !== f.grapheme && g.char.trim()).length
+      return {
+        id: 'centre',
+        score: others ? 0.78 : 0.7,
+        grounds: [
+          others
+            ? `「${a.graphemes[f.grapheme].char}」が閉じ込めた白（${f.holes.length}つ）に、題の残りが入る`
+            : `「${a.graphemes[f.grapheme].char}」が閉じ込めた白（${f.holes.length}つ・${f.arrangement}）が紙面を占める`,
+        ],
+      }
+    }
     const r = roles(a, m)
     return r ? { id: 'centre', score: r.kind === 'dependency' ? 0.75 : 0.7, grounds: [r.ground] } : null
   },
 
   realize(a, m, rng, scale) {
+    const focus = m.primary.focus
+    if (focus.kind === 'counter') {
+      // the character is written the size of the page, and what the title
+      // still has to say is put where its strokes have already left room
+      const units = allUnits(m)
+      const target = units.find((u) => u.grapheme === focus.grapheme)!
+      const others = units.filter((u) => u.grapheme !== focus.grapheme && isWritten(u))
+      const metrics = a.glyphs.get(target.char).metrics
+      const extent = (2 * Math.max(metrics.half.w, metrics.half.h)) / EM
+      const S = Math.min((0.94 * PAGE) / Math.max(0.2, extent), 1.05 * PAGE)
+      // 造形: not exactly on the middle of the page
+      const at: Vec = { x: PAGE / 2 + rng.range(-0.04, 0.04) * PAGE, y: PAGE / 2 + rng.range(-0.04, 0.04) * PAGE }
+      const marks: Mark[] = unitMarks(a, target, at, S)
+      const k = S / EM
+      const groups: Unit[][] = focus.holes.map(() => [])
+      others.forEach((u, i) => groups[i % groups.length].push(u))
+      focus.holes.forEach((hole, i) => {
+        const group = groups[i]
+        if (!group.length) return
+        const w = hole.box.w * k
+        const h = hole.box.h * k
+        const s = Math.min(w, h) * 0.62
+        const centre = { x: at.x + hole.centre.x * k, y: at.y + hole.centre.y * k }
+        marks.push(...centredLine(a, group, centre, Math.min(s, (Math.max(w, h) * 0.8) / group.length)))
+      })
+      return { marks }
+    }
+
     const r = roles(a, m)!
     const { vertical } = directions(a)
     const c: Vec = { x: offCentre(rng, 0.3, 0.42), y: offCentre(rng, 0.3, 0.42) }
