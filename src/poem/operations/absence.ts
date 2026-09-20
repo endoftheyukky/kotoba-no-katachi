@@ -27,6 +27,13 @@ function interiors(a: Analysis): Proposal[] {
     const rs = Math.max(Math.min(1, biggest / 0.25), rhythm ? 0.75 : 0)
     const d = 0.45 + 0.35 * clamp((biggest - 0.08) / 0.3)
     const carried = content.filter((o) => o.char === g.char).length
+    // Detecting the white and being able to do something with it are two
+    // things. What the present compositions can do with a counter is put the
+    // rest of the title inside it; with nothing to put there, the page would
+    // be the character enlarged and no more. The feature is still read and
+    // recorded — a later grammar that opens the counters themselves as voids
+    // can lift this condition.
+    const placeable = content.filter((o) => o.index !== g.index).length
     out.push({
       op: 'absence',
       level: 4,
@@ -34,7 +41,14 @@ function interiors(a: Analysis): Proposal[] {
       origin: 'intrinsic',
       focus: { kind: 'counter', grapheme: g.index, holes, arrangement: inside.arrangement, even: inside.even },
       linguisticSalience: salience(rs, d, carried / Math.max(1, content.length)),
-      roles: { primary: true, modifier: false },
+      roles: {
+        primary: placeable > 0,
+        modifier: false,
+        note:
+          placeable > 0
+            ? undefined
+            : '閉じた白の中に置ける題の字がない：今の構成語彙では元の字を一様に大きくするだけになるので、feature としては読むが主操作にはしない',
+      },
       relations: [
         `counter「${g.char}」×${holes.length} ${holes.map((h) => h.area.toFixed(2)).join('/')} ${inside.arrangement}`,
       ],
@@ -62,6 +76,7 @@ export const absence: PoeticOperation = {
     '空白は詰められない：失われた字の位置と大きさは、紙面に残る',
     '字がすでに抱えている閉じた白（口の中、日の二つ、田の四つ）も、置かれていない場所である：それは画の隙間ではなく、線が閉じ込めた白で、インク箱の8%以上を占めるものだけを数える',
     '閉じた白の関係の強さ ＝ 最大の白の大きさ（0.25で1）。等しい白が二つ以上あればそれ自体が律動なので0.75を下回らない。固有性は白が大きいほど高い（口0.47→0.80、日0.21→0.60、閾値付近→0.45）',
+    '閉じた白が主操作になれるのは、その白の中に置ける題の他の字があるときだけである：白は場所であって、場所は何かが置かれて初めて場所になる。置くものがなければ紙面は元の字の拡大にしかならないので、feature としては読み、記録し、主操作の候補にはしない。白そのものを複数の空洞として展開する構成が加われば、この条件は外せる',
   ],
 
   propose(a) {
