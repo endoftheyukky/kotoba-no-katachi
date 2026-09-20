@@ -7,6 +7,7 @@
 import type { TitleInput } from '../title'
 import { SMALL, toHiragana } from './kana'
 import { parseMorae, type SoundChar } from './morae'
+import { readPhonology, type PhonologicalFeature } from './phonology'
 import { scriptOf } from './script'
 import { ruleSegmenter, type Segmenter } from './segment'
 import type { Grapheme, Mora, Token, Vowel } from './types'
@@ -42,6 +43,8 @@ export interface LanguageAnalysis {
   /** grapheme index → token index */
   tokenOf: number[]
   morae: Mora[]
+  /** what the sound of the title offers, as far as the writing lets us read it */
+  phonology: PhonologicalFeature[]
   /** whether the given reading could be aligned with the writing */
   readingAligned: boolean
   direction: 'vertical' | 'horizontal'
@@ -125,7 +128,7 @@ export function analyzeLanguage(input: TitleInput, segmenter: Segmenter = ruleSe
   const by = (s: Grapheme['script']) => graphemes.filter((g) => g.script === s).length
   const direction = by('katakana') > by('hiragana') + by('kanji') ? 'horizontal' : 'vertical'
 
-  return { input, graphemes, tokens, tokenOf, morae, readingAligned: !input.reading || !!aligned, direction, relations }
+  return { input, graphemes, tokens, tokenOf, morae, phonology: readPhonology(graphemes, morae), readingAligned: !input.reading || !!aligned, direction, relations }
 }
 
 const NEGATION_ENDINGS = ['ません', 'なかった', 'ない', 'なく', 'ぬ', 'ず']

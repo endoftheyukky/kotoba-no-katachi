@@ -11,7 +11,8 @@ export const voidSpace: SpatialComposition = {
   id: 'void',
   title: '空洞',
   rules: [
-    '否定・促音・関係語の欠落が題の主題であるとき、欠けた部分が紙面の大半を占める',
+    '否定・関係語の欠落が題の主題であるとき、欠けた部分が紙面の大半を占める',
+    '拍の欠落（促音）はここでは扱わない：欠けているのは語ではなく一拍なので、等間隔の拍の列（帯）の中でしか読めない',
     '残った字は小さく、欠落の前にあるものは書き始めの縁に、後にあるものは反対の縁に寄る',
     '欠落が題の終わりにあるとき、白は紙面の終わりまで続く',
   ],
@@ -20,7 +21,8 @@ export const voidSpace: SpatialComposition = {
     const f = m.primary.focus
     if (m.primary.op !== 'absence' || f.kind !== 'absence') return null
     if (f.negation) return { id: 'void', score: 0.9, grounds: ['否定 → 否定されたものの場所が紙面を占める'] }
-    if (f.silence) return { id: 'void', score: 0.8, grounds: ['促音 → 拍の沈黙が紙面を占める'] }
+    // a missing beat is measured against the beats around it, not against the page
+    if (f.silence) return null
     return { id: 'void', score: 0.35, grounds: ['関係語の欠落'] }
   },
 

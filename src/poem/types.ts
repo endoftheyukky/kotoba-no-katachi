@@ -30,7 +30,26 @@ export interface Analysis extends LanguageAnalysis {
   glyphRelations: GlyphRelation[]
   /** glyphs a part of a glyph may be read as: common components, strokes, and the title's own characters */
   readables: Map<string, GlyphMetrics>
+  /**
+   * For each kana written with a voicing mark, the reading of the voiced
+   * glyph against the unvoiced one it decomposes into: ぜ = せ + ゛.
+   * Keyed by the voiced character.
+   */
+  voicing: Map<string, GlyphRelation>
 }
+
+/**
+ * How far down the title the feature a proposal rests on was found. The poem
+ * is built from the highest level that reaches the page; it descends only
+ * when nothing above does (poem/compose.ts, DESCENT_FLOOR).
+ *
+ *   1  語 — between words: dependency, coordination, negation, the joint of a
+ *      word, a space written between two of them
+ *   2  字 — between characters: a repeated character, a mirrored title, one
+ *      letterform read inside another, the parts a character falls into
+ *   3  音 — sound: a voicing mark, a special mora, a marked echo
+ */
+export type FeatureLevel = 1 | 2 | 3
 
 // ---------------------------------------------------------------------------
 // three measures of a proposal
@@ -84,7 +103,15 @@ export type FeatureOrigin = 'endogenous' | 'intrinsic' | 'exogenous'
 /** What, in the title, an operation acts on. */
 export type Focus =
   /** a unit that recurs: each occurrence as grapheme indices */
-  | { kind: 'repetition'; value: string; occurrences: number[][]; contiguous: boolean; whole: boolean }
+  | {
+      kind: 'repetition'
+      value: string
+      occurrences: number[][]
+      contiguous: boolean
+      whole: boolean
+      /** the repetition is one of sound; what is drawn stays the title's own characters */
+      sound?: { unit: 'mora' | 'vowel' | 'onset'; value: string }
+    }
   /** repetition with nothing in the title to ground it */
   | { kind: 'plain' }
   /** a glyph and the parts the computer reads in it */
@@ -98,13 +125,28 @@ export type Focus =
       byReading: boolean
     }
   /** two glyphs related in form */
-  | { kind: 'pair'; relation: GlyphRelation }
+  | {
+      kind: 'pair'
+      relation: GlyphRelation
+      /** the pair is a kana and the unvoiced character it decomposes into */
+      voicing?: { mark: string; base: string; alsoWritten: boolean }
+    }
   /** graphemes that are written as space */
-  | { kind: 'absence'; graphemes: number[]; negation: boolean; silence: boolean }
+  | {
+      kind: 'absence'
+      graphemes: number[]
+      negation: boolean
+      silence: boolean
+      /** beats of the whole title, and which of them are silent */
+      beats: number
+      silentMorae: number[]
+    }
   /** a joint inside a word: the kanji stem and the kana ending it carries */
   | { kind: 'joint'; token: number; at: number }
 
 export interface Proposal {
+  /** the level of language the feature was found at */
+  level: FeatureLevel
   op: OperationId
   origin: FeatureOrigin
   focus: Focus

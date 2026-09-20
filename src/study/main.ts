@@ -82,6 +82,7 @@ function proposalLine(p: Proposal, status: 'primary' | 'modifier' | 'offered', r
   const v = p.visualPotential
   li.append(
     el('span', 'op', opTitle(p.op)),
+    el('span', 'ground', `L${p.level} ${{ 1: '語', 2: '字', 3: '音' }[p.level]}`),
     el('span', 'sal', `poetic ${f2(p.poeticPotential ?? 0)}`),
     el('div', 'parts', `linguistic ${f2(s.value)} = rs ${f2(s.relationStrength)} · d ${f2(s.distinctiveness)} · cov ${f2(s.coverage)}`),
     el('div', 'parts', v ? `visual ${f2(v.value)} = legibility ${f2(v.legibility)} × structure ${f2(v.structure)}` : ''),
@@ -136,6 +137,19 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
       .slice(0, 4)
       .map((r) => `${r.inner}${r.kind === 'similarity' ? '≈' : '⊂'}${r.outer} ${f2(r.score)}${r.origin === 'inventory' ? '(在庫)' : ''}`)
       .join('  ') || '—',
+  )
+  row(
+    dl,
+    'phonology',
+    a.phonology
+      .map((f) =>
+        f.kind === 'voicing'
+          ? `voicing ${f.base}+${f.mark}=${f.voiced}${f.alsoWritten.length ? '（清音も題にある）' : ''}`
+          : f.kind === 'special'
+            ? `special ${f.sub}「${a.morae[f.mora].text}」${f.sub === 'N' ? '（検出のみ：操作へ接続しない）' : ''}`
+            : `echo ${{ mora: '拍', vowel: '母音', onset: '子音' }[f.unit]}「${f.value}」×${f.morae.length} 拍の${(f.share * 100).toFixed(0)}%`,
+      )
+      .join('\n') || '—',
   )
   box.append(dl)
 
@@ -237,6 +251,8 @@ async function main(): Promise<void> {
   const covers: number[] = []
   const dead: string[] = []
   const reaches: number[] = []
+  const descended: string[] = []
+  const byLevel = new Map<string, number>()
   const count = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1)
 
   for (const t of titles) {
@@ -257,6 +273,9 @@ async function main(): Promise<void> {
     count(bySpace, spaceTitle(c.spatial.id))
     count(byPair, `${opTitle(c.primary.op)} / ${spaceTitle(c.spatial.id)}`)
     count(byScale, c.scale.regime)
+    count(byLevel, `L${c.primary.level} ${{ 1: '語', 2: '字', 3: '音' }[c.primary.level]}`)
+    if (c.primary.level === 3)
+      descended.push(`${t.text}（${c.primary.relations[0]?.split(' ')[0] ?? c.primary.op}）`)
     const mm = measure(c.draft.marks)
     reaches.push(mm.reach)
     if (verdict(mm, c.spatial.id).dead) dead.push(t.text)
@@ -278,6 +297,7 @@ async function main(): Promise<void> {
     ['spatial composition', bySpace],
     ['operation / space', byPair],
     ['scale regime', byScale],
+    ['feature level (primary)', byLevel],
   ] as const) {
     const col = el('div')
     col.append(el('h3', undefined, title))
@@ -295,6 +315,13 @@ async function main(): Promise<void> {
       'p',
       'coverline',
       `inventory readings: ${inventory.candidates}/${titles.length} titles have one · primary in ${inventory.primary} · modifier in ${inventory.modifier} · found: ${inventory.components.join(' ') || '—'}`,
+    ),
+  )
+  summary.append(
+    el(
+      'p',
+      'coverline',
+      `level 3（音）へ降りた題: ${descended.length}/${titles.length}${descended.length ? ` — ${descended.join(' · ')}` : ''}`,
     ),
   )
   summary.append(

@@ -27,8 +27,10 @@ export interface GlyphRelation {
    * title: both glyphs are written in the title.
    * inventory: the inner glyph is not in the title — the computer found it
    * inside one of the title's characters, among the components it can read.
+   * decomposition: the inner glyph is what the outer one itself decomposes
+   * into (ぜ = せ + ゛): intrinsic to the character, not fetched from outside.
    */
-  origin: 'title' | 'inventory'
+  origin: 'title' | 'inventory' | 'decomposition'
   /** containment: the glyph inside. similarity: the first of the pair */
   inner: string
   /** containment: the glyph that holds it. similarity: the second of the pair */

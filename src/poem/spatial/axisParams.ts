@@ -53,15 +53,21 @@ export function poles(an: Analysis, m: Material): Poles | null {
       const minus = { char: r.inner, dx: r.dx, dy: r.dy, scale: r.scale, keep: r.residue.pieces }
       const b = r.kind === 'containment' ? [{ ...outer, minus }] : [outer]
       const hasCoordination = coordinated(an).length === 2
-      // found against a component the title never writes: the character itself
-      // stands at one pole, what is left of it at the other, the component between
-      if (m.primary.origin === 'exogenous')
+      // Three terms on one page: the character as the title writes it at one
+      // pole, what is left of it when the other form is taken out at the
+      // other, and the form that was found between them. This is how a
+      // reading the title does not write itself stays traceable — a component
+      // found in the inventory, or the unvoiced character a kana decomposes
+      // into (ぜ = せ + ゛), where the residue is the voicing mark itself.
+      if (m.primary.origin === 'exogenous' || f.voicing)
         return {
           a: [outer],
           b,
           middle: [{ grapheme: -1, token: -1, char: r.inner }],
           kind: 'containment',
-          ground: `「${r.outer}」の中に「${r.inner}」を読んだ（題の外の部品）→ 元の字と、引いた残りを二極に`,
+          ground: f.voicing
+            ? `「${r.outer}」は「${r.inner}」に${f.voicing.mark}が加わった字 → 元の字と、引いた残り（印そのもの）を二極に`
+            : `「${r.outer}」の中に「${r.inner}」を読んだ（題の外の部品）→ 元の字と、引いた残りを二極に`,
         }
       // for a similarity, the small difference stands between the two
       const difference = r.kind === 'similarity' ? [{ ...outer, minus, grapheme: -1 }] : []

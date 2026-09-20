@@ -69,6 +69,8 @@ export const decomposition: PoeticOperation = {
       return [
         {
           op: 'decomposition' as const,
+          // between the parts of a word: the highest level
+          level: 1 as const,
           // the joint is in the word itself, as it is written
           origin: 'endogenous' as const,
           focus: { kind: 'joint' as const, token: r.token, at: r.at },
@@ -113,6 +115,8 @@ export const decomposition: PoeticOperation = {
       const readable = readings.filter((r) => r).map((r) => `「${r!.char}」`)
       out.push({
         op: 'decomposition',
+        // the structure of one character
+        level: 2,
         // the structure of one character, read in the character itself
         origin: 'intrinsic',
         focus: { kind: 'parts', grapheme: g.index, parts: shown, readings, arrangement: arrangement(shown), byReading: parts.length < 2 },

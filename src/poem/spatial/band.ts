@@ -4,11 +4,13 @@
  * becomes one long line crossing the page. A glyph whose parts lie side by
  * side unfolds into a band of its parts.
  */
+import { clamp } from '../../core/math'
 import { EM } from '../../glyph/font'
 import { PAGE } from '../../render/stage'
+import { gridReadable } from '../potential'
 import { contentGraphemes } from '../salience'
 import type { Mark, SpatialComposition, Unit } from '../types'
-import { allUnits, directions, centredLine, lineMarks, offCentre } from './common'
+import { allUnits, directions, centredLine, isWritten, lineMarks, offCentre } from './common'
 
 export const band: SpatialComposition = {
   id: 'band',
@@ -17,6 +19,7 @@ export const band: SpatialComposition = {
     '題の一部が反復するとき（ささやき・許許・コーヒーのー）、反復する単位はその場で増殖し、題は紙面を端から端まで渡る一本の帯になる',
     '帯は書き始めの側の縁に寄る。帯以外は白',
     '部品が一方向に並んで切れる字（川）は、部品が紙面を渡る帯としてほどける。題がその一字であるか、四つ以上の部品が縞をなすときに限る。元の題は小さく帯の始まりに残る',
+    '拍は等時的な単位である：題を等間隔の枡に一拍ずつ書けば、促音の位置は空いた枡として読める。枡は字ではなく拍なので、拗音（ちょ）は二字で一枡に入る',
   ],
 
   fit(a, m) {
@@ -26,6 +29,12 @@ export const band: SpatialComposition = {
         id: 'band',
         score: f.contiguous ? 0.85 : 0.7,
         grounds: [f.contiguous ? `「${f.value}」が直に続く → その場で増殖する帯` : `「${f.value}」が離れて反復する → 各所で伸びる帯`],
+      }
+    if (m.primary.op === 'absence' && f.kind === 'absence' && gridReadable(f))
+      return {
+        id: 'band',
+        score: 0.75,
+        grounds: [`促音は拍としての沈黙 → ${f.beats}拍の等間隔の列に、${f.silentMorae.length}枡の空き`],
       }
     if (m.primary.op === 'decomposition' && f.kind === 'parts' && f.arrangement !== 'mixed' && f.parts.length >= 3) {
       const single = contentGraphemes(a).length === 1
@@ -51,6 +60,26 @@ export const band: SpatialComposition = {
       const across = s * rng.range(1.2, 3.4)
       const start = vertical ? { x: PAGE - across, y: s / 2 } : { x: s / 2, y: across }
       return { marks: lineMarks(a, line, start, s * 0.96) }
+    }
+
+    if (f.kind === 'absence') {
+      // one square per beat, at a constant pitch: the silent mora keeps its place
+      const read = a.morae.filter((mo) => mo.kind !== 'unread')
+      const slots = read.map((mo) => units.filter((u) => mo.graphemes.includes(u.grapheme)))
+      const n = Math.max(1, slots.length)
+      const [, hi] = scale.range('body')
+      const s = Math.min(hi, (0.86 * PAGE) / n)
+      const start = (PAGE - n * s) / 2 + s / 2
+      // 造形: which line across the page the row of beats runs on
+      const across = clamp(offCentre(rng), 0.14 * PAGE, 0.86 * PAGE)
+      const marks = slots.flatMap((slot, i) => {
+        const written = slot.filter(isWritten)
+        if (!written.length) return []
+        const t = start + i * s
+        const centre = vertical ? { x: across, y: t } : { x: t, y: across }
+        return centredLine(a, written, centre, s / written.length)
+      })
+      return { marks }
     }
 
     if (f.kind === 'parts') {

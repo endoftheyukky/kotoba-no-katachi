@@ -23,6 +23,8 @@ export const transformation: PoeticOperation = {
     '題が書いていない字との関係も読む：題の一字の中に、計算機が読める部品が入っていることがある（在庫との関係）。ただし漢字が部品を含むこと自体はありふれているので、読みが 0.80 以上、残りが 10〜60% で、その 6 割以上がまとまった形（断片4つ以下）であることを条件とし、単画は内側の候補にしない',
     '関係の強さ ＝ 読みの強さを 0.5〜1 から 0〜1 へ。固有性は、題の字どうしなら高く（包含 0.9、類似 0.85）、在庫との関係なら低い（0.4）：題の中で二つの字が重なることはまれだが、一つの字が部品を含むことはありふれているから。題が自分で書いている関係が、外の部品との関係に先んじる。被覆 ＝ 関係する字が題の内容字に占める割合',
     '修飾として：紙面上のすべてのBは、Aを引かれた姿で書かれる（包含のみ）',
+    '濁点・半濁点を持つかなは、清音の字そのものに印が加わったものである（ぜ＝せ＋゛）：字自身の正準分解から読むので、外から部品を持ち込むのではない（intrinsic）。有声／無声という音韻の対が、そのまま字の差として見えている場合にあたる',
+    '濁音の関係の強さ 0.8。固有性は、清音も題に書かれていれば 0.8（清濁が並ぶ題はまれ）、書かれていなければ 0.55（濁点を持つ字自体はありふれている）',
   ],
 
   propose(a) {
@@ -35,6 +37,7 @@ export const transformation: PoeticOperation = {
       const distinctiveness = known ? (containment ? 0.9 : 0.85) : 0.4
       out.push({
         op: 'transformation',
+        level: 2,
         origin: known ? 'endogenous' : 'exogenous',
         focus: { kind: 'pair', relation: r },
         linguisticSalience: salience((r.score - 0.5) / 0.5, distinctiveness, involved / content.length),
@@ -57,6 +60,33 @@ export const transformation: PoeticOperation = {
               `「${r.outer}」から「${r.inner}」を引くと${(r.residue.share * 100).toFixed(0)}%が残る`,
             ]
           : [`計算機の読み：「${r.inner}」と「${r.outer}」は互いにほぼ重なる（${r.score.toFixed(2)}）`],
+      })
+    }
+    // 音（level 3）：濁点は、音韻の対がそのまま字の差になっている
+    for (const f of a.phonology) {
+      if (f.kind !== 'voicing') continue
+      const r = a.voicing.get(f.voiced)
+      if (!r) continue
+      const involved = content.filter((g) => g.char === f.voiced || g.char === f.base).length
+      const alsoWritten = f.alsoWritten.length > 0
+      out.push({
+        op: 'transformation',
+        level: 3,
+        // the unvoiced character is what this character itself decomposes
+        // into: intrinsic. When the title writes it too, the pair is also
+        // endogenous, and the evidence is stronger.
+        origin: alsoWritten ? 'endogenous' : 'intrinsic',
+        focus: { kind: 'pair', relation: r, voicing: { mark: f.mark, base: f.base, alsoWritten } },
+        linguisticSalience: salience(0.8, alsoWritten ? 0.8 : 0.55, involved / Math.max(1, content.length)),
+        roles: { primary: true, modifier: false },
+        relations: [`voicing「${f.base}」+「${f.mark}」=「${f.voiced}」${alsoWritten ? '（清音も題にある）' : ''}`],
+        evidence: [
+          `「${f.voiced}」は「${f.base}」に${f.mark === '゛' ? '濁点' : '半濁点'}が加わった字：有声／無声の対が、字の差として見えている`,
+          alsoWritten
+            ? `題は「${f.base}」も書いている：清音と濁音が同じ紙面に並ぶ`
+            : `清音「${f.base}」は題が書いていないが、「${f.voiced}」自身がその形を含んでいる`,
+          `計算機の読み：「${f.base}」のインクの${(r.overlap * 100).toFixed(0)}%が「${f.voiced}」に重なり、残りは${(r.residue.share * 100).toFixed(0)}%（印そのもの）`,
+        ],
       })
     }
     return out
