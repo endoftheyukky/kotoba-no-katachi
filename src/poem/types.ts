@@ -51,6 +51,28 @@ export interface Analysis extends LanguageAnalysis {
  */
 export type FeatureLevel = 1 | 2 | 3
 
+/**
+ * How much of the title a feature acts on.
+ *
+ *   whole  the feature is the whole title (a palindrome, a title that repeats
+ *          entirely, a word that is itself the title)
+ *   span   a contiguous part of it (the stem and ending of one word among
+ *          several, a compound's second character)
+ *   unit   one character, one beat, or a few scattered ones
+ *
+ * A local feature must not cost the title the rest of itself: what the
+ * feature does not act on is context, and context keeps its place in the
+ * order of the writing (poem/context.ts).
+ */
+export interface FeatureScope {
+  kind: 'whole' | 'span' | 'unit'
+  /** graphemes the feature acts on, in title order */
+  target: number[]
+  /** graphemes it does not act on, in title order */
+  context: number[]
+  grounds: string
+}
+
 // ---------------------------------------------------------------------------
 // three measures of a proposal
 
@@ -147,6 +169,8 @@ export type Focus =
 export interface Proposal {
   /** the level of language the feature was found at */
   level: FeatureLevel
+  /** how much of the title it acts on — filled in by the composer (poem/scope.ts) */
+  scope?: FeatureScope
   op: OperationId
   origin: FeatureOrigin
   focus: Focus
@@ -328,6 +352,8 @@ export interface Fitted {
 export interface Contract {
   occupancy: Occupancy
   fitted: Fitted
+  /** how the rest of the title was kept, where the feature is a local one */
+  context?: Decision[]
 }
 
 // ---------------------------------------------------------------------------
@@ -374,6 +400,11 @@ export interface Mark {
   shift?: Vec
   /** another glyph's ink removed from this one */
   minus?: Minus
+  /**
+   * The mark is not part of the figure but of the title around it: it is
+   * measured separately and never leaves the page. Renderers ignore this.
+   */
+  context?: boolean
 }
 
 export interface Draft {
@@ -395,6 +426,8 @@ export interface Composition {
   parameters: Parameter[]
   /** null where the composition does not yet work under the new contract */
   contract: Contract | null
+  /** graphemes the poem writes as space, so a missing character can be explained */
+  absent: number[]
   /** every proposal, ranked by salience */
   proposals: Proposal[]
   /** every space that could hold the material, ranked */

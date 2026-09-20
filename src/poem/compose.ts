@@ -27,6 +27,7 @@ import { decomposition } from './operations/decomposition'
 import { proliferation } from './operations/proliferation'
 import { transformation } from './operations/transformation'
 import { poeticPotential, visualPotential } from './potential'
+import { scopeOf } from './scope'
 import { decideScale } from './scale'
 import { axis } from './spatial/axis'
 import { band } from './spatial/band'
@@ -107,6 +108,7 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   const byId = new Map(OPERATIONS.map((op) => [op.id, op]))
   const proposals = OPERATIONS.flatMap((op) => op.propose(a))
   for (const p of proposals) {
+    p.scope = scopeOf(a, p.focus)
     p.visualPotential = visualPotential(a, p)
     p.poeticPotential = poeticPotential(p)
   }
@@ -190,6 +192,7 @@ export function compose(a: Analysis, force: Force = {}): Composition {
     scale,
     parameters: placed.parameters ?? [],
     contract: placed.contract ?? null,
+    absent: tokens.flat().filter((u) => u.absent).map((u) => u.grapheme),
     proposals,
     fits,
     rejected,

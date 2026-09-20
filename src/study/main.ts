@@ -12,7 +12,7 @@ import './study.css'
 import '../glyph/font-face'
 import type { Relation } from '../language/analysis'
 import { analyze, compose, MODIFIER_SALIENCE, OPERATIONS, SPACES } from '../poem/compose'
-import { measure, verdict } from '../poem/measure'
+import { measureAll, verdict } from '../poem/measure'
 import type { Analysis, Composition, Decision, Proposal } from '../poem/types'
 import { renderCanvas } from '../render/png'
 import { PAGE } from '../render/stage'
@@ -88,6 +88,10 @@ function proposalLine(p: Proposal, status: 'primary' | 'modifier' | 'offered', r
     el('div', 'parts', v ? `visual ${f2(v.value)} = legibility ${f2(v.legibility)} × structure ${f2(v.structure)}` : ''),
   )
   li.append(el('div', 'rel', p.relations.join('  ')))
+  if (p.scope)
+    li.append(
+      el('div', 'parts', `scope ${{ whole: '題全体', span: '連続した部分', unit: '局所' }[p.scope.kind]} — ${p.scope.grounds}`),
+    )
   if (status !== 'offered') {
     li.append(el('div', 'ev', p.evidence.join(' / ')))
     if (v?.notes.length) li.append(el('div', 'ev', v.notes.join(' / ')))
@@ -95,6 +99,42 @@ function proposalLine(p: Proposal, status: 'primary' | 'modifier' | 'offered', r
   if (p.roles.note) li.append(el('div', 'reason', `△ ${p.roles.note}`))
   if (reason) li.append(el('div', 'reason', `✕ ${reason}`))
   return li
+}
+
+/**
+ * Does the page still hold the title? Every character must be drawn, or be
+ * one the poem writes as space; and what is drawn must keep the order it was
+ * written in (repetition aside, which reorders by its nature).
+ */
+function completeness(a: Analysis, c: Composition): { missing: string[]; unexplained: string[]; ordered: boolean } {
+  const title = a.graphemes.filter((g) => g.char.trim())
+  const pool = c.draft.marks.map((k) => k.char)
+  const absent = new Set(c.absent)
+  const missing: string[] = []
+  const unexplained: string[] = []
+  for (const g of title) {
+    const i = pool.indexOf(g.char)
+    if (i >= 0) {
+      pool.splice(i, 1)
+      continue
+    }
+    missing.push(g.char)
+    if (!absent.has(g.index)) unexplained.push(g.char)
+  }
+  const along = (k: { x: number; y: number }) => (a.direction === 'vertical' ? k.y : k.x)
+  const once = title.filter((g) => title.filter((o) => o.char === g.char).length === 1)
+  const seen = once
+    .map((g) => {
+      const hits = c.draft.marks.filter((k) => k.char === g.char)
+      return hits.length === 1 ? { index: g.index, at: along(hits[0]), size: hits[0].size } : null
+    })
+    .filter((v): v is { index: number; at: number; size: number } => !!v)
+  // two marks at the same height along the reading carry their order across it
+  // (a horizontal axis under a vertical reading): only a clear reversal counts
+  const ordered =
+    c.primary.op === 'proliferation' ||
+    seen.every((v, i) => i === 0 || v.at >= seen[i - 1].at - Math.max(v.size, seen[i - 1].size) * 0.75)
+  return { missing, unexplained, ordered }
 }
 
 /** share of the page covered by ink, measured on a small rendering of the same marks */
@@ -219,11 +259,37 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
     )
   }
 
-  const mm = measure(c.draft.marks)
-  const v = verdict(mm, c.spatial.id)
+  if (c.contract?.context?.length) decisions('context — 題の残りをどう保つか', c.contract.context)
+
+  const mm = measureAll(c.draft.marks)
+  const v = verdict(mm.total, c.spatial.id)
+  const comp = completeness(a, c)
   box.append(el('h3', undefined, 'measured page'))
   box.append(
-    el('p', v.dead ? 'dead' : 'rel', `reach ${f2(mm.reach)} · area ${f2(mm.area)} · 最大字 ${f2(mm.maxEm)} · marks ${mm.count} — ${v.note}`),
+    el(
+      'p',
+      'rel',
+      `feature: reach ${f2(mm.feature.reach)} · 最大字 ${f2(mm.feature.maxEm)} · marks ${mm.feature.count}` +
+        (c.contract ? `（契約 reach ${f2(c.contract.occupancy.reach)} / fill ${f2(c.contract.occupancy.fill)}）` : ''),
+    ),
+  )
+  box.append(
+    el(
+      'p',
+      v.dead ? 'dead' : 'rel',
+      `total: reach ${f2(mm.total.reach)} · ink ${f2(mm.total.weight)} · marks ${mm.total.count}` +
+        (mm.context ? ` · うち文脈 ${mm.context.count}字（${f2(mm.context.maxEm)}）` : '') +
+        ` — ${v.note}`,
+    ),
+  )
+  box.append(
+    el(
+      'p',
+      comp.unexplained.length || !comp.ordered ? 'dead' : 'rel',
+      `文脈: ${comp.missing.length ? `欠落「${comp.missing.join('')}」` : '題の字はすべて紙面にある'}` +
+        (comp.unexplained.length ? ` — うち説明のつかない脱落「${comp.unexplained.join('')}」` : '') +
+        (comp.ordered ? ' · 読み順は保たれている' : ' · 読み順が壊れている'),
+    ),
   )
 
   box.append(el('h3', undefined, 'not adopted'))
@@ -252,6 +318,8 @@ async function main(): Promise<void> {
   const dead: string[] = []
   const reaches: number[] = []
   const descended: string[] = []
+  const lost: string[] = []
+  const disordered: string[] = []
   const byLevel = new Map<string, number>()
   const count = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1)
 
@@ -276,9 +344,13 @@ async function main(): Promise<void> {
     count(byLevel, `L${c.primary.level} ${{ 1: '語', 2: '字', 3: '音' }[c.primary.level]}`)
     if (c.primary.level === 3)
       descended.push(`${t.text}（${c.primary.relations[0]?.split(' ')[0] ?? c.primary.op}）`)
-    const mm = measure(c.draft.marks)
+    // the whole page, context included, is what a reader sees
+    const mm = measureAll(c.draft.marks).total
     reaches.push(mm.reach)
     if (verdict(mm, c.spatial.id).dead) dead.push(t.text)
+    const comp = completeness(a, c)
+    if (comp.unexplained.length) lost.push(`${t.text}「${comp.unexplained.join('')}」`)
+    if (!comp.ordered) disordered.push(t.text)
     const found = a.glyphRelations.filter((r) => r.origin === 'inventory')
     if (found.length) {
       inventory.candidates++
@@ -322,6 +394,13 @@ async function main(): Promise<void> {
       'p',
       'coverline',
       `level 3（音）へ降りた題: ${descended.length}/${titles.length}${descended.length ? ` — ${descended.join(' · ')}` : ''}`,
+    ),
+  )
+  summary.append(
+    el(
+      'p',
+      lost.length ? 'coverline dead' : 'coverline',
+      `説明のつかない脱落: ${lost.length}/${titles.length}${lost.length ? ` — ${lost.join(' · ')}` : ' — なし'} · 読み順が壊れた題: ${disordered.length}${disordered.length ? `（${disordered.join(' ')}）` : ''}`,
     ),
   )
   summary.append(

@@ -12,9 +12,10 @@
 import { clamp } from '../../core/math'
 import { EM } from '../../glyph/font'
 import { PAGE } from '../../render/stage'
+import { planContext, seatLine } from '../context'
 import { BANDS, fitSizes, jitter, midOf } from '../contract'
-import type { Fitted, Mark, SpatialComposition, Unit, Vec } from '../types'
-import { centredLine, isWritten, lineMarks, offCentre, placeRegion } from './common'
+import type { Decision, Fitted, Mark, SpatialComposition, Unit, Vec } from '../types'
+import { centredLine, directions, isWritten, lineMarks, offCentre, placeRegion, unitMarks } from './common'
 import { axisShape, closeness, poles, POLE_SCORE } from './axisParams'
 
 /** a pole without the erased characters at its ends (inside, they hold their place) */
@@ -41,6 +42,8 @@ export const axis: SpatialComposition = {
     '拍の重さが決めた大小の比は保たれる。紙面がそれを収めきれないときは、比を崩さずに全体を小さくし、それでも収まらなければ字を紙面の外へ出す',
     'この構成では、読める字を表現のために回さない（放射や流れのように、構成そのものが向きを持つ場合はその限りではない：これは二極に限った制約）',
     '距離・大小の比・揃え方・白の寄り・軸の向き・横ずれは、題の特徴から決まる（axisParams.ts）。一篇で中立から動くのは、最も強い二つだけ',
+    '題の一部だけが対象のとき、置かれなかった字は消えない：題の書字方向に、書かれた順のまま、一定の間隔で並ぶ（poem/context.ts）。対象が離れた席から引き出されているときは、その間隔が席の位置を保つ',
+    '文脈は主要素より明確に小さく、しかし読める大きさを下回らない。対象は紙面の外へ出てよいが、文脈は出ない',
   ],
 
   fit(a, m) {
@@ -71,6 +74,19 @@ export const axis: SpatialComposition = {
     const extentB = unitsB.length
 
     const marks: Mark[] = []
+    // where the figure writes each character of the title, for the seats
+    const placedAt: { grapheme: number; x: number; y: number; size: number }[] = []
+    const reading = directions(a)
+    const put = (us: Unit[], first: Vec, size: number) =>
+      us.forEach((u, j) => {
+        if (!isWritten(u)) return
+        placedAt.push({
+          grapheme: u.grapheme,
+          x: first.x + reading.along.x * j * size,
+          y: first.y + reading.along.y * j * size,
+          size,
+        })
+      })
     let fitted: Fitted
     let startAt: number
     let endAt: number
@@ -96,13 +112,18 @@ export const axis: SpatialComposition = {
       startAt = centre - span / 2
       endAt = centre + span / 2
       inkA = sa
-      marks.push(...centredLine(a, unitsA, at(startAt + sa / 2, lineA), sa))
+      const centreA = at(startAt + sa / 2, lineA)
+      const halfA = ((unitsA.length - 1) * sa) / 2
+      marks.push(...centredLine(a, unitsA, centreA, sa))
+      put(unitsA, { x: centreA.x - reading.along.x * halfA, y: centreA.y - reading.along.y * halfA }, sa)
       const outer = p.b[0]
       const r = m.primary.focus.kind === 'pair' ? m.primary.focus.relation : null
       const box = r?.residue.box ?? { x: -EM / 2, y: -EM / 2, w: EM, h: EM }
       const extent = (vertical ? box.h : box.w) * (S / EM)
       const g = placeRegion(box, S, at(Math.min(PAGE - extent / 2, endAt + extent / 2), lineB))
       marks.push({ char: outer.char, x: g.x, y: g.y, size: S, minus: outer.minus, keep: outer.minus?.keep })
+      // what is left of a character is still that character's place in the title
+      if (isWritten(outer)) placedAt.push({ grapheme: outer.grapheme, x: g.x, y: g.y, size: S })
     } else {
       // both poles are written: the sound decides their ratio, the page decides
       // how large that ratio can be drawn
@@ -121,14 +142,21 @@ export const axis: SpatialComposition = {
       endAt = centre + length / 2
       inkA = extentA * sa
       // pole A begins where the figure begins; pole B ends where it ends
-      marks.push(...lineMarks(a, unitsA, at(startAt + sa / 2, lineA), sa))
-      marks.push(...lineMarks(a, unitsB, at(endAt - extentB * sb + sb / 2, lineB), sb))
+      const firstA = at(startAt + sa / 2, lineA)
+      const firstB = at(endAt - extentB * sb + sb / 2, lineB)
+      marks.push(...lineMarks(a, unitsA, firstA, sa))
+      marks.push(...lineMarks(a, unitsB, firstB, sb))
+      put(unitsA, firstA, sa)
+      put(unitsB, firstB, sb)
     }
 
     // what lies between the poles, in the white they hold open
     const mid = at(startAt + inkA + gap / 2, (lineA + lineB) / 2)
+    // Only what the title does not write itself stands between the poles: the
+    // difference of two similar forms, or a component read inside a character.
+    // Characters of the title the poles do not carry are not squeezed in here
+    // — they keep their own place in the reading (below).
     const difference = p.middle.filter((u) => u.grapheme === -1)
-    const between = p.middle.filter((u) => u.grapheme !== -1 && isWritten(u))
     const body = (fitted.sizes[0] + fitted.sizes[1]) / 2
     if (difference.length) {
       // the difference of two similar forms is written at the size of the forms
@@ -140,13 +168,60 @@ export const axis: SpatialComposition = {
           ? Math.min(midOf('normal', PAGE), gap * 1.5)
           : Math.min(body, gap * 1.6)
       marks.push({ char: u.char, x: mid.x, y: mid.y, size: s, minus: u.minus, keep: u.minus?.keep })
-    } else if (between.length) {
-      const s =
-        p.kind === 'mirror'
-          ? Math.min(body, gap / Math.max(1, between.length))
-          : Math.min(jitter(rng, midOf('micro', PAGE)), gap / Math.max(1, between.length))
-      marks.push(...centredLine(a, between, mid, s))
     }
-    return { marks, parameters: shape.parameters, contract: { occupancy: occ, fitted } }
+
+    // the rest of the title, in the order it was written
+    const plan = placedAt.length
+      ? planContext(a, m, new Set(placedAt.map((k) => k.grapheme)), Math.min(...placedAt.map((k) => k.size)), PAGE)
+      : null
+    let context: Decision[] = []
+    if (plan) {
+      const alongOf = (k: { x: number; y: number }) => (reading.vertical ? k.y : k.x)
+      const crossOf = (k: { x: number; y: number }) => (reading.vertical ? k.x : k.y)
+      const seatOf = new Map(plan.seats.map((k) => [k.grapheme, k.index]))
+      const anchors = placedAt
+        .filter((k) => seatOf.has(k.grapheme))
+        .map((k) => ({ index: seatOf.get(k.grapheme)!, at: alongOf(k) }))
+      const first = placedAt[0]
+      const line = seatLine(anchors, plan.seats.length, first.size, plan.size, PAGE)
+      // 造形: the row runs beside the figure, on the side away from the far pole
+      const others = placedAt.filter((k) => Math.abs(crossOf(k) - crossOf(first)) > 1)
+      const side = others.length
+        ? Math.sign(crossOf(first) - crossOf(others[others.length - 1])) || 1
+        : crossOf(first) < PAGE / 2
+          ? 1
+          : -1
+      const rowCross = clamp(
+        crossOf(first) + side * (first.size / 2 + plan.size),
+        0.04 * PAGE + plan.size / 2,
+        0.96 * PAGE - plan.size / 2,
+      )
+      for (const { unit, seat } of plan.units) {
+        const t = line.origin + seat.index * line.pitch
+        const where = reading.vertical ? { x: rowCross, y: t } : { x: t, y: rowCross }
+        marks.push(...unitMarks(a, unit, where, plan.size).map((k) => ({ ...k, context: true })))
+      }
+      context = [
+        ...plan.decisions,
+        {
+          name: 'seat pitch',
+          ground: line.derived ? 'linguistic' : 'plastic',
+          value: (line.pitch / PAGE).toFixed(3),
+          note: line.derived
+            ? '対象が離れた席から引き出されている：間隔は、対象がそれぞれの席に重なるように決まる'
+            : '席の幅は、席を離れた字の幅にとる：空いた席が、何が抜けたかの大きさで読める',
+        },
+        {
+          name: 'row / axis',
+          ground: 'plastic',
+          value: reading.vertical === vertical ? '平行' : '直交',
+          note:
+            reading.vertical === vertical
+              ? '読みの線と軸が同じ向き：文脈は軸の脇に並ぶ'
+              : '読みの線が軸を横切る：配列と構造が二つの向きに分かれる',
+        },
+      ]
+    }
+    return { marks, parameters: shape.parameters, contract: { occupancy: occ, fitted, context } }
   },
 }

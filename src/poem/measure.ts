@@ -24,6 +24,28 @@ export interface Measurement {
   weight: number
 }
 
+/**
+ * The figure and the whole page are measured apart. The figure is what the
+ * occupancy contract was written for; the page is what a reader sees, and it
+ * includes the context — the rest of the title, which the contract does not
+ * pay for. Judgements about how the page reads use the total.
+ */
+export interface Measurements {
+  feature: Measurement
+  total: Measurement
+  context: Measurement | null
+}
+
+export function measureAll(marks: Mark[]): Measurements {
+  const feature = marks.filter((k) => !k.context)
+  const context = marks.filter((k) => k.context)
+  return {
+    feature: measure(feature.length ? feature : marks),
+    total: measure(marks),
+    context: context.length ? measure(context) : null,
+  }
+}
+
 export function measure(marks: Mark[]): Measurement {
   if (!marks.length) return { count: 0, reach: 0, area: 0, maxEm: 0, weight: 0 }
   let x0 = Infinity
