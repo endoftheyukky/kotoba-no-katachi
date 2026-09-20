@@ -39,6 +39,6 @@ export const field: SpatialComposition = {
     const { relationStrength, coverage } = m.primary.linguisticSalience
     const fill = clamp(0.3 + 0.65 * relationStrength * coverage, 0.3, 0.95)
     const used = Math.round(cells.length * fill)
-    return cells.slice(0, used).flatMap((at, k) => unitMarks(a, units[k % n], at, s * 0.96))
+    return { marks: cells.slice(0, used).flatMap((at, k) => unitMarks(a, units[k % n], at, s * 0.96)) }
   },
 }

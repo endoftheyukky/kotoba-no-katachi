@@ -179,13 +179,37 @@ export interface Fit {
   grounds: string[]
 }
 
+/**
+ * A parameter of a composition, with where its value came from.
+ *   linguistic  derived from a relation in the title
+ *   plastic     a decision of form, derived from measurement but not from language
+ * Parameters that are not among the strongest few are returned to neutral, so
+ * that one page shows one or two differences, not all of them at once.
+ */
+export interface Parameter {
+  name: string
+  ground: 'linguistic' | 'plastic'
+  value: string
+  neutral: string
+  applied: boolean
+  /** 0–1: how far this feature pushes the parameter from neutral */
+  deviation: number
+  note: string
+}
+
+export interface Placed {
+  marks: Mark[]
+  /** what the composition decided, and why (for study; never drawn) */
+  parameters?: Parameter[]
+}
+
 export interface SpatialComposition {
   id: SpatialId
   title: string
   rules: readonly string[]
   /** null when this space cannot hold this material */
   fit(a: Analysis, m: Material): Fit | null
-  realize(a: Analysis, m: Material, rng: Rng, scale: Scale): Mark[]
+  realize(a: Analysis, m: Material, rng: Rng, scale: Scale): Placed
 }
 
 // ---------------------------------------------------------------------------
@@ -250,6 +274,7 @@ export interface Composition {
   modifiers: Proposal[]
   spatial: Fit
   scale: Scale
+  parameters: Parameter[]
   /** every proposal, ranked by salience */
   proposals: Proposal[]
   /** every space that could hold the material, ranked */

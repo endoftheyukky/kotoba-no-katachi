@@ -57,6 +57,6 @@ export const scattered: SpatialComposition = {
       const s = Math.min(scale.pick('body', rng, [0, 0.5]), (0.7 * PAGE) / g.length)
       marks.push(...centredLine(a, g, inside(a, jittered, g.length * s, s), s))
     }
-    return marks
+    return { marks }
   },
 }

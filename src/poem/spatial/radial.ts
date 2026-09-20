@@ -31,7 +31,7 @@ export const radial: SpatialComposition = {
 
   realize(a, m, rng, scale) {
     const f = m.primary.focus
-    if (f.kind !== 'parts') return []
+    if (f.kind !== 'parts') return { marks: [] }
     const units = allUnits(m)
     const { along } = directions(a)
     const hub = { x: offCentre(rng, 0.25, 0.4), y: offCentre(rng, 0.25, 0.4) }
@@ -54,6 +54,6 @@ export const radial: SpatialComposition = {
       const target = { x: inside(focus.x + Math.cos(angle) * r), y: inside(focus.y + Math.sin(angle) * r) }
       return { char, x: target.x - c.x * k, y: target.y - c.y * k, size: S, keep: p.keep }
     })
-    return rays.concat(word)
+    return { marks: rays.concat(word) }
   },
 }

@@ -148,7 +148,19 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   const spatial = (force.space && fits.find((f) => f.id === force.space)) || fits[Math.min(spaceRank, fits.length - 1)]
   const space = SPACES.find((s) => s.id === spatial.id)!
   const scale = decideScale(a, material, spatial.id)
-  const marks = space.realize(a, material, new Rng(seed).fork(spatial.id), scale)
+  const placed = space.realize(a, material, new Rng(seed).fork(spatial.id), scale)
 
-  return { input: a.input, seed, primary, modifiers, spatial, scale, proposals, fits, rejected, draft: { marks } }
+  return {
+    input: a.input,
+    seed,
+    primary,
+    modifiers,
+    spatial,
+    scale,
+    parameters: placed.parameters ?? [],
+    proposals,
+    fits,
+    rejected,
+    draft: { marks: placed.marks },
+  }
 }

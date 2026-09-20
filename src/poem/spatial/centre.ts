@@ -88,6 +88,6 @@ export const centre: SpatialComposition = {
       ? { x: edgeX, y: edgeY > PAGE / 2 ? edgeY - (n - 1) * s : edgeY }
       : { x: edgeX > PAGE / 2 ? edgeX - (n - 1) * s : edgeX, y: edgeY }
     marks.push(...lineMarks(a, r.periphery, start, s))
-    return marks
+    return { marks }
   },
 }

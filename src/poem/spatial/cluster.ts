@@ -75,6 +75,6 @@ export const cluster: SpatialComposition = {
         })
       })
     }
-    return marks
+    return { marks }
   },
 }

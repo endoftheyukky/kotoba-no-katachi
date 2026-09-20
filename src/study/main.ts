@@ -159,6 +159,22 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
   })
   box.append(fits)
 
+  if (c.parameters.length) {
+    box.append(el('h3', undefined, 'composition parameters (言語的 / 造形的)'))
+    const ul = el('ul', 'params')
+    for (const p of [...c.parameters].sort((x, y) => Number(y.applied) - Number(x.applied) || y.deviation - x.deviation)) {
+      const li = el('li', p.applied ? 'applied' : 'neutralised')
+      li.append(
+        el('span', 'op', p.name),
+        el('span', 'ground', p.ground === 'linguistic' ? '言語' : '造形'),
+        el('span', 'sal', p.applied ? p.value : `${p.neutral}（中立に戻す・偏差 ${f2(p.deviation)}）`),
+        el('div', 'rel', p.note),
+      )
+      ul.append(li)
+    }
+    box.append(ul)
+  }
+
   box.append(el('h3', undefined, 'not adopted'))
   const rest = el('ul', 'ops')
   for (const r of c.rejected) rest.append(proposalLine(r.proposal, 'offered', r.reason))

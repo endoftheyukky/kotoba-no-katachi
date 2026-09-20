@@ -262,3 +262,25 @@ main.grid .caption {
   font-size: 10px;
   color: var(--mute);
 }
+
+.params {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.params > li {
+  margin-bottom: 3px;
+}
+
+.params .ground {
+  margin-left: 8px;
+  padding: 0 4px;
+  border: 1px solid var(--rule);
+  font-size: 10px;
+}
+
+.params .neutralised,
+.params .neutralised .op {
+  color: var(--mute);
+  font-weight: normal;
+}

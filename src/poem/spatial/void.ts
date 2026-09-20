@@ -52,6 +52,6 @@ export const voidSpace: SpatialComposition = {
       marks.push(...lineMarks(a, r.units, vertical ? { x: line, y: t } : { x: t, y: line }, s))
       t += r.units.length * s
     }
-    return marks
+    return { marks }
   },
 }

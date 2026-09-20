@@ -50,7 +50,7 @@ export const band: SpatialComposition = {
       const s = PAGE / line.length
       const across = s * rng.range(1.2, 3.4)
       const start = vertical ? { x: PAGE - across, y: s / 2 } : { x: s / 2, y: across }
-      return lineMarks(a, line, start, s * 0.96)
+      return { marks: lineMarks(a, line, start, s * 0.96) }
     }
 
     if (f.kind === 'parts') {
@@ -72,8 +72,8 @@ export const band: SpatialComposition = {
       const at = byX
         ? { x: vertical ? PAGE - s * 1.5 : s * 1.5, y: line + (line < PAGE / 2 ? 1 : -1) * S * 0.45 }
         : { x: line + (line < PAGE / 2 ? 1 : -1) * S * 0.45, y: s * 1.5 }
-      return marks.concat(vertical ? lineMarks(a, units, at, s) : centredLine(a, units, at, s))
+      return { marks: marks.concat(vertical ? lineMarks(a, units, at, s) : centredLine(a, units, at, s)) }
     }
-    return []
+    return { marks: [] }
   },
 }
