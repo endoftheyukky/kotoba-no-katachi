@@ -65,6 +65,8 @@ function relationLabel(a: Analysis, r: Relation): string {
       return `separation ${t(r.left)} ␣ ${t(r.right)}`
     case 'imperative':
       return `imperative「${t(r.token)}」`
+    case 'inflection':
+      return `inflection「${t(r.token)}」語幹|活用語尾`
   }
 }
 

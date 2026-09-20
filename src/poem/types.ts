@@ -101,6 +101,8 @@ export type Focus =
   | { kind: 'pair'; relation: GlyphRelation }
   /** graphemes that are written as space */
   | { kind: 'absence'; graphemes: number[]; negation: boolean; silence: boolean }
+  /** a joint inside a word: the kanji stem and the kana ending it carries */
+  | { kind: 'joint'; token: number; at: number }
 
 export interface Proposal {
   op: OperationId

@@ -15,7 +15,7 @@ interface Poles {
   a: Unit[]
   b: Unit[]
   middle: Unit[]
-  kind: 'containment' | 'similarity' | 'coordination' | 'mirror' | 'dependency' | 'imperative'
+  kind: 'containment' | 'similarity' | 'coordination' | 'mirror' | 'dependency' | 'imperative' | 'inflection'
   ground: string
 }
 
@@ -58,6 +58,20 @@ function poles(an: Analysis, m: Material): Poles | null {
     return null
   }
 
+  if (f.kind === 'joint') {
+    const t = an.tokens[f.token]
+    const stem = units.filter((u) => u.grapheme >= t.start && u.grapheme < f.at)
+    const ending = units.filter((u) => u.grapheme >= f.at && u.grapheme < t.end)
+    if (stem.length && ending.length)
+      return {
+        a: stem,
+        b: ending,
+        middle: rest(stem, ending),
+        kind: 'inflection',
+        ground: `「${t.surface}」は語幹と活用語尾でできている → 語の継ぎ目を二極に`,
+      }
+  }
+
   const members = coordinated(an)
   if (members.length === 2) {
     const [l, r] = members
@@ -92,6 +106,7 @@ function poles(an: Analysis, m: Material): Poles | null {
 }
 
 const SCORE: Record<Poles['kind'], number> = {
+  inflection: 0.7,
   containment: 0.9,
   similarity: 0.85,
   coordination: 0.85,
@@ -104,7 +119,7 @@ export const axis: SpatialComposition = {
   id: 'axis',
   title: '二極',
   rules: [
-    '二項の関係（A または B、A と B、AがB、AをB、鏡像、よく似た二つの字形）は、一本の軸の両端に引き離される',
+    '二項の関係（A または B、A と B、AがB、AをB、鏡像、よく似た二つの字形、語幹と活用語尾）は、一本の軸の両端に引き離される',
     '二極の間の長い白が、その関係である。関係語は極の間に小さく置かれるか、欠落として白になる',
     '包含の二極では、取り出された字は小さく、残りは大きい。類似の二極は同じ大きさで、二つを分ける小さな差だけが間に置かれる',
     '題の外の部品との関係では、一方の極に元の字をそのまま、もう一方にその字から部品を引いた残りを置き、間に見つかった部品を小さく置く：読み手が三者を一枚で辿れるようにする',

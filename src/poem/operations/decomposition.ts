@@ -56,10 +56,29 @@ export const decomposition: PoeticOperation = {
     '主操作になれるのは、どの部品もインクの8%以上を持ち、部品が文字として読める度合いが0.4以上のときだけ（部品が「木」「口」のような字に読めるか、計算機が固定フォントの字形と照らして判定する）',
     '読みがあるとき、一字をその字が担う拍の数だけ切る。この切り方はインクを横切るので、修飾として字をその場でわずかに開くことにだけ使う',
     '言語的な顕著さ：関係の強さ ＝ 継ぎ目の開き・部品の数・インクの島の数。固有性は低い（0.15）：どの字も切れるから。題の中の他の字と字形の関係を持つ字だけ＋0.5。被覆 ＝ その字が内容字に占める割合',
+    '分けられるのは字だけではない：漢字の語幹とかなの活用語尾で書かれた語（触|る、美し|い、走|れ）は、語そのものが継ぎ目を持つ。字を割らずに語を割る',
+    '語の継ぎ目：関係の強さ 0.7（送り仮名は書き方の上ではっきり見えている）、固有性 0.35（活用語はありふれている）、被覆 ＝ その語が内容字に占める割合',
   ],
 
   propose(a) {
     const content = contentGraphemes(a)
+    const joints: Proposal[] = a.relations.flatMap((r) => {
+      if (r.kind !== 'inflection') return []
+      const t = a.tokens[r.token]
+      const covered = content.filter((g) => g.index >= t.start && g.index < t.end).length
+      return [
+        {
+          op: 'decomposition' as const,
+          // the joint is in the word itself, as it is written
+          origin: 'endogenous' as const,
+          focus: { kind: 'joint' as const, token: r.token, at: r.at },
+          linguisticSalience: salience(0.7, 0.35, covered / Math.max(1, content.length)),
+          roles: { primary: true, modifier: false },
+          relations: [`inflection「${t.surface}」語幹「${t.surface.slice(0, r.at - t.start)}」|語尾「${t.surface.slice(r.at - t.start)}」`],
+          evidence: [`「${t.surface}」は漢字の語幹とかなの活用語尾で書かれている`],
+        },
+      ]
+    })
     const related = new Set(
       a.glyphRelations.filter((r) => r.score >= RELATION_THRESHOLD).flatMap((r) => [r.inner, r.outer]),
     )
@@ -109,8 +128,8 @@ export const decomposition: PoeticOperation = {
         ],
       })
     }
-    // one proposal per character: the most prominent two
-    return out.sort((x, y) => y.linguisticSalience.value - x.linguisticSalience.value).slice(0, 2)
+    // one proposal per character: the most prominent two, plus any word joints
+    return [...joints, ...out.sort((x, y) => y.linguisticSalience.value - x.linguisticSalience.value).slice(0, 2)]
   },
 
   apply(a, p, tokens) {

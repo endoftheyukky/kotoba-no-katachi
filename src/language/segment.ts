@@ -114,6 +114,7 @@ export const ruleSegmenter: Segmenter = {
         last.surface = text(last.start, last.end)
         last.pos = pos
         last.form = form
+        last.stem = r.start // where the kanji stem ends and the ending begins
         return
       }
       const { pos, form } = okuriganaPos(rest)

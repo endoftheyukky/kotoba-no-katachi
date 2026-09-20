@@ -71,6 +71,11 @@ export interface Token {
   pos: PartOfSpeech
   /** conjugated form, when the segmenter can tell */
   form?: 'imperative' | 'plain'
+  /**
+   * grapheme index where the kana ending begins, when the word is written
+   * with a kanji stem and okurigana (触|る, 美し|い, 走|れ)
+   */
+  stem?: number
   /** hiragana reading, when known */
   reading?: string
 }

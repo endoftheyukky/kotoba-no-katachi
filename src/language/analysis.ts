@@ -32,6 +32,8 @@ export type Relation =
   | { kind: 'separation'; left: number; right: number }
   /** a command: 走れ, さがせ */
   | { kind: 'imperative'; token: number }
+  /** a word written as a kanji stem and a kana ending: 触|る, 美し|い, 走|れ */
+  | { kind: 'inflection'; token: number; at: number }
 
 export interface LanguageAnalysis {
   input: TitleInput
@@ -108,6 +110,7 @@ export function analyzeLanguage(input: TitleInput, segmenter: Segmenter = ruleSe
   relations.push(...reduplications(graphemes), ...mirror(graphemes))
   tokens.forEach((t, i) => {
     if (t.form === 'imperative') relations.push({ kind: 'imperative', token: i })
+    if (t.stem !== undefined && t.stem > t.start) relations.push({ kind: 'inflection', token: i, at: t.stem })
     const kana = toHiragana(t.surface)
     const ending = NEGATION_ENDINGS.find((e) => kana.endsWith(e))
     if (ending) relations.push({ kind: 'negation', token: i, graphemes: range(t.end - ending.length, t.end) })

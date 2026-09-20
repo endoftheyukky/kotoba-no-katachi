@@ -67,6 +67,9 @@ export function visualPotential(a: Analysis, p: Proposal): VisualPotential {
         `引いた残りのうち${(r.residue.substance * 100).toFixed(0)}%が形を持つ（残りは削りかす）`,
       ])
     }
+    case 'joint':
+      // both sides stay written as they are; the joint shows as two poles
+      return potential(1, 0.75, ['語幹と活用語尾は、どちらも字のまま二極に置ける'])
     case 'absence': {
       // a gap is seen as a missing character only where written characters hold it on both sides
       const g = f.graphemes
