@@ -260,13 +260,41 @@ export interface PoeticOperation {
 // ---------------------------------------------------------------------------
 // space
 
-export type SpatialId = 'field' | 'band' | 'radial' | 'axis' | 'centre' | 'void' | 'scattered' | 'cluster'
+export type SpatialId = 'field' | 'band' | 'radial' | 'axis' | 'centre' | 'void' | 'scattered' | 'cluster' | 'nest'
 
 export interface Fit {
   id: SpatialId
   /** 0–1: how strongly the title's relations call for this space */
   score: number
   grounds: string[]
+}
+
+/**
+ * One way a composition could hold this material. A composition offers as
+ * many as it has: a feature and a page are not in one-to-one correspondence,
+ * and a repetition may become a band, a field, a grid or a path.
+ *
+ *   uses        which measured properties of the feature this way takes hold
+ *               of — named, so that two offers can be compared by what they
+ *               actually read rather than by an opinion of the composition
+ *   fitness     how far those properties meet what this way needs
+ *   realisable  whether the page can hold it at a readable size: a hard gate,
+ *               decided by the composition, which is the only thing that
+ *               knows its own geometry
+ *   demand      what it will ask of the page, before anything is drawn
+ *
+ * The worth of the feature itself (poeticPotential) is settled in the
+ * descent and is never re-judged here.
+ */
+export interface Realization {
+  id: SpatialId
+  /** which way of this composition: 'line' | 'nested' | '1xN' | … */
+  mode: string
+  uses: { property: string; value: string }[]
+  grounds: string[]
+  fitness: number
+  realisable: boolean
+  demand: { reach: number; spread: Spread; minSize: number; cells?: number; depth?: number }
 }
 
 /**
@@ -306,6 +334,10 @@ export interface SpatialComposition {
    * traceable cannot afford to lose one over the edge.
    */
   bleed?: boolean
+  /** which foci it can hold at all (for study; the offers decide the rest) */
+  accepts?: readonly Focus['kind'][]
+  /** every way it could hold this material. Compositions that have only one way keep `fit`. */
+  offer?(a: Analysis, m: Material): Realization[]
   /** null when this space cannot hold this material */
   fit(a: Analysis, m: Material): Fit | null
   realize(a: Analysis, m: Material, rng: Rng, scale: Scale): Placed
@@ -445,7 +477,7 @@ export interface Composition {
   seed: number
   primary: Proposal
   modifiers: Proposal[]
-  spatial: Fit
+  spatial: Realization
   scale: Scale
   parameters: Parameter[]
   /** null where the composition does not yet work under the new contract */
@@ -463,8 +495,8 @@ export interface Composition {
   descent: { layer: number; reason: string; adopted: number; upper: number; deepest: number; held: string[] }
   /** every proposal, ranked by salience */
   proposals: Proposal[]
-  /** every space that could hold the material, ranked */
-  fits: Fit[]
+  /** every way a space could hold the material, ranked */
+  fits: Realization[]
   rejected: Rejection[]
   draft: Draft
 }

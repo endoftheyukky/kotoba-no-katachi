@@ -24,7 +24,8 @@
 import { clamp } from '../core/math'
 import { BANDS } from './contract'
 import { seatsOf } from './scope'
-import type { Analysis, Decision, Material, ScaleBand, Unit } from './types'
+import { directions, unitMarks } from './spatial/common'
+import type { Analysis, Decision, Mark, Material, ScaleBand, Unit } from './types'
 
 /** the smallest a character may be written and still be read at ordinary size */
 export const MIN_READABLE = 0.055
@@ -145,4 +146,77 @@ export function seatLine(
   }
   const origin = clamp(anchor.at - anchor.index * pitch, lo, Math.max(lo, hi - extent))
   return { origin, pitch, derived: false }
+}
+
+/**
+ * Lay the rest of the title on the line of the reading, beside the figure.
+ *
+ * `placed` says where the composition has written each character it took;
+ * everything else in the material that is not written as space is put back in
+ * the order it was written, at a constant pitch, on a row that runs beside
+ * the figure. Extracted from the axis so that any composition can keep the
+ * title whole: the figure decides where its own marks go, and this decides
+ * where the rest of the reading goes.
+ */
+export function layContext(
+  a: Analysis,
+  m: Material,
+  placed: { grapheme: number; x: number; y: number; size: number }[],
+  page: number,
+  /** for the note only: whether the figure itself runs along the reading */
+  figureVertical?: boolean,
+): { marks: Mark[]; decisions: Decision[] } | null {
+  if (!placed.length) return null
+  const reading = directions(a)
+  const plan = planContext(a, m, new Set(placed.map((k) => k.grapheme)), Math.min(...placed.map((k) => k.size)), page)
+  if (!plan) return null
+
+  const alongOf = (k: { x: number; y: number }) => (reading.vertical ? k.y : k.x)
+  const crossOf = (k: { x: number; y: number }) => (reading.vertical ? k.x : k.y)
+  const seatOf = new Map(plan.seats.map((k) => [k.grapheme, k.index]))
+  const anchors = placed
+    .filter((k) => seatOf.has(k.grapheme))
+    .map((k) => ({ index: seatOf.get(k.grapheme)!, at: alongOf(k) }))
+  const first = placed[0]
+  const line = seatLine(anchors, plan.seats.length, first.size, plan.size, page)
+  // 造形: the row runs beside the figure, on the side away from its far end
+  const others = placed.filter((k) => Math.abs(crossOf(k) - crossOf(first)) > 1)
+  const side = others.length
+    ? Math.sign(crossOf(first) - crossOf(others[others.length - 1])) || 1
+    : crossOf(first) < page / 2
+      ? 1
+      : -1
+  const rowCross = clamp(
+    crossOf(first) + side * (first.size / 2 + plan.size),
+    0.04 * page + plan.size / 2,
+    0.96 * page - plan.size / 2,
+  )
+  const marks: Mark[] = []
+  for (const { unit, seat } of plan.units) {
+    const t = line.origin + seat.index * line.pitch
+    const where = reading.vertical ? { x: rowCross, y: t } : { x: t, y: rowCross }
+    marks.push(...unitMarks(a, unit, where, plan.size).map((k) => ({ ...k, context: true })))
+  }
+  const decisions: Decision[] = [
+    ...plan.decisions,
+    {
+      name: 'seat pitch',
+      ground: line.derived ? 'linguistic' : 'plastic',
+      value: (line.pitch / page).toFixed(3),
+      note: line.derived
+        ? '対象が離れた席から引き出されている：間隔は、対象がそれぞれの席に重なるように決まる'
+        : '席の幅は、席を離れた字の幅にとる：空いた席が、何が抜けたかの大きさで読める',
+    },
+  ]
+  if (figureVertical !== undefined)
+    decisions.push({
+      name: 'row / figure',
+      ground: 'plastic',
+      value: reading.vertical === figureVertical ? '平行' : '直交',
+      note:
+        reading.vertical === figureVertical
+          ? '読みの線と図形が同じ向き：文脈は図形の脇に並ぶ'
+          : '読みの線が図形を横切る：配列と構造が二つの向きに分かれる',
+    })
+  return { marks, decisions }
 }

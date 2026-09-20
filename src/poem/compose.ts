@@ -35,25 +35,26 @@ import { band } from './spatial/band'
 import { centre } from './spatial/centre'
 import { cluster } from './spatial/cluster'
 import { field } from './spatial/field'
+import { nest } from './spatial/nest'
 import { radial } from './spatial/radial'
 import { scattered } from './spatial/scattered'
 import { voidSpace } from './spatial/void'
 import type {
   Analysis,
   Composition,
-  Fit,
   Material,
   OperationId,
   PoeticOperation,
   Proposal,
   Rejection,
+  Realization,
   SpatialComposition,
   SpatialId,
   Unit,
 } from './types'
 
 export const OPERATIONS: readonly PoeticOperation[] = [proliferation, decomposition, transformation, absence]
-export const SPACES: readonly SpatialComposition[] = [field, band, radial, axis, centre, voidSpace, scattered, cluster]
+export const SPACES: readonly SpatialComposition[] = [field, band, radial, axis, centre, nest, voidSpace, scattered, cluster]
 
 /** a modifier must be at least this salient to enter the poem */
 export const MODIFIER_SALIENCE = 0.4
@@ -75,6 +76,15 @@ export const DESCENT_FLOOR = 0.32
 export const SETTLED = 0.6
 export const DECISIVE = 1.5
 const MATERIAL = new Set<OperationId>(['decomposition', 'transformation'])
+/**
+ * Two ways of holding the material are near-equals within this; only then
+ * does it matter which of them reads more of the feature. (v1 heuristic.)
+ */
+const FITNESS_EPS = 0.05
+/** properties every composition needs anyway: they say nothing particular */
+const GENERIC = new Set(['count', 'order'])
+const specificity = (r: Realization) =>
+  Math.min(1, r.uses.filter((u) => !GENERIC.has(u.property)).length / 3)
 
 export async function analyze(input: TitleInput, segmenter?: Segmenter): Promise<Analysis> {
   const language = analyzeLanguage(input, segmenter)
@@ -232,9 +242,31 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   }
 
   const material: Material = { tokens, primary, modifiers }
-  const fits = SPACES.map((s) => s.fit(a, material))
-    .filter((f): f is Fit => !!f)
-    .sort((x, y) => y.score - x.score)
+  // Every way each composition could hold this material, not just its best.
+  // A composition that has only one way keeps `fit`, wrapped here.
+  const offers = SPACES.flatMap((s) => {
+    if (s.offer) return s.offer(a, material)
+    const f = s.fit(a, material)
+    return f
+      ? [
+          {
+            id: f.id,
+            mode: 'default',
+            uses: [],
+            grounds: f.grounds,
+            fitness: f.score,
+            realisable: true,
+            demand: { reach: 0.8, spread: 'mass' as const, minSize: 0 },
+          },
+        ]
+      : []
+  })
+  // A hard gate first: a way the page cannot hold at a readable size is not a
+  // way. Then fitness alone; specificity only separates near-equals, and is
+  // capped so that naming more properties cannot by itself win.
+  const fits = offers
+    .filter((o) => o.realisable)
+    .sort((x, y) => (Math.abs(y.fitness - x.fitness) > FITNESS_EPS ? y.fitness - x.fitness : specificity(y) - specificity(x)))
   const spatial = (force.space && fits.find((f) => f.id === force.space)) || fits[Math.min(spaceRank, fits.length - 1)]
   const space = SPACES.find((s) => s.id === spatial.id)!
   const scale = decideScale(a, material, spatial.id)

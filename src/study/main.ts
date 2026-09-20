@@ -224,7 +224,13 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
   const fits = el('ol', 'fits')
   c.fits.forEach((f) => {
     const li = el('li', f === c.spatial ? 'primary' : 'offered')
-    li.append(el('span', 'op', spaceTitle(f.id)), el('span', 'sal', f2(f.score)), el('span', 'rel', f.grounds.join(' / ')))
+    li.append(
+      el('span', 'op', spaceTitle(f.id)),
+      el('span', 'ground', f.mode),
+      el('span', 'sal', f2(f.fitness)),
+      el('span', 'rel', f.grounds.join(' / ')),
+    )
+    if (f.uses.length) li.append(el('div', 'parts', f.uses.map((u) => `${u.property} ${u.value}`).join(' · ')))
     fits.append(li)
   })
   box.append(fits)

@@ -66,7 +66,7 @@ function report(a: Analysis, c: Composition): void {
     console.groupEnd()
   }
   const space = SPACES.find((s) => s.id === c.spatial.id)!
-  console.group(`${space.title}（紙面構成） ${c.spatial.score.toFixed(2)} / scale ${c.scale.regime}: ${c.scale.grounds}`)
+  console.group(`${space.title}（紙面構成・${c.spatial.mode}） ${c.spatial.fitness.toFixed(2)} / scale ${c.scale.regime}: ${c.scale.grounds}`)
   c.spatial.grounds.forEach((g) => console.log('根拠:', g))
   space.rules.forEach((r) => console.log('規則:', r))
   console.groupEnd()
