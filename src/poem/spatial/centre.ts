@@ -18,6 +18,9 @@ interface Roles {
 function roles(a: Analysis, m: Material): Roles | null {
   const units = allUnits(m)
   const f = m.primary.focus
+  // a component the title never writes needs the character it was found in on
+  // the same page: that is the axis's business, not this one
+  if (f.kind === 'pair' && m.primary.origin === 'exogenous') return null
   if (f.kind === 'pair' && f.relation.kind === 'containment' && coordinated(a).length !== 2) {
     const r = f.relation
     const outer = units.find((u) => u.char === r.outer)

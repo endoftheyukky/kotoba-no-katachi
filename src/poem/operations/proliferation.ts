@@ -28,6 +28,7 @@ export const proliferation: PoeticOperation = {
       const whole = covered >= n
       out.push({
         op: 'proliferation',
+        origin: 'endogenous',
         focus: { kind: 'repetition', value: r.value, occurrences: r.occurrences, contiguous: true, whole },
         linguisticSalience: salience(whole ? 1 : 0.85, 0.9, covered / n),
         roles: { primary: true, modifier: false },
@@ -47,6 +48,7 @@ export const proliferation: PoeticOperation = {
       const d = (1 - chanceOfRepeat(a.graphemes.length, g.script)) * (functional ? 0.35 : 1)
       out.push({
         op: 'proliferation',
+        origin: 'endogenous',
         focus: { kind: 'repetition', value: g.char, occurrences: r.members.map((i) => [i]), contiguous: false, whole: false },
         roles: { primary: true, modifier: false },
         linguisticSalience: salience(Math.min(1, 0.4 + 0.3 * (k - 1)), d, (functional ? k : r.members.length) / (functional ? a.graphemes.length : n)),
@@ -57,6 +59,7 @@ export const proliferation: PoeticOperation = {
 
     out.push({
       op: 'proliferation',
+      origin: 'endogenous',
       focus: { kind: 'plain' },
       linguisticSalience: salience(0.25, 0.05, 1),
       roles: { primary: true, modifier: false },

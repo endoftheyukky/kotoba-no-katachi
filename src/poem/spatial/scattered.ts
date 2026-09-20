@@ -20,9 +20,12 @@ export const scattered: SpatialComposition = {
     '空白で隔てられた語、三つ以上並列された語は、互いに依存しない：一語ずつ紙面の別々の場所に置かれる',
     '語どうしは一行を共有しない。置き場所は紙面の中央を避け、互いにできるだけ離れる',
     '語の大きさは互いに異なってよい（造形）',
+    '散在は語どうしの置き方しか示せない：字形の関係や字の部品が主操作のときは、それを表せないので使わない',
   ],
 
   fit(a, m) {
+    // this space shows nothing of a glyph relation or of a glyph's parts
+    if (m.primary.focus.kind === 'pair' || m.primary.focus.kind === 'parts') return null
     const groups = independentGroups(a, m.tokens)
     if (groups.length < 2) return null
     if (relationsOf(a, 'separation').length) return { id: 'scattered', score: 0.85, grounds: ['語が空白で隔てられている → 散在'] }

@@ -5,6 +5,7 @@
  * It is a reading of shapes, not a fact about the characters.
  */
 import type { Rect } from '../render/stage'
+import { STROKES } from './legibility'
 import type { GlyphMetrics } from './metrics'
 
 /**
@@ -22,6 +23,12 @@ const SIMILAR_RESIDUE = 0.15
 
 export interface GlyphRelation {
   kind: GlyphRelationKind
+  /**
+   * title: both glyphs are written in the title.
+   * inventory: the inner glyph is not in the title — the computer found it
+   * inside one of the title's characters, among the components it can read.
+   */
+  origin: 'title' | 'inventory'
   /** containment: the glyph inside. similarity: the first of the pair */
   inner: string
   /** containment: the glyph that holds it. similarity: the second of the pair */
@@ -74,10 +81,14 @@ function sample(m: GlyphMetrics, x: number, y: number): boolean {
   return i >= 0 && j >= 0 && i < w && j < h && data[j * w + i] > 127
 }
 
+const grids = new WeakMap<GlyphMetrics, Uint8Array>()
 function grid(m: GlyphMetrics): Uint8Array {
+  const had = grids.get(m)
+  if (had) return had
   const g = new Uint8Array(N * N)
   for (let j = 0; j < N; j++)
     for (let i = 0; i < N; i++) g[j * N + i] = sample(m, -R + (i + 0.5) * CELL, -R + (j + 0.5) * CELL) ? 1 : 0
+  grids.set(m, g)
   return g
 }
 
@@ -176,7 +187,7 @@ export function relate(
   inner: GlyphMetrics,
   outerChar: string,
   outer: GlyphMetrics,
-): Omit<GlyphRelation, 'kind' | 'score'> {
+): Omit<GlyphRelation, 'kind' | 'score' | 'origin'> {
   const outerGrid = grid(outer)
   let best = { c: -Infinity, overlap: 0, dx: 0, dy: 0, scale: 1 }
   const tryAt = (dx: number, dy: number, scale: number) => {
@@ -256,7 +267,7 @@ export function relate(
  */
 export function readRelations(glyphs: ReadonlyMap<string, GlyphMetrics>): GlyphRelation[] {
   const chars = [...glyphs.keys()].filter((c) => glyphs.get(c)!.density > 0)
-  const out: GlyphRelation[] = []
+  const out: Omit<GlyphRelation, 'origin'>[] = []
   const ratio = (a: string, b: string) => glyphs.get(a)!.density / glyphs.get(b)!.density
   // tested at all: the first has between 30% and 118% of the second's ink
   const tested = (a: string, b: string) => ratio(a, b) >= 0.3 && ratio(a, b) <= 1.18
@@ -279,5 +290,97 @@ export function readRelations(glyphs: ReadonlyMap<string, GlyphMetrics>): GlyphR
       if (ab && inside(a, b)) out.push({ ...ab, kind: 'containment', score: ab.containment })
       if (ba && inside(b, a)) out.push({ ...ba, kind: 'containment', score: ba.containment })
     }
+  return out.map((r) => ({ ...r, origin: 'title' as const })).sort((x, y) => y.score - x.score)
+}
+
+// --- the title's characters against the components the computer can read ----
+//
+// A character of the title may hold a component that the title never writes
+// (犬 holds 大). Such a reading is only worth having when it is unmistakable,
+// so the conditions are stricter than for two characters of the same title —
+// otherwise nearly every kanji would have one.
+
+/** the inner glyph must lie on the outer's ink this much beyond chance */
+const INVENTORY_THRESHOLD = 0.8
+/** and take up at least this share of the outer's ink … */
+const INVENTORY_MIN_INK = 0.3
+/**
+ * … leaving a remainder that is neither nothing nor almost everything.
+ * Note: the overlay only moves a component by ±12 and scales it by ±9%, so a
+ * component that appears shrunk inside a character (a 偏 or a 旁) is not
+ * found. Only components that stand at nearly their own size are read.
+ */
+const INVENTORY_RESIDUE = [0.06, 0.8]
+/** … made of forms rather than slivers, and few of them */
+const INVENTORY_SUBSTANCE = 0.6
+const INVENTORY_PIECES = 4
+
+/** a few placements, to throw out the obvious misfits cheaply */
+function coarseLift(inner: GlyphMetrics, outer: GlyphMetrics): number {
+  const g = grid(outer)
+  let best = 0
+  for (let dx = -8; dx <= 8; dx += 8)
+    for (let dy = -8; dy <= 8; dy += 8) best = Math.max(best, contained(placed(inner, dx, dy, 1), g).lift)
+  return best
+}
+
+/**
+ * A light, skeletal form (十 人 上 广) sits inside almost any character that
+ * has a crossing or a sweep, so finding one there says nothing. Only a
+ * component with a body of its own may be the inner glyph: measured on the
+ * font alone, as ink per em square.
+ */
+const INVENTORY_MIN_DENSITY = 0.24
+
+function worthReading(r: Omit<GlyphRelation, 'kind' | 'score' | 'origin'>): boolean {
+  return (
+    r.containment >= INVENTORY_THRESHOLD &&
+    r.residue.share >= INVENTORY_RESIDUE[0] &&
+    r.residue.share <= INVENTORY_RESIDUE[1] &&
+    r.residue.substance >= INVENTORY_SUBSTANCE &&
+    r.residue.pieces.length <= INVENTORY_PIECES
+  )
+}
+
+/**
+ * At most one reading per character of the title: the strongest component
+ * found inside it. Single strokes and light skeletal forms are never the
+ * inner glyph — finding one inside a character says nothing about it.
+ */
+export function readInventory(
+  letters: ReadonlyMap<string, GlyphMetrics>,
+  inventory: ReadonlyMap<string, GlyphMetrics>,
+): GlyphRelation[] {
+  const strokes = new Set(STROKES)
+  const out: GlyphRelation[] = []
+  for (const [outerChar, outer] of letters) {
+    if (!outer.density) continue
+    let best: GlyphRelation | null = null
+    for (const [innerChar, inner] of inventory) {
+      if (innerChar === outerChar || strokes.has(innerChar)) continue
+      if (inner.density < INVENTORY_MIN_DENSITY) continue
+      const ratio = inner.density / outer.density
+      if (ratio < INVENTORY_MIN_INK || ratio > 1.05) continue
+      if (coarseLift(inner, outer) < 0.35) continue
+      const r = relate(innerChar, inner, outerChar, outer)
+      if (!worthReading(r)) continue
+      // the two are read as alike when each lies in the other and little is left
+      let kind: GlyphRelationKind = 'containment'
+      let score = r.containment
+      if (ratio >= 0.85) {
+        const back = relate(outerChar, outer, innerChar, inner)
+        if (
+          back.containment >= INVENTORY_THRESHOLD &&
+          r.residue.share <= SIMILAR_RESIDUE &&
+          back.residue.share <= SIMILAR_RESIDUE
+        ) {
+          kind = 'similarity'
+          score = Math.min(r.containment, back.containment)
+        }
+      }
+      if (!best || score > best.score) best = { ...r, kind, score, origin: 'inventory' }
+    }
+    if (best) out.push(best)
+  }
   return out.sort((x, y) => y.score - x.score)
 }

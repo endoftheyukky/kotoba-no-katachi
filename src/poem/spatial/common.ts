@@ -35,7 +35,9 @@ function partShift(p: GlyphPart, index: number, amount: number): Vec {
 /** One unit at (x, y), em size `size`. Absent units leave nothing. */
 export function unitMarks(a: Analysis, u: Unit, at: Vec, size: number, spread = 1): Mark[] {
   if (!isWritten(u)) return []
-  const adj = cellAdjust(a.graphemes[u.grapheme], a.direction === 'vertical')
+  // a unit the title never wrote (a glyph read inside another) has no cell of its own
+  const g = a.graphemes[u.grapheme]
+  const adj = g ? cellAdjust(g, a.direction === 'vertical') : { dx: 0, dy: 0, rotate: 0 }
   const base: Mark = {
     char: u.char,
     x: at.x + adj.dx * size,

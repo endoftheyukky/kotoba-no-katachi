@@ -68,6 +68,19 @@ export interface VisualPotential {
 
 export type OperationId = 'proliferation' | 'decomposition' | 'transformation' | 'absence'
 
+/**
+ * Where a feature comes from — how far the reader has to go to meet it.
+ *   endogenous  a relation between things the title itself writes
+ *               (川 ⊂ 州 in 川または州, the repetition of ころ)
+ *   intrinsic   structure taken from one character alone
+ *               (森 coming apart into 木)
+ *   exogenous   found only by holding the title's character against a
+ *               component the title never writes (間 ⊃ 門, 白 ⊃ 口).
+ *               The reader cannot see what was compared, so on its own it
+ *               does not give a poem its subject.
+ */
+export type FeatureOrigin = 'endogenous' | 'intrinsic' | 'exogenous'
+
 /** What, in the title, an operation acts on. */
 export type Focus =
   /** a unit that recurs: each occurrence as grapheme indices */
@@ -91,6 +104,7 @@ export type Focus =
 
 export interface Proposal {
   op: OperationId
+  origin: FeatureOrigin
   focus: Focus
   linguisticSalience: Salience
   /** filled in by the composer (poem/potential.ts), not by the operation */

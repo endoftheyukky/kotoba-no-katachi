@@ -94,6 +94,8 @@ export const decomposition: PoeticOperation = {
       const readable = readings.filter((r) => r).map((r) => `「${r!.char}」`)
       out.push({
         op: 'decomposition',
+        // the structure of one character, read in the character itself
+        origin: 'intrinsic',
         focus: { kind: 'parts', grapheme: g.index, parts: shown, readings, arrangement: arrangement(shown), byReading: parts.length < 2 },
         linguisticSalience: salience(rs, d, 1 / content.length),
         roles: { primary, modifier: true, note: primary ? undefined : `主操作にならない：${reasons.join('・')}` },

@@ -27,11 +27,22 @@ function poles(an: Analysis, m: Material): Poles | null {
 
   if (f.kind === 'pair') {
     const r = f.relation
-    const inner = units.find((u) => u.char === r.inner)
+    // the inner glyph may be one the title never writes (read inside another)
+    const inner = units.find((u) => u.char === r.inner) ?? { grapheme: -1, token: -1, char: r.inner }
     const outer = units.find((u) => u.char === r.outer)
-    if (inner && outer) {
+    if (outer) {
       const minus = { char: r.inner, dx: r.dx, dy: r.dy, scale: r.scale, keep: r.residue.pieces }
       const b = r.kind === 'containment' ? [{ ...outer, minus }] : [outer]
+      // found against a component the title never writes: the character itself
+      // stands at one pole, what is left of it at the other, the component between
+      if (m.primary.origin === 'exogenous')
+        return {
+          a: [outer],
+          b,
+          middle: [{ grapheme: -1, token: -1, char: r.inner }],
+          kind: 'containment',
+          ground: `「${r.outer}」の中に「${r.inner}」を読んだ（題の外の部品）→ 元の字と、引いた残りを二極に`,
+        }
       const hasCoordination = coordinated(an).length === 2
       // for a similarity, the small difference stands between the two
       const difference = r.kind === 'similarity' ? [{ ...outer, minus, grapheme: -1 }] : []
@@ -96,6 +107,7 @@ export const axis: SpatialComposition = {
     '二項の関係（A または B、A と B、AがB、AをB、鏡像、よく似た二つの字形）は、一本の軸の両端に引き離される',
     '二極の間の長い白が、その関係である。関係語は極の間に小さく置かれるか、欠落として白になる',
     '包含の二極では、取り出された字は小さく、残りは大きい。類似の二極は同じ大きさで、二つを分ける小さな差だけが間に置かれる',
+    '題の外の部品との関係では、一方の極に元の字をそのまま、もう一方にその字から部品を引いた残りを置き、間に見つかった部品を小さく置く：読み手が三者を一枚で辿れるようにする',
     '軸は紙面の中央を通らない。軸は書字の方向に沿うか、斜めに紙面を横切る',
     '二極の間の白は、軸の長さの40%を下回らない。足りなければ極の字を小さくする',
   ],

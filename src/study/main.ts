@@ -129,8 +129,8 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
     dl,
     'glyph',
     a.glyphRelations
-      .slice(0, 3)
-      .map((r) => `${r.inner}${r.kind === 'similarity' ? '≈' : '⊂'}${r.outer} ${f2(r.score)}`)
+      .slice(0, 4)
+      .map((r) => `${r.inner}${r.kind === 'similarity' ? '≈' : '⊂'}${r.outer} ${f2(r.score)}${r.origin === 'inventory' ? '(在庫)' : ''}`)
       .join('  ') || '—',
   )
   box.append(dl)
@@ -178,6 +178,7 @@ async function main(): Promise<void> {
   const bySpace = new Map<string, number>()
   const byPair = new Map<string, number>()
   const byScale = new Map<string, number>()
+  const inventory = { candidates: 0, primary: 0, modifier: 0, components: [] as string[] }
   const covers: number[] = []
   const count = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1)
 
@@ -199,6 +200,16 @@ async function main(): Promise<void> {
     count(bySpace, spaceTitle(c.spatial.id))
     count(byPair, `${opTitle(c.primary.op)} / ${spaceTitle(c.spatial.id)}`)
     count(byScale, c.scale.regime)
+    const found = a.glyphRelations.filter((r) => r.origin === 'inventory')
+    if (found.length) {
+      inventory.candidates++
+      inventory.components.push(...found.map((r) => `${r.inner}${r.kind === 'similarity' ? '≈' : '⊂'}${r.outer}`))
+    }
+    const used = [c.primary, ...c.modifiers].find(
+      (p) => p.focus.kind === 'pair' && p.focus.relation.origin === 'inventory',
+    )
+    if (used === c.primary) inventory.primary++
+    else if (used) inventory.modifier++
   }
 
   const summary = el('div', 'summary')
@@ -219,6 +230,13 @@ async function main(): Promise<void> {
     col.append(ul)
     summary.append(col)
   }
+  summary.append(
+    el(
+      'p',
+      'coverline',
+      `inventory readings: ${inventory.candidates}/${titles.length} titles have one · primary in ${inventory.primary} · modifier in ${inventory.modifier} · found: ${inventory.components.join(' ') || '—'}`,
+    ),
+  )
   const sorted = [...covers].sort((x, y) => x - y)
   const sparse = covers.filter((v) => v < 0.3).length
   summary.append(

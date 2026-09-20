@@ -47,6 +47,7 @@ export const absence: PoeticOperation = {
     return [
       {
         op: 'absence',
+        origin: 'endogenous',
         focus: { kind: 'absence', graphemes: [...new Set(graphemes)], negation: negations.length > 0, silence: silences.length > 0 },
         linguisticSalience: best.s,
         roles: { primary: true, modifier: true },

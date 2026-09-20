@@ -17,7 +17,7 @@
  */
 import { Rng } from '../core/random'
 import { COMPONENTS, STROKES } from '../glyph/legibility'
-import { readRelations } from '../glyph/relation'
+import { readInventory, readRelations } from '../glyph/relation'
 import { GlyphLibrary } from '../glyph/source'
 import { analyzeLanguage } from '../language/analysis'
 import type { Segmenter } from '../language/segment'
@@ -55,6 +55,13 @@ export const SPACES: readonly SpatialComposition[] = [field, band, radial, axis,
 
 /** a modifier must be at least this salient to enter the poem */
 export const MODIFIER_SALIENCE = 0.4
+/**
+ * Below this, nothing the title itself shows has reached the page, and a
+ * reading against a component the title never writes may take the poem
+ * (feature descent v1: the last layer). Provisional heuristic, not a
+ * principle of the work.
+ */
+export const EXOGENOUS_FLOOR = 0.3
 const MATERIAL = new Set<OperationId>(['decomposition', 'transformation'])
 
 export async function analyze(input: TitleInput, segmenter?: Segmenter): Promise<Analysis> {
@@ -65,7 +72,11 @@ export async function analyze(input: TitleInput, segmenter?: Segmenter): Promise
   const letters = new Map(own.filter((c) => c.trim()).map((c) => [c, glyphs.get(c).metrics]))
   // what a part of a glyph may be read as: the inventory, and the title's own characters
   const readables = new Map([...COMPONENTS, ...STROKES, ...letters.keys()].map((c) => [c, glyphs.get(c).metrics]))
-  return { ...language, glyphs, glyphRelations: readRelations(letters), readables }
+  const inventory = new Map([...COMPONENTS, ...STROKES].map((c) => [c, glyphs.get(c).metrics]))
+  const glyphRelations = [...readRelations(letters), ...readInventory(letters, inventory)].sort(
+    (x, y) => y.score - x.score,
+  )
+  return { ...language, glyphs, glyphRelations, readables }
 }
 
 export interface Force {
@@ -85,7 +96,15 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   proposals.sort((p, q) => q.poeticPotential! - p.poeticPotential!)
 
   // primary: the highest poetic potential among those allowed to be primary; variant n → the (n+1)-th
-  const eligible = proposals.filter((p) => p.roles.primary)
+  const own = proposals.filter((p) => p.roles.primary)
+  const exogenous = proposals.filter((p) => p.origin === 'exogenous')
+  // a component the title never writes takes the poem only as another reading
+  // (variant) or when nothing the title itself shows reaches the page
+  const lastResort = (own[0]?.poeticPotential ?? 0) < EXOGENOUS_FLOOR
+  const eligible =
+    variant > 0 || lastResort
+      ? [...own, ...exogenous].sort((p, q) => q.poeticPotential! - p.poeticPotential!)
+      : own
   const ranked = force.op ? eligible.filter((p) => p.op === force.op) : eligible
   const primary = ranked[variant % ranked.length]
   const spaceRank = Math.floor(variant / ranked.length)
@@ -104,6 +123,10 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   for (const p of proposals) {
     if (p === primary) continue
     const reject = (reason: string) => rejected.push({ proposal: p, reason })
+    if (p.origin === 'exogenous' && !eligible.includes(p) && !p.roles.modifier) {
+      reject('題の外の部品との関係：題自身の候補があるので主操作にしない')
+      continue
+    }
     if (p.op === primary.op) { reject('主操作と同じ操作'); continue }
     if (!p.roles.modifier) { reject(p.op === 'proliferation' ? '反復は紙面構成が担う（修飾にならない）' : '修飾として素材に書き込めない'); continue }
     if (p.linguisticSalience.value < MODIFIER_SALIENCE) { reject(`linguisticSalience ${p.linguisticSalience.value.toFixed(2)} < ${MODIFIER_SALIENCE}`); continue }
