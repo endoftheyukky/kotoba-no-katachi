@@ -260,7 +260,7 @@ export interface PoeticOperation {
 // ---------------------------------------------------------------------------
 // space
 
-export type SpatialId = 'field' | 'band' | 'radial' | 'axis' | 'centre' | 'void' | 'scattered' | 'cluster' | 'nest'
+export type SpatialId = 'field' | 'band' | 'radial' | 'axis' | 'centre' | 'void' | 'scattered' | 'cluster' | 'nest' | 'grid'
 
 export interface Fit {
   id: SpatialId
@@ -290,7 +290,14 @@ export interface Realization {
   id: SpatialId
   /** which way of this composition: 'line' | 'nested' | '1xN' | … */
   mode: string
+  /** only what this way keeps and uses on the page */
   uses: { property: string; value: string }[]
+  /**
+   * Measured structure this way cannot keep. Recorded so that the page can be
+   * judged against what was read, and kept out of `uses` so that discarding
+   * something can never count in a composition's favour.
+   */
+  losses?: { property: string; value: string }[]
   grounds: string[]
   fitness: number
   realisable: boolean
@@ -340,7 +347,8 @@ export interface SpatialComposition {
   offer?(a: Analysis, m: Material): Realization[]
   /** null when this space cannot hold this material */
   fit(a: Analysis, m: Material): Fit | null
-  realize(a: Analysis, m: Material, rng: Rng, scale: Scale): Placed
+  /** `r` is the way that was chosen, for compositions that offer more than one */
+  realize(a: Analysis, m: Material, rng: Rng, scale: Scale, r?: Realization): Placed
 }
 
 // ---------------------------------------------------------------------------

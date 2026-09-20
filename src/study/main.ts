@@ -230,7 +230,9 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
       el('span', 'sal', f2(f.fitness)),
       el('span', 'rel', f.grounds.join(' / ')),
     )
-    if (f.uses.length) li.append(el('div', 'parts', f.uses.map((u) => `${u.property} ${u.value}`).join(' · ')))
+    if (f.uses.length) li.append(el('div', 'parts', `使う: ${f.uses.map((u) => `${u.property} ${u.value}`).join(' · ')}`))
+    if (f.losses?.length)
+      li.append(el('div', 'reason', `失う: ${f.losses.map((u) => `${u.property} ${u.value}`).join(' · ')}`))
     fits.append(li)
   })
   box.append(fits)

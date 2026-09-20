@@ -35,6 +35,7 @@ import { band } from './spatial/band'
 import { centre } from './spatial/centre'
 import { cluster } from './spatial/cluster'
 import { field } from './spatial/field'
+import { grid } from './spatial/grid'
 import { nest } from './spatial/nest'
 import { radial } from './spatial/radial'
 import { scattered } from './spatial/scattered'
@@ -54,7 +55,7 @@ import type {
 } from './types'
 
 export const OPERATIONS: readonly PoeticOperation[] = [proliferation, decomposition, transformation, absence]
-export const SPACES: readonly SpatialComposition[] = [field, band, radial, axis, centre, nest, voidSpace, scattered, cluster]
+export const SPACES: readonly SpatialComposition[] = [field, band, grid, radial, axis, centre, nest, voidSpace, scattered, cluster]
 
 /** a modifier must be at least this salient to enter the poem */
 export const MODIFIER_SALIENCE = 0.4
@@ -270,7 +271,7 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   const spatial = (force.space && fits.find((f) => f.id === force.space)) || fits[Math.min(spaceRank, fits.length - 1)]
   const space = SPACES.find((s) => s.id === spatial.id)!
   const scale = decideScale(a, material, spatial.id)
-  const placed = space.realize(a, material, new Rng(seed).fork(spatial.id), scale)
+  const placed = space.realize(a, material, new Rng(seed).fork(spatial.id), scale, spatial)
 
   return {
     input: a.input,
