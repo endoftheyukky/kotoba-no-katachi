@@ -10,13 +10,15 @@
  * page and adds a final ±6% to sizes that are already decided.
  */
 import { clamp } from '../../core/math'
+import { Rng } from '../../core/random'
 import { EM } from '../../glyph/font'
 import { PAGE } from '../../render/stage'
-import { planContext, seatLine } from '../context'
+import { MIN_READABLE, planContext, seatLine } from '../context'
 import { BANDS, fitSizes, jitter, midOf } from '../contract'
-import type { Decision, Fitted, Mark, SpatialComposition, Unit, Vec } from '../types'
+import { seatsOf } from '../scope'
+import type { Analysis, Decision, Fitted, Mark, Material, SpatialComposition, Unit, Vec } from '../types'
 import { centredLine, directions, isWritten, lineMarks, offCentre, placeRegion, unitMarks } from './common'
-import { axisShape, closeness, poles, POLE_SCORE } from './axisParams'
+import { axisShape, closeness, poles, POLE_SCORE, type Poles } from './axisParams'
 
 /** a pole without the erased characters at its ends (inside, they hold their place) */
 function trim(units: Unit[]): Unit[] {
@@ -25,6 +27,123 @@ function trim(units: Unit[]): Unit[] {
   while (lo < hi && !isWritten(units[lo])) lo++
   while (hi > lo && !isWritten(units[hi - 1])) hi--
   return lo < hi ? units.slice(lo, hi) : units.slice(0, 1)
+}
+
+/**
+ * In-place mutation — when the feature is one character of the title.
+ *
+ * The title is not a caption to an analysis. It is laid out first, whole, as
+ * one line of writing at a size that reads; the character the feature acts on
+ * stays in its own seat, a little larger; and only what came out of it — the
+ * form read inside it, what is left when that form is taken away — grows out
+ * of that seat, across the line. The reader sees a title in which one
+ * character has changed on the spot, not a magnified fragment with the title
+ * noted beside it.
+ *
+ * Used only where one written character of the title is the whole target and
+ * the figure is what that character decomposes into. Everything else in this
+ * composition keeps the two poles and the seats around them.
+ */
+function inPlace(
+  a: Analysis,
+  m: Material,
+  p: Poles,
+  rng: Rng,
+  page: number,
+): { marks: Mark[]; fitted: Fitted } | null {
+  const scope = m.primary.scope
+  const focus = m.primary.focus
+  if (!scope || scope.kind !== 'unit' || scope.target.length !== 1) return null
+  if (p.kind !== 'containment' || focus.kind !== 'pair') return null
+  const at = scope.target[0]
+  const outer = p.b[0]
+  // the character the title writes must be the one the figure comes out of
+  if (!outer || outer.grapheme !== at || p.a[0]?.grapheme !== at) return null
+  const units = m.tokens.flat()
+  const targetUnit = units.find((u) => u.grapheme === at)
+  if (!targetUnit || !isWritten(targetUnit)) return null
+
+  const seats = seatsOf(a)
+  const index = seats.indexOf(at)
+  if (index < 0) return null
+  const { vertical } = directions(a)
+  const r = focus.relation
+
+  // the whole title, solved as one layout: the line of seats first
+  const margin = 0.07 * page
+  const pitch = Math.min((page - 2 * margin) / Math.max(1, seats.length), 0.3 * page)
+  const target = pitch * 0.92
+  const base = Math.max(MIN_READABLE * page, target / 1.5)
+  const originAlong = (page - (seats.length - 1) * pitch) / 2
+  // 造形: the line of the reading runs in one of the outer thirds; the figure
+  // grows from the seat towards the open side of the page
+  const lineCross = offCentre(rng)
+  const dir = lineCross < page / 2 ? 1 : -1
+  const place = (t: number, cross: number): Vec => (vertical ? { x: cross, y: t } : { x: t, y: cross })
+
+  const marks: Mark[] = []
+  for (const u of units) {
+    if (!isWritten(u)) continue
+    const i = seats.indexOf(u.grapheme)
+    if (i < 0) continue
+    const size = u.grapheme === at ? target : base
+    marks.push(
+      ...unitMarks(a, u, place(originAlong + i * pitch, lineCross), size).map((k) =>
+        u.grapheme === at ? k : { ...k, context: true },
+      ),
+    )
+  }
+
+  // the arm: what was read inside the character, then what is left of it
+  const gap = 0.04 * page
+  const room = (dir > 0 ? page - lineCross : lineCross) - 0.05 * page - target / 2
+  const box = r.residue.box
+  const boxAcross = (vertical ? box.w : box.h) / EM
+  const boxAlong = (vertical ? box.h : box.w) / EM
+  let found = target
+  let residue = Math.min(target * 1.3, pitch * 1.6)
+  const need = 2 * gap + found + residue
+  if (need > room) {
+    const k = Math.max(0.35, room / need)
+    found *= k
+    residue *= k
+  }
+  const seatAlong = originAlong + index * pitch
+  const foundAt = lineCross + dir * (target / 2 + gap + found / 2)
+  const residueAt = foundAt + dir * (found / 2 + gap + residue / 2)
+  marks.push(...centredLine(a, [{ grapheme: -1, token: -1, char: r.inner }], place(seatAlong, foundAt), found))
+  // the residue is sized by how much of it has form, not by its em square
+  const S = clamp(residue / Math.max(0.08, boxAcross), 0, Math.min(1.3 * page, (pitch * 2.2) / Math.max(0.08, boxAlong)))
+  const g = placeRegion(box, S, place(seatAlong, residueAt))
+  marks.push({ char: outer.char, x: g.x, y: g.y, size: S, minus: outer.minus, keep: outer.minus?.keep })
+
+  const fitted: Fitted = {
+    sizes: [base, target, found, S],
+    desired: 'normal',
+    achieved: 'normal',
+    bled: false,
+    decisions: [
+      {
+        name: 'base',
+        ground: 'linguistic',
+        value: (base / page).toFixed(3),
+        note: `題の${seats.length}字を一本の行として先に置く：文脈は注釈ではなく、変形される前からある題そのもの`,
+      },
+      {
+        name: 'target',
+        ground: 'linguistic',
+        value: (target / page).toFixed(3),
+        note: '対象は自分の席に留まり、そこでだけ大きくなる',
+      },
+      {
+        name: 'arm',
+        ground: 'plastic',
+        value: `${(found / page).toFixed(2)} / ${(residue / page).toFixed(2)}`,
+        note: '字の中に読まれた形と、それを引いた残りが、その席から行の外へ伸びる',
+      },
+    ],
+  }
+  return { marks, fitted }
 }
 
 export const axis: SpatialComposition = {
@@ -44,6 +163,7 @@ export const axis: SpatialComposition = {
     '距離・大小の比・揃え方・白の寄り・軸の向き・横ずれは、題の特徴から決まる（axisParams.ts）。一篇で中立から動くのは、最も強い二つだけ',
     '題の一部だけが対象のとき、置かれなかった字は消えない：題の書字方向に、書かれた順のまま、一定の間隔で並ぶ（poem/context.ts）。対象が離れた席から引き出されているときは、その間隔が席の位置を保つ',
     '文脈は主要素より明確に小さく、しかし読める大きさを下回らない。対象は紙面の外へ出てよいが、文脈は出ない',
+    '対象が題の一字だけのときは、二極にしない：題を一本の行として先に置き、その字は自分の席に留まったまま変質し、そこから生じたもの（読まれた形・引いた残り）だけが席の外へ伸びる。題は図の注釈ではなく、変形される前からある詩の本体である',
   ],
 
   fit(a, m) {
@@ -56,6 +176,33 @@ export const axis: SpatialComposition = {
     const shape = axisShape(a, m, p, PAGE, axis.bleed ?? false)
     const occ = shape.occupancy
     const close = closeness(p)
+
+    // one character of the title, changed where it stands
+    const own = inPlace(a, m, p, rng, PAGE)
+    if (own)
+      return {
+        marks: own.marks,
+        parameters: shape.parameters,
+        contract: {
+          occupancy: occ,
+          fitted: own.fitted,
+          context: [
+            {
+              name: 'mode',
+              ground: 'linguistic',
+              value: 'その場での変質',
+              note: '対象が題の一字だけのとき、題を一行として先に置き、対象はその席で変わる（大きな図形に小さな題を添えない）',
+            },
+            {
+              name: 'reading direction',
+              ground: 'linguistic',
+              value: a.direction === 'vertical' ? '縦' : '横',
+              note: '行は題の書字方向に、書かれた順のまま',
+            },
+          ],
+        },
+      }
+
     const vertical = shape.vertical
     const at = (t: number, cross: number): Vec => (vertical ? { x: cross, y: t } : { x: t, y: cross })
 
