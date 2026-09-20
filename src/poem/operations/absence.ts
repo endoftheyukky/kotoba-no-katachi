@@ -48,7 +48,8 @@ export const absence: PoeticOperation = {
       {
         op: 'absence',
         focus: { kind: 'absence', graphemes: [...new Set(graphemes)], negation: negations.length > 0, silence: silences.length > 0 },
-        salience: best.s,
+        linguisticSalience: best.s,
+        roles: { primary: true, modifier: true },
         relations: candidates.map((c) => c.label),
         evidence: candidates.map((c) => `${c.label.replace(/^\w+/, '')} は空白として書かれる`),
       },

@@ -9,6 +9,7 @@ import { EM } from '../../glyph/font'
 import { cellAdjust } from '../../glyph/layout'
 import { openness, type GlyphPart } from '../../glyph/parts'
 import { PAGE } from '../../render/stage'
+import type { Rect } from '../../render/stage'
 import type { Analysis, Mark, Material, Unit, Vec } from '../types'
 
 export const isWritten = (u: Unit) => !u.absent && !!u.char.trim()
@@ -42,6 +43,8 @@ export function unitMarks(a: Analysis, u: Unit, at: Vec, size: number, spread = 
     size,
     rotate: adj.rotate || undefined,
     minus: u.minus,
+    // what remains of a subtraction is drawn only where it has form
+    keep: u.minus?.keep,
   }
   if (!u.parts) return [base]
   // decomposition as a modifier: the parts open a little, as far as their seams were open
@@ -59,6 +62,45 @@ export function centredLine(a: Analysis, units: Unit[], centre: Vec, size: numbe
   const { along } = directions(a)
   const half = ((units.length - 1) * pitch) / 2
   return lineMarks(a, units, { x: centre.x - along.x * half, y: centre.y - along.y * half }, size, pitch)
+}
+
+/**
+ * Move a line centred at `centre` along the writing direction so that all of
+ * it lies inside the page, `margin` from the edge (for sizes that are not
+ * macro: those alone may leave the page).
+ */
+export function inside(a: Analysis, centre: Vec, length: number, size: number, margin = PAGE * 0.04): Vec {
+  const { vertical } = directions(a)
+  const half = length / 2
+  const lo = margin + half
+  const hi = PAGE - margin - half
+  const along = vertical ? centre.y : centre.x
+  const clamped = lo > hi ? PAGE / 2 : Math.min(hi, Math.max(lo, along))
+  const acrossLo = margin + size / 2
+  const acrossHi = PAGE - margin - size / 2
+  const across = Math.min(acrossHi, Math.max(acrossLo, vertical ? centre.x : centre.y))
+  return vertical ? { x: across, y: clamped } : { x: clamped, y: across }
+}
+
+/**
+ * Where to put a glyph (its ink centre) so that a region of it — the residue
+ * of a subtraction, given as a box in its em space — lies centred on `at`,
+ * moved as needed to lie wholly on the page when it is small enough to.
+ * Only what is larger than the page may leave it.
+ */
+export function placeRegion(box: Rect, size: number, at: Vec, margin = PAGE * 0.04): Vec {
+  const k = size / EM
+  const fit = (centre: number, extent: number) => {
+    const half = extent / 2
+    if (extent > PAGE - 2 * margin) return PAGE / 2
+    return Math.min(PAGE - margin - half, Math.max(margin + half, centre))
+  }
+  const cx = fit(at.x, box.w * k)
+  const cy = fit(at.y, box.h * k)
+  // the box's centre in em space, relative to the ink centre
+  const bx = box.x + box.w / 2
+  const by = box.y + box.h / 2
+  return { x: cx - bx * k, y: cy - by * k }
 }
 
 /** 造形: a coordinate in one of the outer thirds of the page — never the middle. */

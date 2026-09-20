@@ -24,7 +24,7 @@ export const voidSpace: SpatialComposition = {
     return { id: 'void', score: 0.35, grounds: ['関係語の欠落'] }
   },
 
-  realize(a, m, rng) {
+  realize(a, m, rng, scale) {
     const units = allUnits(m)
     const { vertical } = directions(a)
     // runs: written stretches and absent stretches, in order
@@ -35,7 +35,7 @@ export const voidSpace: SpatialComposition = {
       if (last && last.absent === absent) last.units.push(u)
       else runs.push({ absent, units: [u] })
     }
-    const s = rng.range(0.07, 0.12) * PAGE
+    const s = scale.pick('body', rng, [0, 0.12])
     const margin = rng.range(0.06, 0.12) * PAGE
     const writtenCount = runs.filter((r) => !r.absent).reduce((t, r) => t + r.units.length, 0)
     const absentCount = runs.filter((r) => r.absent).reduce((t, r) => t + r.units.length, 0) || 1

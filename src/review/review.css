@@ -1,0 +1,55 @@
+/*
+ * Review sheet: pages on a quiet grey ground, so each white page shows its
+ * own edge without a drawn frame. Titles sit below, outside the page.
+ */
+html,
+body {
+  margin: 0;
+  background: #e6e6e6;
+  color: #333;
+  font-family: "Noto Sans JP", sans-serif;
+}
+
+main {
+  box-sizing: border-box;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 48px 40px 96px;
+  display: grid;
+  /* two or three large pages per row on a desktop screen, one on a phone */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+  gap: 56px 40px;
+}
+
+figure {
+  margin: 0;
+}
+
+.page {
+  aspect-ratio: 1;
+  background: #fff;
+}
+
+.page svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+figcaption {
+  margin-top: 10px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+figcaption .reading {
+  color: #888;
+}
+
+@media (max-width: 500px) {
+  main {
+    padding: 16px 16px 48px;
+    gap: 32px;
+  }
+}

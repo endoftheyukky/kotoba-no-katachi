@@ -8,6 +8,8 @@
  * (造形) decisions inside the rules: margins, small offsets, how far a form
  * leaves the page, permitted ranges of proportion.
  */
+import type { PartReading } from '../glyph/legibility'
+import type { GlyphMetrics } from '../glyph/metrics'
 import type { Arrangement, GlyphPart } from '../glyph/parts'
 import type { GlyphRelation } from '../glyph/relation'
 import type { GlyphLibrary } from '../glyph/source'
@@ -26,13 +28,16 @@ export interface Analysis extends LanguageAnalysis {
   glyphs: GlyphLibrary
   /** the computer's readings of the fixed font's letterforms (not linguistic facts) */
   glyphRelations: GlyphRelation[]
+  /** glyphs a part of a glyph may be read as: common components, strokes, and the title's own characters */
+  readables: Map<string, GlyphMetrics>
 }
 
 // ---------------------------------------------------------------------------
-// salience
+// three measures of a proposal
 
 /**
- * How much a relation belongs to this title — comparable across operations.
+ * linguisticSalience: how prominent the relation is for this title, as
+ * language — comparable across operations. Nothing about how it would look.
  *   relationStrength  how strong the relation itself is
  *   distinctiveness   how unusual it is (a property most titles have is low)
  *   coverage          how much of the title it accounts for
@@ -42,6 +47,20 @@ export interface Salience {
   relationStrength: number
   distinctiveness: number
   coverage: number
+}
+
+/**
+ * visualPotential: how far the present operations and spatial compositions
+ * can turn this relation into a strong visual structure that keeps the
+ * character of writing. Independent of how prominent the relation is.
+ *   legibility  how much of what is drawn stays readable as writing
+ *   structure   how clearly the relation shows as structure on the page
+ */
+export interface VisualPotential {
+  value: number
+  legibility: number
+  structure: number
+  notes: string[]
 }
 
 // ---------------------------------------------------------------------------
@@ -56,7 +75,15 @@ export type Focus =
   /** repetition with nothing in the title to ground it */
   | { kind: 'plain' }
   /** a glyph and the parts the computer reads in it */
-  | { kind: 'parts'; grapheme: number; parts: GlyphPart[]; arrangement: Arrangement; byReading: boolean }
+  | {
+      kind: 'parts'
+      grapheme: number
+      parts: GlyphPart[]
+      /** what each part reads as, if anything */
+      readings: (PartReading | null)[]
+      arrangement: Arrangement
+      byReading: boolean
+    }
   /** two glyphs related in form */
   | { kind: 'pair'; relation: GlyphRelation }
   /** graphemes that are written as space */
@@ -65,7 +92,13 @@ export type Focus =
 export interface Proposal {
   op: OperationId
   focus: Focus
-  salience: Salience
+  linguisticSalience: Salience
+  /** filled in by the composer (poem/potential.ts), not by the operation */
+  visualPotential?: VisualPotential
+  /** √(linguisticSalience × visualPotential): what the primary operation is chosen by */
+  poeticPotential?: number
+  /** whether it may give the poem its subject, act only as a modifier, or both */
+  roles: { primary: boolean; modifier: boolean; note?: string }
   /** the relations it stands on, as compact labels */
   relations: string[]
   /** the ground, in words */
@@ -78,6 +111,8 @@ export interface Minus {
   dx: number
   dy: number
   scale: number
+  /** only these regions of what remains are drawn: the pieces with form, not the slivers */
+  keep?: Rect[]
 }
 
 /** One grapheme of the title as it will be written. */
@@ -134,7 +169,34 @@ export interface SpatialComposition {
   rules: readonly string[]
   /** null when this space cannot hold this material */
   fit(a: Analysis, m: Material): Fit | null
-  realize(a: Analysis, m: Material, rng: Rng): Mark[]
+  realize(a: Analysis, m: Material, rng: Rng, scale: Scale): Mark[]
+}
+
+// ---------------------------------------------------------------------------
+// scale
+
+/**
+ * micro  text size or smaller: the units are read as texture or as asides
+ * normal the size of a word held at a distance: 10–30% of the page per glyph
+ * macro  larger than a hand can hold: over half the page, may leave it
+ * mixed  macro and micro at once, nothing in between
+ */
+export type ScaleRegime = 'micro' | 'normal' | 'macro' | 'mixed'
+
+/**
+ * result  what the operation produced (a residue, parts of a glyph)
+ * body    the words the composition is built from
+ * aside   what stands beside them (a relation word, the title as a witness)
+ */
+export type ScaleRole = 'result' | 'body' | 'aside'
+
+export interface Scale {
+  regime: ScaleRegime
+  grounds: string
+  /** the permitted em sizes for a role, in page units */
+  range(role: ScaleRole): [number, number]
+  /** 造形: a size within the role's range; `within` narrows it to a part of the range (0–1) */
+  pick(role: ScaleRole, rng: Rng, within?: [number, number]): number
 }
 
 // ---------------------------------------------------------------------------
@@ -171,6 +233,7 @@ export interface Composition {
   primary: Proposal
   modifiers: Proposal[]
   spatial: Fit
+  scale: Scale
   /** every proposal, ranked by salience */
   proposals: Proposal[]
   /** every space that could hold the material, ranked */

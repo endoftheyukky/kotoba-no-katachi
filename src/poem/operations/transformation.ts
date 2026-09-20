@@ -33,7 +33,9 @@ export const transformation: PoeticOperation = {
       out.push({
         op: 'transformation',
         focus: { kind: 'pair', relation: r },
-        salience: salience((r.score - 0.5) / 0.5, containment ? 0.9 : 0.85, involved / content.length),
+        linguisticSalience: salience((r.score - 0.5) / 0.5, containment ? 0.9 : 0.85, involved / content.length),
+        // only a containment can be written into other units (as B without A)
+        roles: { primary: true, modifier: containment },
         relations: [containment ? `containment「${r.inner}」⊂「${r.outer}」${r.score.toFixed(2)} 残${(r.residue.share * 100).toFixed(0)}%` : `similarity「${r.inner}」≈「${r.outer}」${r.score.toFixed(2)}`],
         evidence: containment
           ? [
@@ -49,7 +51,7 @@ export const transformation: PoeticOperation = {
   apply(_a: Analysis, p, tokens) {
     if (p.focus.kind !== 'pair' || p.focus.relation.kind !== 'containment') return null
     const r = p.focus.relation
-    const minus = { char: r.inner, dx: r.dx, dy: r.dy, scale: r.scale }
+    const minus = { char: r.inner, dx: r.dx, dy: r.dy, scale: r.scale, keep: r.residue.pieces }
     let hit = false
     const out = tokens.map((t) =>
       t.map((u) => {

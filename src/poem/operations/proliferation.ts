@@ -29,7 +29,8 @@ export const proliferation: PoeticOperation = {
       out.push({
         op: 'proliferation',
         focus: { kind: 'repetition', value: r.value, occurrences: r.occurrences, contiguous: true, whole },
-        salience: salience(whole ? 1 : 0.85, 0.9, covered / n),
+        linguisticSalience: salience(whole ? 1 : 0.85, 0.9, covered / n),
+        roles: { primary: true, modifier: false },
         relations: [`reduplication「${r.value}」×${r.occurrences.length}`],
         evidence: [`「${r.value}」が直に${r.occurrences.length}回続く${whole ? '（題全体が反復）' : ''}`],
       })
@@ -47,7 +48,8 @@ export const proliferation: PoeticOperation = {
       out.push({
         op: 'proliferation',
         focus: { kind: 'repetition', value: g.char, occurrences: r.members.map((i) => [i]), contiguous: false, whole: false },
-        salience: salience(Math.min(1, 0.4 + 0.3 * (k - 1)), d, (functional ? k : r.members.length) / (functional ? a.graphemes.length : n)),
+        roles: { primary: true, modifier: false },
+        linguisticSalience: salience(Math.min(1, 0.4 + 0.3 * (k - 1)), d, (functional ? k : r.members.length) / (functional ? a.graphemes.length : n)),
         relations: [`recurrence 字「${g.char}」×${k}${functional ? '（関係語）' : ''}`],
         evidence: [`「${g.char}」が${k}回現れる`],
       })
@@ -56,7 +58,8 @@ export const proliferation: PoeticOperation = {
     out.push({
       op: 'proliferation',
       focus: { kind: 'plain' },
-      salience: salience(0.25, 0.05, 1),
+      linguisticSalience: salience(0.25, 0.05, 1),
+      roles: { primary: true, modifier: false },
       relations: ['—'],
       evidence: ['反復は題に見当たらない：どの題にも可能な増殖'],
     })

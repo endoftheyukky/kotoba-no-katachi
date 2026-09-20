@@ -41,13 +41,20 @@ export interface GlyphRelation {
   dx: number
   dy: number
   scale: number
-  /** what is left of the outer glyph once the inner glyph is removed (em space of the outer) */
+  /**
+   * What is left of the outer glyph once the inner glyph is removed (em space
+   * of the outer). Only pieces with a form of their own count; slivers left by
+   * a slight misfit between the two letterforms are not part of the residue.
+   */
   residue: {
+    /** share of the outer glyph's ink that is left, in pieces */
     share: number
+    /** the pieces, as rectangles to keep (em space) */
+    pieces: Rect[]
     box: Rect
     centroid: { x: number; y: number }
-    /** share of the residue held by its largest connected piece: a coherent form (a dot) is high, scattered slivers low */
-    coherence: number
+    /** share of everything left that lies in pieces rather than slivers */
+    substance: number
   }
 }
 
@@ -131,18 +138,18 @@ function contained(inner: Uint8Array, outer: Uint8Array): { overlap: number; lif
   return { overlap, lift: chance < 1 ? (overlap - chance) / (1 - chance) : 0 }
 }
 
-/** cells in the largest 8-connected piece of a grid */
-function largestPiece(g: Uint8Array): number {
+/** the 8-connected pieces of a grid, as lists of cells */
+function pieces(g: Uint8Array): number[][] {
   const seen = new Uint8Array(N * N)
-  let best = 0
+  const out: number[][] = []
   for (let k = 0; k < N * N; k++) {
     if (!g[k] || seen[k]) continue
-    let size = 0
+    const cells: number[] = []
     const stack = [k]
     seen[k] = 1
     while (stack.length) {
       const q = stack.pop()!
-      size++
+      cells.push(q)
       const x = q % N
       const y = (q - x) / N
       for (let dy = -1; dy <= 1; dy++)
@@ -156,10 +163,13 @@ function largestPiece(g: Uint8Array): number {
           }
         }
     }
-    best = Math.max(best, size)
+    out.push(cells)
   }
-  return best
+  return out
 }
+
+/** a piece of residue smaller than this share of the outer glyph is a sliver, not a form */
+const SLIVER = 0.03
 
 export function relate(
   innerChar: string,
@@ -183,25 +193,41 @@ export function relate(
   const removed = dilate(placed(inner, best.dx, best.dy, best.scale))
   const rest = new Uint8Array(N * N)
   let total = 0
+  let everything = 0
+  for (let k = 0; k < N * N; k++) {
+    if (!outerGrid[k]) continue
+    total++
+    if (!removed[k]) {
+      rest[k] = 1
+      everything++
+    }
+  }
+  // keep only the pieces with a form of their own
+  const kept = pieces(rest).filter((c) => c.length >= Math.max(3, total * SLIVER))
+  const keep: Rect[] = []
   let left = 0
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, sx = 0, sy = 0
-  for (let j = 0; j < N; j++)
-    for (let i = 0; i < N; i++) {
-      const k = j * N + i
-      if (!outerGrid[k]) continue
-      total++
-      if (removed[k]) continue
-      rest[k] = 1
-      left++
+  for (const cells of kept) {
+    let px0 = Infinity, py0 = Infinity, px1 = -Infinity, py1 = -Infinity
+    for (const k of cells) {
+      const i = k % N
+      const j = (k - i) / N
       const x = -R + (i + 0.5) * CELL
       const y = -R + (j + 0.5) * CELL
+      left++
       sx += x
       sy += y
-      x0 = Math.min(x0, x - CELL / 2)
-      y0 = Math.min(y0, y - CELL / 2)
-      x1 = Math.max(x1, x + CELL / 2)
-      y1 = Math.max(y1, y + CELL / 2)
+      px0 = Math.min(px0, x - CELL)
+      py0 = Math.min(py0, y - CELL)
+      px1 = Math.max(px1, x + CELL)
+      py1 = Math.max(py1, y + CELL)
     }
+    keep.push({ x: px0, y: py0, w: px1 - px0, h: py1 - py0 })
+    x0 = Math.min(x0, px0)
+    y0 = Math.min(y0, py0)
+    x1 = Math.max(x1, px1)
+    y1 = Math.max(y1, py1)
+  }
   return {
     inner: innerChar,
     outer: outerChar,
@@ -212,9 +238,10 @@ export function relate(
     scale: best.scale,
     residue: {
       share: total ? left / total : 0,
+      pieces: keep,
       box: left ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : { x: 0, y: 0, w: 0, h: 0 },
       centroid: left ? { x: sx / left, y: sy / left } : { x: 0, y: 0 },
-      coherence: left ? largestPiece(rest) / left : 0,
+      substance: everything ? left / everything : 0,
     },
   }
 }

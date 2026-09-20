@@ -20,22 +20,23 @@ export const field: SpatialComposition = {
     const f = m.primary.focus
     if (m.primary.op !== 'proliferation') return null
     if (f.kind === 'repetition' && f.whole) return { id: 'field', score: 0.9, grounds: ['題全体が反復している → 紙面を覆う'] }
-    if (f.kind === 'repetition') return { id: 'field', score: 0.3 + 0.2 * m.primary.salience.coverage, grounds: ['題の一部が反復する'] }
+    if (f.kind === 'repetition') return { id: 'field', score: 0.3 + 0.2 * m.primary.linguisticSalience.coverage, grounds: ['題の一部が反復する'] }
     return { id: 'field', score: 0.3, grounds: ['反復の根拠がない：書き継ぐことだけが残る'] }
   },
 
-  realize(a, m, rng) {
+  realize(a, m, rng, scale) {
     const units = allUnits(m)
     const n = units.length
     const vertical = a.direction === 'vertical'
-    // 造形: the grid may be a little finer or coarser
-    const span = clamp(2 * n, 5, 12) + rng.pick([-1, 0, 0, 1])
-    const s = PAGE / span
+    // 造形: the grid may be a little finer or coarser; the cell stays within the scale's range
+    const [lo, hi] = scale.range('body')
+    const s = clamp(PAGE / (clamp(2 * n, 5, 12) + rng.pick([-1, 0, 0, 1])), lo, hi)
+    const span = Math.round(PAGE / s)
     const lineLength = span + 1
     const cells: Vec[] = []
     for (let l = 0; l <= span; l++)
       for (let c = 0; c < lineLength; c++) cells.push(vertical ? { x: PAGE - l * s, y: c * s } : { x: c * s, y: l * s })
-    const { relationStrength, coverage } = m.primary.salience
+    const { relationStrength, coverage } = m.primary.linguisticSalience
     const fill = clamp(0.3 + 0.65 * relationStrength * coverage, 0.3, 0.95)
     const used = Math.round(cells.length * fill)
     return cells.slice(0, used).flatMap((at, k) => unitMarks(a, units[k % n], at, s * 0.96))

@@ -18,14 +18,15 @@ export const cluster: SpatialComposition = {
   ],
 
   fit(_a, m) {
-    const score = 0.2 + 0.45 * (1 - m.primary.salience.value)
-    return { id: 'cluster', score, grounds: [`主操作の salience ${m.primary.salience.value.toFixed(2)} → 弱い題は小さく集まる`] }
+    const p = m.primary.poeticPotential ?? 0
+    const score = 0.2 + 0.45 * (1 - p)
+    return { id: 'cluster', score, grounds: [`主操作の poeticPotential ${p.toFixed(2)} → 弱い題は小さく集まる`] }
   },
 
-  realize(a, m, rng) {
+  realize(a, m, rng, scale) {
     const units = allUnits(m)
     const { along, vertical } = directions(a)
-    const s = rng.range(0.07, 0.11) * PAGE
+    const s = scale.pick('body', rng)
     const margin = rng.range(0.06, 0.14) * PAGE
     // 造形: which corner or edge
     const spots: Vec[] = [
@@ -45,7 +46,7 @@ export const cluster: SpatialComposition = {
       // the parts leave the word along the direction of writing, further and further apart;
       // where the page ends, they go on in the next line, as writing does
       const char = a.graphemes[f.grapheme].char
-      const S = s * rng.range(1.6, 2.8)
+      const S = scale.pick('result', rng)
       const k = S / EM
       const { across } = directions(a)
       const along0 = vertical ? start.y : start.x

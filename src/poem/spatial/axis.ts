@@ -5,7 +5,7 @@
 import { EM } from '../../glyph/font'
 import { PAGE } from '../../render/stage'
 import type { Analysis, Material, Mark, SpatialComposition, Unit, Vec } from '../types'
-import { allUnits, centredLine, directions, isWritten, lineMarks, offCentre } from './common'
+import { allUnits, centredLine, directions, isWritten, lineMarks, offCentre, placeRegion } from './common'
 import { coordinated, dependencyBy, relationsOf } from './relations'
 
 /** particles that point from one term to another: object, subject, direction */
@@ -30,7 +30,7 @@ function poles(an: Analysis, m: Material): Poles | null {
     const inner = units.find((u) => u.char === r.inner)
     const outer = units.find((u) => u.char === r.outer)
     if (inner && outer) {
-      const minus = { char: r.inner, dx: r.dx, dy: r.dy, scale: r.scale }
+      const minus = { char: r.inner, dx: r.dx, dy: r.dy, scale: r.scale, keep: r.residue.pieces }
       const b = r.kind === 'containment' ? [{ ...outer, minus }] : [outer]
       const hasCoordination = coordinated(an).length === 2
       // for a similarity, the small difference stands between the two
@@ -97,6 +97,7 @@ export const axis: SpatialComposition = {
     '二極の間の長い白が、その関係である。関係語は極の間に小さく置かれるか、欠落として白になる',
     '包含の二極では、取り出された字は小さく、残りは大きい。類似の二極は同じ大きさで、二つを分ける小さな差だけが間に置かれる',
     '軸は紙面の中央を通らない。軸は書字の方向に沿うか、斜めに紙面を横切る',
+    '二極の間の白は、軸の長さの40%を下回らない。足りなければ極の字を小さくする',
   ],
 
   fit(a, m) {
@@ -104,7 +105,7 @@ export const axis: SpatialComposition = {
     return p ? { id: 'axis', score: SCORE[p.kind], grounds: [p.ground] } : null
   },
 
-  realize(a, m, rng) {
+  realize(a, m, rng, scale) {
     const p = poles(a, m)!
     const { vertical } = directions(a)
     // 造形: the line of the axis, and whether it runs straight or slants
@@ -116,38 +117,48 @@ export const axis: SpatialComposition = {
     const lineA = line
     const lineB = slant ? PAGE - line : line
 
-    const poleSize = (units: Unit[], weight: number) => Math.min(0.34, 0.66 / Math.max(1, units.length)) * PAGE * weight
+    const length = endAt - startAt
     const marks: Mark[] = []
     if (p.kind === 'containment') {
-      // the glyph taken out, small; what remains of the other, large
-      const sa = rng.range(0.12, 0.2) * PAGE
-      marks.push(...centredLine(a, p.a, at(startAt, lineA), sa))
+      // the glyph taken out, at body size; what remains of the other is the result
+      const sa = Math.min(scale.pick('body', rng, [0.05, 0.3]), length * 0.3)
+      marks.push(...centredLine(a, p.a, at(startAt + sa / 2, lineA), sa))
       const outer = p.b[0]
       const r = m.primary.focus.kind === 'pair' ? m.primary.focus.relation : null
-      const S = rng.range(0.6, 0.95) * PAGE
+      const S = scale.pick('result', rng, [0.05, 0.4])
+      // the residue ends where the axis ends, and stays on the page when it can
+      const box = r?.residue.box ?? { x: -EM / 2, y: -EM / 2, w: EM, h: EM }
       const k = S / EM
-      const c = r?.residue.centroid ?? { x: 0, y: 0 }
-      const target = at(endAt, lineB)
-      marks.push({ char: outer.char, x: target.x - c.x * k, y: target.y - c.y * k, size: S, minus: outer.minus })
+      const extent = (vertical ? box.h : box.w) * k
+      const g = placeRegion(box, S, at(endAt + (PAGE - endAt) / 2 - extent / 2, lineB))
+      marks.push({ char: outer.char, x: g.x, y: g.y, size: S, minus: outer.minus, keep: outer.minus?.keep })
     } else {
       const same = p.kind === 'similarity' || p.kind === 'mirror'
       const w = same ? rng.range(0.9, 1.1) : 1
+      let sa = scale.pick('body', rng, [0.2, 0.8]) * w
+      let sb = same ? sa : scale.pick('body', rng, [0.2, 0.8])
+      // the white between the poles is at least 40% of the axis
+      const used = p.a.length * sa + p.b.length * sb
+      if (used > length * 0.6) {
+        const f = (length * 0.6) / used
+        sa *= f
+        sb *= f
+      }
       // pole A begins where the axis begins; pole B ends where it ends
-      const sa = poleSize(p.a, w)
-      const sb = poleSize(p.b, same ? w : 1.2)
-      marks.push(...lineMarks(a, p.a, at(startAt, lineA), sa))
-      marks.push(...lineMarks(a, p.b, at(endAt - (p.b.length - 1) * sb, lineB), sb))
+      marks.push(...lineMarks(a, p.a, at(startAt + sa / 2, lineA), sa))
+      marks.push(...lineMarks(a, p.b, at(endAt - sb / 2 - (p.b.length - 1) * sb, lineB), sb))
     }
     // what lies between the poles, at the middle of the axis
     const mid = at((startAt + endAt) / 2, (lineA + lineB) / 2)
     const difference = p.middle.filter((u) => u.grapheme === -1)
     const between = p.middle.filter((u) => u.grapheme !== -1 && isWritten(u))
     if (difference.length) {
-      // the difference of two similar forms, at the size of the poles
+      // the difference of two similar forms: only its pieces with form, at the size of the poles
       const u = difference[0]
-      marks.push({ char: u.char, x: mid.x, y: mid.y, size: poleSize(p.a, 1), minus: u.minus })
+      const s = Math.min(scale.pick('result', rng, [0.2, 0.8]), length * 0.3)
+      marks.push({ char: u.char, x: mid.x, y: mid.y, size: s, minus: u.minus, keep: u.minus?.keep })
     } else if (between.length) {
-      const s = p.kind === 'mirror' ? poleSize(p.a, 0.8) : rng.range(0.035, 0.05) * PAGE
+      const s = p.kind === 'mirror' ? Math.min(scale.pick('body', rng, [0.2, 0.6]), length * 0.3) : scale.pick('aside', rng)
       marks.push(...centredLine(a, between, mid, s))
     }
     return marks

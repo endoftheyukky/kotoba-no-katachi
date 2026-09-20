@@ -58,13 +58,15 @@ function report(a: Analysis, c: Composition): void {
   console.log('glyph readings', a.glyphRelations.slice(0, 5).map((r) => `${r.inner}${r.kind === 'similarity' ? '≈' : '⊂'}${r.outer} ${r.score.toFixed(2)}`))
   for (const p of ops) {
     const op = OPERATIONS.find((o) => o.id === p.op)!
-    console.group(`${op.title}${p === c.primary ? '（主）' : '（修飾）'} salience ${p.salience.value.toFixed(2)}`)
+    console.group(
+      `${op.title}${p === c.primary ? '（主）' : '（修飾）'} poetic ${p.poeticPotential?.toFixed(2)} = √(linguistic ${p.linguisticSalience.value.toFixed(2)} × visual ${p.visualPotential?.value.toFixed(2)})`,
+    )
     p.evidence.forEach((e) => console.log('根拠:', e))
     op.rules.forEach((r) => console.log('規則:', r))
     console.groupEnd()
   }
   const space = SPACES.find((s) => s.id === c.spatial.id)!
-  console.group(`${space.title}（紙面構成） ${c.spatial.score.toFixed(2)}`)
+  console.group(`${space.title}（紙面構成） ${c.spatial.score.toFixed(2)} / scale ${c.scale.regime}: ${c.scale.grounds}`)
   c.spatial.grounds.forEach((g) => console.log('根拠:', g))
   space.rules.forEach((r) => console.log('規則:', r))
   console.groupEnd()

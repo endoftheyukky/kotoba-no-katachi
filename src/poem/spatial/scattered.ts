@@ -5,7 +5,7 @@
  */
 import { PAGE } from '../../render/stage'
 import type { Analysis, Mark, SpatialComposition, Unit, Vec } from '../types'
-import { centredLine, isWritten } from './common'
+import { centredLine, inside, isWritten } from './common'
 import { coordinated, has, relationsOf } from './relations'
 
 /** the words to place: every token with something written, except bare marks */
@@ -32,7 +32,7 @@ export const scattered: SpatialComposition = {
     return null
   },
 
-  realize(a, m, rng) {
+  realize(a, m, rng, scale) {
     const groups = independentGroups(a, m.tokens)
     // candidate places: a 5 × 5 lattice without its centre, jittered
     const places: Vec[] = []
@@ -50,8 +50,8 @@ export const scattered: SpatialComposition = {
       places.splice(places.indexOf(at), 1)
       const jittered = { x: at.x + rng.range(-40, 40), y: at.y + rng.range(-40, 40) }
       chosen.push(jittered)
-      const s = rng.range(0.06, 0.16) * PAGE
-      marks.push(...centredLine(a, g, jittered, s))
+      const s = Math.min(scale.pick('body', rng, [0, 0.5]), (0.7 * PAGE) / g.length)
+      marks.push(...centredLine(a, g, inside(a, jittered, g.length * s, s), s))
     }
     return marks
   },

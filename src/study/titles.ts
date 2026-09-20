@@ -1,6 +1,9 @@
 /**
- * Titles for the study sheet, chosen to cover different properties of
- * language and of the font's letterforms. `note` says what each one tests.
+ * DEVELOPMENT SET — titles used to design and tune the generator, chosen to
+ * cover different properties of language and of the font's letterforms.
+ * `note` says what each one tests. Because design decisions were made while
+ * looking at these, results on them are not evidence of generality: new rules
+ * are to be judged on a separate holdout set of titles never used for design.
  */
 export interface StudyTitle {
   text: string

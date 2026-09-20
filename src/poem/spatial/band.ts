@@ -35,7 +35,7 @@ export const band: SpatialComposition = {
     return null
   },
 
-  realize(a, m, rng) {
+  realize(a, m, rng, scale) {
     const f = m.primary.focus
     const { vertical } = directions(a)
     const units = allUnits(m)
@@ -44,7 +44,7 @@ export const band: SpatialComposition = {
       const recurring = new Set(f.occurrences.flat())
       const r = units.filter((u) => recurring.has(u.grapheme)).length
       // 造形: the size of the band's characters
-      const target = Math.floor(PAGE / rng.range(80, 125))
+      const target = Math.floor(PAGE / scale.pick('body', rng, [0, 0.15]))
       const times = Math.max(2, Math.floor((target - units.length) / Math.max(1, r)) + 1)
       const line: Unit[] = units.flatMap((u) => (recurring.has(u.grapheme) ? Array(times).fill(u) : [u]))
       const s = PAGE / line.length
@@ -55,7 +55,7 @@ export const band: SpatialComposition = {
 
     if (f.kind === 'parts') {
       const g = a.graphemes[f.grapheme]
-      const S = rng.range(0.6, 0.9) * PAGE
+      const S = scale.pick('result', rng, [0.05, 0.35])
       const k = S / EM
       // the parts spread across the page along the direction of their cuts
       const byX = f.arrangement === 'row'
@@ -68,7 +68,7 @@ export const band: SpatialComposition = {
           : { char: g.char, x: line, y: t - p.centroid.y * k, size: S, keep: p.keep }
       })
       // the whole title, small, where the band begins
-      const s = rng.range(0.045, 0.06) * PAGE
+      const s = scale.pick('aside', rng)
       const at = byX
         ? { x: vertical ? PAGE - s * 1.5 : s * 1.5, y: line + (line < PAGE / 2 ? 1 : -1) * S * 0.45 }
         : { x: line + (line < PAGE / 2 ? 1 : -1) * S * 0.45, y: s * 1.5 }

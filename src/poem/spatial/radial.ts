@@ -29,13 +29,13 @@ export const radial: SpatialComposition = {
     }
   },
 
-  realize(a, m, rng) {
+  realize(a, m, rng, scale) {
     const f = m.primary.focus
     if (f.kind !== 'parts') return []
     const units = allUnits(m)
     const { along } = directions(a)
     const hub = { x: offCentre(rng, 0.25, 0.4), y: offCentre(rng, 0.25, 0.4) }
-    const h = rng.range(0.06, 0.09) * PAGE
+    const h = scale.pick('body', rng, [0.5, 1])
     const word = centredLine(a, units, hub, h)
     const index = units.findIndex((u) => u.grapheme === f.grapheme)
     const focus = {
@@ -43,7 +43,7 @@ export const radial: SpatialComposition = {
       y: hub.y + along.y * (index - (units.length - 1) / 2) * h,
     }
     const char = a.graphemes[f.grapheme].char
-    const S = rng.range(0.5, 0.75) * PAGE
+    const S = scale.pick('result', rng, [0, 0.3])
     const k = S / EM
     const rays: Mark[] = f.parts.map((p, i) => {
       const c = p.centroid

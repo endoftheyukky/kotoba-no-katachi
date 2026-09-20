@@ -5,7 +5,7 @@
 import { EM } from '../../glyph/font'
 import { PAGE } from '../../render/stage'
 import type { Analysis, Material, Mark, SpatialComposition, Unit, Vec } from '../types'
-import { allUnits, centredLine, directions, isWritten, lineMarks, offCentre } from './common'
+import { allUnits, centredLine, directions, inside, lineMarks, offCentre, placeRegion } from './common'
 import { coordinated, dependencyBy } from './relations'
 
 interface Roles {
@@ -23,7 +23,7 @@ function roles(a: Analysis, m: Material): Roles | null {
     const outer = units.find((u) => u.char === r.outer)
     if (!outer) return null
     return {
-      centre: [{ ...outer, minus: { char: r.inner, dx: r.dx, dy: r.dy, scale: r.scale } }],
+      centre: [{ ...outer, minus: { char: r.inner, dx: r.dx, dy: r.dy, scale: r.scale, keep: r.residue.pieces } }],
       periphery: units,
       kind: 'containment',
       ground: `「${r.inner}」は「${r.outer}」の中にある → 残りが中心、題は周縁`,
@@ -55,7 +55,7 @@ export const centre: SpatialComposition = {
     return r ? { id: 'centre', score: r.kind === 'dependency' ? 0.75 : 0.7, grounds: [r.ground] } : null
   },
 
-  realize(a, m, rng) {
+  realize(a, m, rng, scale) {
     const r = roles(a, m)!
     const { vertical } = directions(a)
     const c: Vec = { x: offCentre(rng, 0.3, 0.42), y: offCentre(rng, 0.3, 0.42) }
@@ -64,19 +64,19 @@ export const centre: SpatialComposition = {
     if (r.kind === 'containment') {
       const u = r.centre[0]
       const f = m.primary.focus
-      const residue = f.kind === 'pair' ? f.relation.residue.centroid : { x: 0, y: 0 }
-      const S = rng.range(0.7, 1.05) * PAGE
-      const k = S / EM
-      marks.push({ char: u.char, x: c.x - residue.x * k, y: c.y - residue.y * k, size: S, minus: u.minus })
+      const box = f.kind === 'pair' ? f.relation.residue.box : { x: -EM / 2, y: -EM / 2, w: EM, h: EM }
+      const S = scale.pick('result', rng, [0.2, 0.6])
+      const g = placeRegion(box, S, c)
+      marks.push({ char: u.char, x: g.x, y: g.y, size: S, minus: u.minus, keep: u.minus?.keep })
     } else {
-      const written = r.centre.filter(isWritten).length
-      // 造形: the centre may be larger than the page can hold
-      const S = Math.min(0.85, 1.1 / Math.max(1, written)) * PAGE * rng.range(0.8, 1)
-      marks.push(...centredLine(a, r.centre, c, S))
+      // the centre holds the page by its place, at body size, not by being enlarged past it
+      const n = Math.max(1, r.centre.length)
+      const S = Math.min(scale.pick('body', rng, [0.5, 1]), (0.7 * PAGE) / n)
+      marks.push(...centredLine(a, r.centre, inside(a, c, n * S, S), S))
     }
 
     // the periphery: small, at the edge farthest from the centre
-    const s = rng.range(0.042, 0.06) * PAGE
+    const s = scale.pick('aside', rng)
     const margin = rng.range(0.05, 0.1) * PAGE
     const edgeX = c.x < PAGE / 2 ? PAGE - margin : margin
     const edgeY = c.y < PAGE / 2 ? PAGE - margin : margin

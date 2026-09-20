@@ -68,18 +68,26 @@ function relationLabel(a: Analysis, r: Relation): string {
   }
 }
 
-/** a proposal as one line: op, focus, salience = (strength, distinctiveness, coverage) */
+/**
+ * a proposal: poeticPotential = √(linguisticSalience × visualPotential), then
+ * each measure with its components
+ */
 function proposalLine(p: Proposal, status: 'primary' | 'modifier' | 'offered', reason?: string): HTMLElement {
   const li = el('li', status)
-  const s = p.salience
+  const s = p.linguisticSalience
+  const v = p.visualPotential
   li.append(
     el('span', 'op', opTitle(p.op)),
-    el('span', 'sal', f2(s.value)),
-    el('span', 'parts', `= rs ${f2(s.relationStrength)} · d ${f2(s.distinctiveness)} · cov ${f2(s.coverage)}`),
+    el('span', 'sal', `poetic ${f2(p.poeticPotential ?? 0)}`),
+    el('div', 'parts', `linguistic ${f2(s.value)} = rs ${f2(s.relationStrength)} · d ${f2(s.distinctiveness)} · cov ${f2(s.coverage)}`),
+    el('div', 'parts', v ? `visual ${f2(v.value)} = legibility ${f2(v.legibility)} × structure ${f2(v.structure)}` : ''),
   )
-  const rel = el('div', 'rel', p.relations.join('  '))
-  li.append(rel)
-  if (status !== 'offered') li.append(el('div', 'ev', p.evidence.join(' / ')))
+  li.append(el('div', 'rel', p.relations.join('  ')))
+  if (status !== 'offered') {
+    li.append(el('div', 'ev', p.evidence.join(' / ')))
+    if (v?.notes.length) li.append(el('div', 'ev', v.notes.join(' / ')))
+  }
+  if (p.roles.note) li.append(el('div', 'reason', `△ ${p.roles.note}`))
   if (reason) li.append(el('div', 'reason', `✕ ${reason}`))
   return li
 }
@@ -107,6 +115,7 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
     document.createTextNode(c.modifiers.length ? ` + ${c.modifiers.map((m) => opTitle(m.op)).join(' + ')}` : ''),
     document.createTextNode('  /  '),
     el('b', undefined, spaceTitle(c.spatial.id)),
+    document.createTextNode(`  /  ${c.scale.regime}`),
     el('span', 'cover', `  ink ${(cover * 100).toFixed(0)}%`),
   )
   box.append(decision)
@@ -138,6 +147,7 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
     box.append(mods)
   }
 
+  box.append(el('h3', undefined, 'scale regime'), el('p', 'rel', `${c.scale.regime} — ${c.scale.grounds}`))
   box.append(el('h3', undefined, 'spatial composition'))
   const fits = el('ol', 'fits')
   c.fits.forEach((f) => {
@@ -159,7 +169,7 @@ async function main(): Promise<void> {
   const header = el('header')
   header.append(
     el('h1', undefined, 'study sheet'),
-    el('p', undefined, `${titles.length} titles · variant ${variant} · the pages carry no text; what was read and decided is written beside them`),
+    el('p', undefined, `development set · ${titles.length} titles · variant ${variant} · the pages carry no text; what was read and decided is written beside them`),
   )
   const list = el('main', grid ? 'grid' : undefined)
   document.body.append(header, list)
@@ -167,6 +177,7 @@ async function main(): Promise<void> {
   const byOp = new Map<string, number>()
   const bySpace = new Map<string, number>()
   const byPair = new Map<string, number>()
+  const byScale = new Map<string, number>()
   const covers: number[] = []
   const count = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1)
 
@@ -187,6 +198,7 @@ async function main(): Promise<void> {
     count(byOp, opTitle(c.primary.op))
     count(bySpace, spaceTitle(c.spatial.id))
     count(byPair, `${opTitle(c.primary.op)} / ${spaceTitle(c.spatial.id)}`)
+    count(byScale, c.scale.regime)
   }
 
   const summary = el('div', 'summary')
@@ -194,6 +206,7 @@ async function main(): Promise<void> {
     ['primary operation', byOp],
     ['spatial composition', bySpace],
     ['operation / space', byPair],
+    ['scale regime', byScale],
   ] as const) {
     const col = el('div')
     col.append(el('h3', undefined, title))
