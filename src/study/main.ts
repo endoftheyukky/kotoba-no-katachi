@@ -12,8 +12,10 @@ import './study.css'
 import '../glyph/font-face'
 import type { Relation } from '../language/analysis'
 import { analyze, compose, MODIFIER_SALIENCE, OPERATIONS, SPACES } from '../poem/compose'
-import type { Analysis, Composition, Proposal } from '../poem/types'
+import { measure, verdict } from '../poem/measure'
+import type { Analysis, Composition, Decision, Proposal } from '../poem/types'
 import { renderCanvas } from '../render/png'
+import { PAGE } from '../render/stage'
 import { renderSVG } from '../render/svg'
 import { normalizeTitle } from '../title'
 import { STUDY_TITLES, type StudyTitle } from './titles'
@@ -175,6 +177,41 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
     box.append(ul)
   }
 
+  const decisions = (title: string, ds: Decision[]) => {
+    box.append(el('h3', undefined, title))
+    const ul = el('ul', 'params')
+    for (const d of ds) {
+      const li = el('li', 'applied')
+      li.append(
+        el('span', 'op', d.name),
+        el('span', 'ground', d.ground === 'linguistic' ? '言語' : '造形'),
+        el('span', 'sal', d.value),
+        el('div', 'rel', d.note),
+      )
+      ul.append(li)
+    }
+    box.append(ul)
+  }
+
+  if (c.contract) {
+    const { occupancy: o, fitted } = c.contract
+    decisions(
+      `occupancy — reach ${f2(o.reach)} / fill ${f2(o.fill)} / ${o.spread}${o.bleed ? ' · 断ち落とし可' : ''}`,
+      o.decisions,
+    )
+    decisions(
+      `scale contract — 望む帯 ${fitted.desired} → 実際 ${fitted.achieved}${fitted.bled ? ' · 紙面外へ' : ''} · 字の大きさ ${fitted.sizes.map((v) => (v / PAGE).toFixed(2)).join(' : ')}`,
+      fitted.decisions,
+    )
+  }
+
+  const mm = measure(c.draft.marks)
+  const v = verdict(mm, c.spatial.id)
+  box.append(el('h3', undefined, 'measured page'))
+  box.append(
+    el('p', v.dead ? 'dead' : 'rel', `reach ${f2(mm.reach)} · area ${f2(mm.area)} · 最大字 ${f2(mm.maxEm)} · marks ${mm.count} — ${v.note}`),
+  )
+
   box.append(el('h3', undefined, 'not adopted'))
   const rest = el('ul', 'ops')
   for (const r of c.rejected) rest.append(proposalLine(r.proposal, 'offered', r.reason))
@@ -198,6 +235,8 @@ async function main(): Promise<void> {
   const byScale = new Map<string, number>()
   const inventory = { candidates: 0, primary: 0, modifier: 0, components: [] as string[] }
   const covers: number[] = []
+  const dead: string[] = []
+  const reaches: number[] = []
   const count = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1)
 
   for (const t of titles) {
@@ -218,6 +257,9 @@ async function main(): Promise<void> {
     count(bySpace, spaceTitle(c.spatial.id))
     count(byPair, `${opTitle(c.primary.op)} / ${spaceTitle(c.spatial.id)}`)
     count(byScale, c.scale.regime)
+    const mm = measure(c.draft.marks)
+    reaches.push(mm.reach)
+    if (verdict(mm, c.spatial.id).dead) dead.push(t.text)
     const found = a.glyphRelations.filter((r) => r.origin === 'inventory')
     if (found.length) {
       inventory.candidates++
@@ -253,6 +295,13 @@ async function main(): Promise<void> {
       'p',
       'coverline',
       `inventory readings: ${inventory.candidates}/${titles.length} titles have one · primary in ${inventory.primary} · modifier in ${inventory.modifier} · found: ${inventory.components.join(' ') || '—'}`,
+    ),
+  )
+  summary.append(
+    el(
+      'p',
+      dead.length ? 'coverline dead' : 'coverline',
+      `死域（少数・小さな字・狭い範囲）: ${dead.length}/${titles.length}${dead.length ? ` — ${dead.join(' ')}` : ' — なし'} · reach 中央値 ${[...reaches].sort((x, y) => x - y)[Math.floor(reaches.length / 2)].toFixed(2)}`,
     ),
   )
   const sorted = [...covers].sort((x, y) => x - y)

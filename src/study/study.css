@@ -284,3 +284,8 @@ main.grid .caption {
   color: var(--mute);
   font-weight: normal;
 }
+
+.record .dead,
+.coverline.dead {
+  color: #b00;
+}

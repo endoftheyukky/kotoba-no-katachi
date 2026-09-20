@@ -12,7 +12,8 @@
 import { clamp } from '../../core/math'
 import { EM } from '../../glyph/font'
 import type { GlyphMetrics } from '../../glyph/metrics'
-import type { Analysis, Material, Parameter, Unit } from '../types'
+import { occupancyOf } from '../contract'
+import type { Analysis, Material, Occupancy, Parameter, ScaleBand, Unit } from '../types'
 import { allUnits, isWritten } from './common'
 import { coordinated, dependencyBy, relationsOf } from './relations'
 
@@ -221,6 +222,28 @@ const WEIGHT: Record<string, number> = {
 /** at most this many parameters leave their neutral value in one poem */
 const VARY = 2
 
+/**
+ * Whether the poem asks the reader to read the marks themselves — the form of
+ * a character, the small difference between two forms, the seam inside a word.
+ * Where it does, the letterform is the subject and is written large. Where the
+ * poem is about two words standing apart, the marks are ordinary and the
+ * distance does the work: those pages may stay small in a great emptiness.
+ *
+ * Being few is never itself a reason to be large.
+ */
+export function closeness(p: Poles): { close: boolean; band: ScaleBand; note: string } {
+  switch (p.kind) {
+    case 'similarity':
+      return { close: true, band: 'large', note: '二つの形の差そのものを読ませる → 元の形を大きく' }
+    case 'inflection':
+      return { close: true, band: 'large', note: '語の継ぎ目を読ませる → 継ぎ目が見える大きさに' }
+    case 'containment':
+      return { close: true, band: 'macro', note: '引き算の残りは操作が生んだもの → macro を許す' }
+    default:
+      return { close: false, band: 'normal', note: '語と語の関係は、字の大きさではなく隔たりで見せる' }
+  }
+}
+
 export interface AxisShape {
   /** the axis runs along the writing direction, or across it */
   vertical: boolean
@@ -235,10 +258,12 @@ export interface AxisShape {
   offsetB: number
   /** extra shift of the subordinate pole, in page units */
   alignment: number
+  /** how much of the page the figure claims, and how much of that is ink */
+  occupancy: Occupancy
   parameters: Parameter[]
 }
 
-export function axisShape(a: Analysis, m: Material, p: Poles, page: number): AxisShape {
+export function axisShape(a: Analysis, m: Material, p: Poles, page: number, bleed: boolean): AxisShape {
   const salience = m.primary.linguisticSalience.value
   // a written space only pushes the poles apart when the poles are the two
   // sides of it: a joint inside one word is not separated by it
@@ -297,6 +322,7 @@ export function axisShape(a: Analysis, m: Material, p: Poles, page: number): Axi
     offsetA: 0,
     offsetB: 0,
     alignment: 0,
+    occupancy: occupancyOf({ distance: NEUTRAL_DISTANCE, distanceNote: '中立の隔たり', spread: 'pair', bleed }),
     parameters: [],
   }
 
@@ -384,6 +410,14 @@ export function axisShape(a: Analysis, m: Material, p: Poles, page: number): Axi
     e.apply()
     e.applied = true
   }
+  // occupancy follows the distance the poem actually adopted, not the one it
+  // was offered: a parameter returned to neutral must not stretch the page
+  shape.occupancy = occupancyOf({
+    distance: shape.distance,
+    distanceNote: entries.find((e) => e.key === 'distance')!.applied ? distanceNote : '中立の隔たり',
+    spread: 'pair',
+    bleed,
+  })
   shape.parameters = entries.map(({ name, ground, value, neutral, applied, deviation, note }) => ({
     name,
     ground,

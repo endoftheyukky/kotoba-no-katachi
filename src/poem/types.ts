@@ -201,15 +201,91 @@ export interface Placed {
   marks: Mark[]
   /** what the composition decided, and why (for study; never drawn) */
   parameters?: Parameter[]
+  /** the contract this composition worked under, where it works under one */
+  contract?: Contract
 }
 
 export interface SpatialComposition {
   id: SpatialId
   title: string
   rules: readonly string[]
+  /**
+   * Whether this composition may let its marks run off the page rather than
+   * shrink them when the page cannot hold the relation. A property of the
+   * composition, not a global rule: a page whose three terms must all be
+   * traceable cannot afford to lose one over the edge.
+   */
+  bleed?: boolean
   /** null when this space cannot hold this material */
   fit(a: Analysis, m: Material): Fit | null
   realize(a: Analysis, m: Material, rng: Rng, scale: Scale): Placed
+}
+
+// ---------------------------------------------------------------------------
+// occupancy and the scale contract
+//
+// Two separate measures. Scale is how large a mark is; occupancy is how much
+// of the page the figure claims. They are independent: small marks at the two
+// edges occupy the whole page, and two large marks touching in the middle
+// occupy little of it.
+
+/**
+ * micro  texture, or a mark set beside another as a witness
+ * small  the unit of a line or a field: read as writing, not as a form
+ * normal a word held at a distance
+ * large  the letterform itself is the subject, and fills much of the page
+ * macro  larger than the page can hold; only for what an operation produced
+ */
+export type ScaleBand = 'micro' | 'small' | 'normal' | 'large' | 'macro'
+
+/** how the figure fills what it reaches */
+export type Spread = 'mass' | 'pair' | 'line' | 'field' | 'edge'
+
+/** a decision with the kind of ground it rests on (for study; never drawn) */
+export interface Decision {
+  name: string
+  ground: 'linguistic' | 'plastic'
+  value: string
+  note: string
+}
+
+export interface Occupancy {
+  /** 0–1.3: the longer side of the figure, as a share of the page */
+  reach: number
+  /** 0–1: how much of the reach is ink rather than the white inside the figure */
+  fill: number
+  spread: Spread
+  /** whether the figure may leave the page instead of shrinking */
+  bleed: boolean
+  decisions: Decision[]
+}
+
+/** a request to size several groups of marks that share one reach */
+export interface FitRequest {
+  /** how many glyph widths each group lays along the reach */
+  extents: number[]
+  /** the desired size of each group, relative to each other (from the language) */
+  ratios: number[]
+  /** the band the grounds ask for */
+  band: ScaleBand
+  note: string
+}
+
+export interface Fitted {
+  /** em size for each group, in page units */
+  sizes: number[]
+  /** what the grounds asked for */
+  desired: ScaleBand
+  /** what the page could hold */
+  achieved: ScaleBand
+  /** the figure leaves the page */
+  bled: boolean
+  decisions: Decision[]
+}
+
+export interface Contract {
+  occupancy: Occupancy
+  fitted: Fitted
 }
 
 // ---------------------------------------------------------------------------
@@ -275,6 +351,8 @@ export interface Composition {
   spatial: Fit
   scale: Scale
   parameters: Parameter[]
+  /** null where the composition does not yet work under the new contract */
+  contract: Contract | null
   /** every proposal, ranked by salience */
   proposals: Proposal[]
   /** every space that could hold the material, ranked */

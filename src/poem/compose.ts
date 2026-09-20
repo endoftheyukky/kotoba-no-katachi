@@ -158,6 +158,7 @@ export function compose(a: Analysis, force: Force = {}): Composition {
     spatial,
     scale,
     parameters: placed.parameters ?? [],
+    contract: placed.contract ?? null,
     proposals,
     fits,
     rejected,
