@@ -12,6 +12,7 @@ import { EM, type Face } from '../../glyph/font'
 import { REMOVAL_MARGIN } from '../../glyph/relation'
 import type { Analysis, Mark, Material, Placed, Realization, Vec } from '../types'
 import { faceOf } from '../face'
+import { distances, edgeDistance } from './ink'
 
 export interface PageView {
   a: Analysis
@@ -25,11 +26,21 @@ export interface PageView {
   /** the marks the page is organised around: the largest of the body, when they stand out */
   nucleus: Mark[]
   seats: NonNullable<Placed['seats']>
+  /** review only: whether material may be taken from the lexicon (grammar/material.ts) */
+  semantic: boolean
+  /** review only: a way of a grammar asked for by name, instead of the one its rule chooses */
+  variant?: string
+}
+
+/** what a review may ask of a grammar, beyond naming it */
+export interface Asked {
+  semantic?: boolean
+  variant?: string
 }
 
 const median = (v: number[]) => [...v].sort((x, y) => x - y)[Math.floor(v.length / 2)] ?? 0
 
-export function viewOf(a: Analysis, m: Material, spatial: Realization, placed: Placed): PageView {
+export function viewOf(a: Analysis, m: Material, spatial: Realization, placed: Placed, asked: Asked = {}): PageView {
   const marks = placed.marks
   const context = marks.filter((k) => k.context)
   const body = marks
@@ -54,11 +65,13 @@ export function viewOf(a: Analysis, m: Material, spatial: Realization, placed: P
     context: context.map((k) => byOld.get(k)!),
     nucleus: nucleus.map((k) => byOld.get(k)!),
     seats: placed.seats ?? [],
+    semantic: !!asked.semantic,
+    ...(asked.variant ? { variant: asked.variant } : {}),
   }
 }
 
 /** a point of the page in a mark's own em space (ink centre = origin) */
-function toEm(k: Mark, p: Vec): Vec {
+export function toEm(k: Mark, p: Vec): Vec {
   const s = k.size / EM
   const t = (-(k.rotate ?? 0) * Math.PI) / 180
   const dx = p.x - k.x
@@ -89,7 +102,7 @@ export function fromEm(k: Mark, e: Vec): Vec {
 export function inkAt(v: PageView, k: Mark, p: Vec, as?: Face): boolean {
   const e = toEm(k, p)
   if (k.keep?.length && !k.keep.some((r) => e.x >= r.x && e.y >= r.y && e.x <= r.x + r.w && e.y <= r.y + r.h)) return false
-  const face = as ?? (k.derived ? 'serif' : faceOf(v.a, v.m, k))
+  const face = as ?? faceOf(v.a, v.m, k)
   let metrics
   try {
     metrics = v.a.glyphs.get(k.char, face).metrics
@@ -110,6 +123,43 @@ export function inkAt(v: PageView, k: Mark, p: Vec, as?: Face): boolean {
     for (const [ox, oy] of [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r]]) if (rasterHas(other.ink, { x: q.x + ox, y: q.y + oy })) return false
   }
   return true
+}
+
+/**
+ * Whether any of a mark's ink lies within `r` of a page point: measured on the
+ * glyph's distance field, so a hairline between two sample points is not
+ * missed. A part or a residue (what is kept or left of a glyph) is sampled.
+ */
+export function inkNear(v: PageView, k: Mark, p: Vec, r: number): boolean {
+  if (k.keep?.length || k.minus) {
+    for (const u of [-1, -0.5, 0, 0.5, 1])
+      for (const w of [-1, -0.5, 0, 0.5, 1]) if (u * u + w * w <= 1.01 && inkAt(v, k, { x: p.x + u * r, y: p.y + w * r })) return true
+    return false
+  }
+  const face = faceOf(v.a, v.m, k)
+  let ink
+  try {
+    ink = v.a.glyphs.get(k.char, face).metrics.ink
+  } catch {
+    ink = v.a.glyphs.get(k.char).metrics.ink
+  }
+  return (edgeDistance(distances(ink), toEm(k, p)) * k.size) / EM < r
+}
+
+/**
+ * Whether a point of the page lies on the ink of the glyph a subtraction took
+ * out of this mark: the removed form itself, where it was, whole.
+ */
+export function removedAt(v: PageView, k: Mark, p: Vec): boolean {
+  if (!k.minus) return false
+  let other
+  try {
+    other = v.a.glyphs.get(k.minus.char).metrics
+  } catch {
+    return false
+  }
+  const e = toEm(k, p)
+  return rasterHas(other.ink, { x: (e.x - k.minus.dx) / k.minus.scale, y: (e.y - k.minus.dy) / k.minus.scale })
 }
 
 function rasterHas(ink: { w: number; h: number; data: Uint8Array; left: number; top: number; px: number }, e: Vec): boolean {

@@ -69,10 +69,19 @@ const bare = params.get('bare') === '1'
 /**
  * a comparison entry → the review-only force that draws it. An entry may end
  * in `+grammar` (v2): `#1+field` is the chosen page written as a density field.
+ * A grammar may name one of its ways (`#1+silhouette/contour`), and `+sem`
+ * lets the grammars that place several materials take one from the lexicon
+ * (`#1+constellation+sem`). Both are review only.
  */
 function forceOf(spec: string, fits: readonly Realization[]): Force | null {
-  const [base, g] = spec.split('+')
-  const grammar = g ? { grammar: g as GrammarId | 'auto' } : {}
+  const [base, ...more] = spec.split('+')
+  const g = more.find((x) => x !== 'sem')
+  const [gid, named] = (g ?? '').split('/')
+  const grammar = {
+    ...(gid ? { grammar: gid as GrammarId | 'auto' } : {}),
+    ...(named ? { variant: named } : {}),
+    ...(more.includes('sem') ? { semantic: true } : {}),
+  }
   if (base === 'auto' || base === '') return { ...grammar }
   const rank = /^#(\d+)$/.exec(base)
   if (rank) {
@@ -411,7 +420,7 @@ async function comparison(list: HTMLElement): Promise<void> {
       renderSVG(page, c.draft, a.glyphs)
       const cap = el('div', 'caption')
       cap.append(
-        el('p', 'shotname', `${spaceTitle(r.id)} / ${r.mode}${c.grammar.id !== 'uniform' ? ` + ${c.grammar.id}` : ''}${same && c.grammar.id === 'uniform' ? '　← 採用' : ''}`),
+        el('p', 'shotname', `${spaceTitle(r.id)} / ${r.mode}${c.grammar.id !== 'uniform' ? ` + ${c.grammar.id}${c.grammar.variant ? `/${c.grammar.variant}` : ''}` : ''}${force.semantic ? ' +語彙' : ''}${same && c.grammar.id === 'uniform' ? '　← 採用' : ''}`),
         el('p', undefined, `fitness ${f2(r.fitness)}`),
         el('p', undefined, `使う: ${r.uses.length ? r.uses.map((u) => `${u.property} ${u.value}`).join(' · ') : '—'}`),
         el('p', r.losses?.length ? 'dead' : undefined, `失う: ${r.losses?.length ? r.losses.map((u) => `${u.property} ${u.value}`).join(' · ') : '—'}`),
@@ -420,6 +429,8 @@ async function comparison(list: HTMLElement): Promise<void> {
         cap.append(
           el('p', undefined, `grammar: ${c.grammar.grounds.join(' / ')}`),
           el('p', undefined, `派生: ${Object.entries(c.grammar.derived).map(([k, n]) => `${k}×${n}`).join(' ') || '—'}`),
+          // semantic material: where each character was read from (review only; never on the page)
+          ...[...new Set(c.draft.marks.filter((k) => k.derived?.source).map((k) => k.derived!.source!))].map((src) => el('p', 'dead', `語彙: ${src}`)),
         )
       if (detail) {
         const mm = measureAll(c.draft.marks).total

@@ -8,13 +8,17 @@
  * its provenance, so what the page shows can be traced back to the title.
  */
 import type { Rng } from '../../core/random'
-import { BANDS } from '../contract'
 import type { GrammarId, Mark, Provenance } from '../types'
-import { boxOf, inkAt, type PageView } from './page'
+import { boxOf, inkNear, type PageView } from './page'
+import { GRAIN_MIN } from './roles'
+
+export { GRAIN_MIN }
 
 export interface GrammarOffer {
   grounds: string[]
   uses: { property: string; value: string }[]
+  /** which of its ways the grammar will draw, where it has more than one */
+  variant?: string
 }
 
 export interface MarkGrammar {
@@ -27,18 +31,16 @@ export interface MarkGrammar {
   apply(v: PageView, rng: Rng): Mark[]
 }
 
-/** the smallest a grain is written: below the micro band it stops being a character */
-export const GRAIN_MIN = BANDS.micro[0] * 0.8
-
 /** 4 × 4 ordered-dither thresholds: a density drawn without chance */
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16)
 export const dither = (i: number, j: number) => BAYER[(((j % 4) + 4) % 4) * 4 + (((i % 4) + 4) % 4)]
 
-export const derive = (grammar: GrammarId, kind: Provenance['kind'], note: string, from?: number): Provenance => ({
+export const derive = (grammar: GrammarId, kind: Provenance['kind'], note: string, from?: number, source?: string): Provenance => ({
   grammar,
   kind,
   note,
   ...(from !== undefined ? { from } : {}),
+  ...(source ? { source } : {}),
 })
 
 /**
@@ -57,20 +59,18 @@ export function clear(v: PageView, others: Mark[], x: number, y: number, size: n
   return true
 }
 
+/** how far from a small mark's centre the ink of others must stay, as a share of its size */
+export const CLEAR = 0.45
+
 /**
- * Whether a small mark can stand at this point: nowhere on the ink of the
- * page's own marks (their white is free), and not on another small mark.
- * Ink, not boxes: a ring round a character may pass through the corners of
- * its em square, never through a stroke.
+ * Whether a small mark can stand at this point: no ink of the page's own
+ * marks within most of its em (their white is free), and not on another
+ * small mark. Ink, not boxes: a ring round a character may pass through the
+ * corners of its em square, never through a stroke.
  */
 export function free(v: PageView, own: Mark[], added: Mark[], x: number, y: number, size: number): boolean {
-  const pts = [
-    [0, 0], [0.42, 0.42], [-0.42, 0.42], [0.42, -0.42], [-0.42, -0.42], [0, 0.45], [0.45, 0], [0, -0.45], [-0.45, 0],
-    [0.22, 0.22], [-0.22, 0.22], [0.22, -0.22], [-0.22, -0.22],
-  ].map(
-    ([u, w]) => ({ x: x + u * size, y: y + w * size }),
-  )
-  if (own.some((k) => pts.some((p) => inkAt(v, k, p)))) return false
+  const p = { x, y }
+  if (own.some((k) => Math.abs(k.x - x) < (k.size + size) * 0.75 && Math.abs(k.y - y) < (k.size + size) * 0.75 && inkNear(v, k, p, size * CLEAR))) return false
   return added.every((k) => Math.abs(k.x - x) >= (k.size + size) * 0.5 || Math.abs(k.y - y) >= (k.size + size) * 0.5)
 }
 

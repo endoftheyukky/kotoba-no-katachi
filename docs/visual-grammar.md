@@ -294,6 +294,88 @@ grammar. Contact sheets: `docs/contact/dev34-v2.png`, `docs/contact/holdout-v2.p
 size), so several of them read as a family; orbits are circles; a quiet page
 stays quiet; the joint line and the corner page are untouched.
 
+Checkpoint: tag `v2a` (= `ccdc3df`), sheets `docs/contact/dev34-v2a.png`,
+`docs/contact/holdout-v2a.png`.
+
+## v2b — second generation (branch `v2`)
+
+**Roles, as sizes.** A grammar says what each mark it adds is; the role, not
+the grammar, says how large and how many (`grammar/roles.ts`): satellite —
+the top of the micro band, few; grain — the bottom of it down to where a
+character stops being one, many; trace — decays from what it follows to the
+smallest grain; auxiliary — a little under a satellite, at most a few, for
+what comes from outside the writing. Derived marks never reach the small
+band. A derived mark below the micro band is written in the reading face:
+the writing face's thin strokes fall under a pixel of the exported page there
+(`face.ts`, `SMALLEST_WRITING`).
+
+**Silhouette: four ways, chosen by the nucleus.** Stroke widths were
+measured on both faces (distance transform of the ink, widths along the
+middle of the strokes): the reading face varies little (coefficient of
+variation 0.01–0.22), the writing face's kanji a lot (0.27–0.37); the line is
+drawn at 0.25, between the faces, not per title.
+
+| way | where | what the form does |
+| --- | --- | --- |
+| residue | the nucleus is what a subtraction left | the residue is filled with grains; the glyph taken out stays where it was as the smallest grains (a trace) — unless the page writes it in that place (a nest) |
+| contour | the nucleus's closed white is the subject (the counter the page is about, or white holding a quarter of its box) | only the edge of the ink, a line of grains just off the strokes; twenty to twenty-four grains across the em so the line stands apart from itself |
+| density | the nucleus is written in the writing face and its strokes vary (≥ 0.25) | one lattice; the grain under a point is as large as the stroke there is wide (from the smallest grain to twice it) |
+| fill | otherwise | every lattice point on ink holds one size of grain (v2a) |
+
+Forced over all 81 titles: fill 34, residue 7, density 5, contour 4. Under
+auto on the development set: fill 5, residue 4, density 1, contour 1.
+
+**Four grammars.**
+
+| grammar | linguistic input | rule | auto |
+| --- | --- | --- | --- |
+| emanation | a nucleus and where its constituents lie (islands/parts in the glyph, or its marks as laid out) | one ray per constituent, in its direction; along a ray each mark smaller, further, turned with the ray; sound one more ray; meaning single marks furthest out. Only where the rays surround the nucleus (three at least, no half-turn empty) | no |
+| branch | a grouping the title makes (coordinated terms, occurrences) and what each group is made of (its characters, or its islands of ink and what they read as) | each group grows as many branches as it has members, rows of small marks, all to the side with room; branches do not shrink — the count is compared | where the groups differ in count, before orbit |
+| constellation | the kinds of material the title holds: structure, sound (reading reduced to vowels), meaning (review only) | structure and sound are discs of grains whose area is one share per character measured; they stand in the page's own white (largest empty circles), structure nearest the writing, sound further, meaning (a few marks round a ring) furthest | last, before uniform |
+| lattice | a repetition laid in two grounded dimensions: a grid whose rows are the occurrences, or a field of lines of the title | a grid's rows are read again smaller cell by cell and go on in the room freed; a field's lines shrink one after another (from the middle for a mirror title), over the extent it covered | occurrence grids |
+
+**Selection (`auto`), now.** Corner → quiet; erasure → attenuation / field;
+run of eight → phase / attenuation; formed nucleus → silhouette (its way by
+rule; illegible → branch or orbit); occurrence grid → lattice; groups that
+differ → branch; poles → orbit; two kinds of material → constellation;
+otherwise v1. Emanation is not selected (under review it was the reading
+prolonged, not a new event); the lexicon is never selected.
+
+**Semantic material (review only).** `src/language/lexicon/` holds a small
+lexicon written for this work (`seed.ts`, seed-lexicon v0): categories of
+single characters over whole fields (sky, light, water, land, plants,
+animals, the body, people, dwellings, time, things, sound, a few actions) and
+typed relations between them — made-of, part, unit (inside the thing), with,
+organ (beside it at the same moment), source, becomes, yields (before or
+after it); the other end of each is read too (whole, was, use), and those
+and opposites are recorded but never taken. Material is taken nearest
+relation first, one per head per pass, the page's nucleus first, at most
+three, never a character the title writes or the structure already gives.
+No generated text, no model; the same title always gets the same few. It
+enters only the grammars that place several materials (constellation,
+emanation, branch), only as auxiliary marks, only when a review asks for it
+(`Force.semantic`, `+sem` in `study.html?compare=`), and every mark records
+the statement it came from (`Provenance.source`); the page never shows it.
+
+**Review.** `study.html?compare=%231%2Bconstellation%2Bsem|%231%2Bsilhouette/contour`
+— a grammar may name one of its ways; `+sem` lets the lexicon in.
+
+**Results.** Development set: every page as before is lossless, in order,
+without overlap, no grain on ink or on a grain; 81 titles × 8 ways generate
+identically twice (648); v1 (`compose()` with no grammar) is unchanged to the
+mark on both sets. Grammars in use on the development set: v2a 6 kinds
+(uniform 10) → v2b 9 kinds (uniform 5: three corner pages, 白い 犬, なぜ？).
+Holdout: 28 of 47 pages take a grammar (v2a: 22). Sheets:
+`docs/contact/dev34-v2b.png`, `docs/contact/holdout-v2b.png`,
+`docs/contact/v2b-grammars-compare.png`, `docs/contact/v2b-silhouette-ways.png`.
+
+**Still weak.** Emanation almost never has room: its best case (森) bleeds off
+the page. Constellation's discs are hexagonal rosettes of one grain size —
+a second family texture. Branch reads the computer's island readings as they
+are (林's left island reads 扌). Lattice finds grids and fields only. Density
+needs a single nucleus that can grow to twice the smallest grain across
+twenty-two grains; word nuclei stay fill.
+
 ## VOID
 
 `void.ts` is kept and is not a preferred choice. Its idea — a region that is

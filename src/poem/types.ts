@@ -508,13 +508,29 @@ export interface Mark {
  *   nucleus    the mark the page is organised around
  *   body       the title's own characters, written
  *   context    the rest of the title beside a figure
- *   satellite  a small mark placed in relation to a nucleus
- *   grain      one of many small marks that together make a field or a form
+ *   satellite  a small mark placed in relation to a nucleus: few, and the
+ *              largest of the derived marks
+ *   grain      one of many small marks that together make a field or a form:
+ *              the smallest, and many
  *   trace      what remains of a mark: an echo, a decay
+ *   auxiliary  a mark brought from outside the title's own writing (its sound
+ *              reduced to vowels, a word the lexicon relates to it): few,
+ *              small, and never where the title itself is
+ * How large and how many each may be is fixed in grammar/roles.ts.
  */
-export type MarkRole = 'nucleus' | 'body' | 'context' | 'satellite' | 'grain' | 'trace'
+export type MarkRole = 'nucleus' | 'body' | 'context' | 'satellite' | 'grain' | 'trace' | 'auxiliary'
 
-export type GrammarId = 'uniform' | 'attenuation' | 'field' | 'silhouette' | 'phase' | 'orbit'
+export type GrammarId =
+  | 'uniform'
+  | 'attenuation'
+  | 'field'
+  | 'silhouette'
+  | 'phase'
+  | 'orbit'
+  | 'emanation'
+  | 'branch'
+  | 'constellation'
+  | 'lattice'
 
 /** where a mark the title does not itself write came from */
 export interface Provenance {
@@ -525,10 +541,15 @@ export interface Provenance {
    *   echo      a mark's own character, fading (a decay, an afterimage)
    *   form      a form the reading found inside a character (an echo form, an inner glyph)
    *   rest      the rest of the title, used as material for a form
+   *   sound     the title's reading reduced to its vowels (phonological)
+   *   semantic  a character a lexicon relates to one the title writes: never
+   *             the title's own, never shown as an explanation (review first)
    */
-  kind: 'repeat' | 'echo' | 'form' | 'rest'
+  kind: 'repeat' | 'echo' | 'form' | 'rest' | 'sound' | 'semantic'
   /** the grapheme it derives from, when it derives from one */
   from?: number
+  /** for semantic material: the resource, and the relation it was read by */
+  source?: string
   note: string
 }
 
@@ -574,6 +595,8 @@ export interface Composition {
 
 export interface GrammarApplied {
   id: GrammarId
+  /** which of its ways the grammar drew, where it has more than one (silhouette: fill, contour, density, residue) */
+  variant?: string
   grounds: string[]
   uses: { property: string; value: string }[]
   /** derived marks added, by where they came from */

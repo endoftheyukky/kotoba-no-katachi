@@ -23,14 +23,25 @@
  *   - a character whose closed white is what the poem uses.
  * A character that falls into parts is not itself a reading: the parts are.
  * Context — the rest of the title around a figure — is always writing.
+ *
+ * v2: a mark the title does not itself write (a grain, an echo, a satellite)
+ * is writing too — down to the micro band. Below it the writing face's thin
+ * strokes (a thirtieth of the em and less) fall under a pixel of the page as
+ * it is exported, and a grain in it is no longer a character but a smudge; a
+ * derived mark that small is written in the reading face, whose strokes stay
+ * whole. The line is the band's, not a title's.
  */
 import { covers } from '../glyph/coverage'
 import type { Face } from '../glyph/font'
+import { PAGE } from '../render/stage'
+import { BANDS } from './contract'
 import type { Analysis, Mark, Material } from './types'
 
+/** derived marks below this size (page units) are written in the reading face */
+export const SMALLEST_WRITING = BANDS.micro[0] * PAGE
+
 export function faceOf(a: Analysis, m: Material, k: Mark): Face {
-  // a mark the title does not itself write (a grain, an echo) is writing
-  if (k.derived) return 'serif'
+  if (k.derived) return k.size < SMALLEST_WRITING ? 'sans' : 'serif'
   if (k.minus || k.keep || k.shift) return 'sans'
   if (k.context) return 'serif'
   const f = m.primary.focus

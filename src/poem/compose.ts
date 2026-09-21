@@ -17,10 +17,12 @@
  */
 import { Rng } from '../core/random'
 import { readInterior, type Interior } from '../glyph/interior'
+import { covers } from '../glyph/coverage'
 import { COMPONENTS, STROKES } from '../glyph/legibility'
 import { readInventory, readRelations, relate, RELATION_THRESHOLD, type GlyphRelation } from '../glyph/relation'
 import { GlyphLibrary } from '../glyph/source'
 import { analyzeLanguage } from '../language/analysis'
+import { derivableChars } from '../language/lexicon'
 import type { Segmenter } from '../language/segment'
 import { titleSeed, type TitleInput } from '../title'
 import { absence } from './operations/absence'
@@ -105,9 +107,13 @@ export async function analyze(input: TitleInput, segmenter?: Segmenter): Promise
   // a kana written with a voicing mark needs the unvoiced character it
   // decomposes into: not an outside component, the character's own base
   const bases = [...new Set(language.phonology.flatMap((f) => (f.kind === 'voicing' ? [f.base] : [])))]
-  await glyphs.prepare([...own, ...COMPONENTS, ...STROKES, ...bases])
-  // the title written as writing, in the second face (poem/face.ts)
-  await glyphs.prepare(own.filter((c) => c.trim()), 'serif')
+  // v2: what derived marks can be written in beyond the title's own characters —
+  // the vowels a reading reduces to, and what the lexicon relates to the title
+  const derivable = derivableChars(own).filter((c) => covers('sans', c))
+  await glyphs.prepare([...new Set([...own, ...COMPONENTS, ...STROKES, ...bases, ...derivable])])
+  // the title written as writing, in the second face (poem/face.ts); derived
+  // marks are writing too, whatever they are made of
+  await glyphs.prepare([...new Set([...own.filter((c) => c.trim()), ...derivable, ...COMPONENTS].filter((c) => covers('serif', c)))], 'serif')
   const letters = new Map(own.filter((c) => c.trim()).map((c) => [c, glyphs.get(c).metrics]))
   // what a part of a glyph may be read as: the inventory, and the title's own characters
   const readables = new Map([...COMPONENTS, ...STROKES, ...letters.keys()].map((c) => [c, glyphs.get(c).metrics]))
@@ -146,6 +152,10 @@ export interface Force {
   mode?: string
   /** how the marks behave inside it (v2): a grammar, or 'auto' for the v2 selection */
   grammar?: GrammarId | 'auto'
+  /** v2, review only: let the multi-material grammars take material from the lexicon */
+  semantic?: boolean
+  /** v2, review only: draw a grammar's named way instead of the one its rule chooses (silhouette: fill, contour, density, residue) */
+  variant?: string
 }
 
 export function compose(a: Analysis, force: Force = {}): Composition {
@@ -316,7 +326,10 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   const placed = space.realize(a, material, new Rng(seed).fork(spatial.id), scale, drawn)
   // v2: how the marks behave inside the composition. Without a named grammar
   // this is the composition's own marks, exactly as v1 wrote them.
-  const behaved = writeWith(force.grammar, a, material, drawn, placed, new Rng(seed).fork(`grammar:${force.grammar ?? 'uniform'}`))
+  const behaved = writeWith(force.grammar, a, material, drawn, placed, new Rng(seed).fork(`grammar:${force.grammar ?? 'uniform'}`), {
+    semantic: force.semantic,
+    variant: force.variant,
+  })
 
   return {
     input: a.input,

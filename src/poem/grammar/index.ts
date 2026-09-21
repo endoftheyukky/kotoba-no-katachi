@@ -10,14 +10,20 @@
 import type { Rng } from '../../core/random'
 import type { Analysis, GrammarApplied, GrammarId, Material, Mark, Placed, Realization } from '../types'
 import { attenuation } from './attenuation'
-import { silentSeat, type MarkGrammar } from './common'
+import { branch, branchesDiffer } from './branch'
+import { silentSeat, type GrammarOffer, type MarkGrammar } from './common'
+import { constellation } from './constellation'
+import { emanation } from './emanation'
 import { field } from './field'
-import { viewOf, type PageView } from './page'
+import { lattice, occurrenceGrid } from './lattice'
+import { viewOf, type Asked, type PageView } from './page'
 import { orbit } from './orbit'
 import { phase } from './phase'
 import { silhouette } from './silhouette'
 
-export const GRAMMARS: readonly MarkGrammar[] = [attenuation, field, silhouette, phase, orbit]
+export type { Asked } from './page'
+
+export const GRAMMARS: readonly MarkGrammar[] = [attenuation, field, silhouette, phase, orbit, emanation, branch, constellation, lattice]
 
 export const UNIFORM: GrammarApplied = { id: 'uniform', grounds: [], uses: [], derived: {} }
 
@@ -61,11 +67,24 @@ function formed(v: PageView): string | null {
  *      a phase; any other run dwindles (attenuation)
  *   3. a nucleus that is a reading of ink or the word another depends on —
  *      its form is drawn in small marks (silhouette), where enough of them
- *      fall on it for the form to be read
- *   4. two terms held apart as poles — each is ringed by the other where the
+ *      fall on it for the form to be read; the way it is drawn (fill,
+ *      contour, density, residue) is the nucleus's own (silhouette.ts)
+ *   4. a grid whose rows are the occurrences of what the title repeats — each
+ *      row is read again, smaller cell by cell, and goes on (lattice)
+ *   5. groups the title makes (the terms it coordinates, the occurrences it
+ *      repeats) that differ in what they are made of — each grows as many
+ *      branches as it has members (branch)
+ *   6. two terms held apart as poles — each is ringed by the other where the
  *      relation is symmetric, the dependent circles its head where it is not
  *      (orbit)
- *   5. otherwise the page stays as the composition wrote it (v1)
+ *   7. a page with none of these, whose title holds material of two kinds
+ *      (its structure, its sound) — each gathers as a cluster in the page's
+ *      white, the nearer kind nearer the writing (constellation)
+ *   8. otherwise the page stays as the composition wrote it (v1)
+ * A form in small marks that cannot be read falls back to 5, then 6.
+ * Emanation is not selected: under review it did not yet make an event
+ * distinct enough from what the page already does. Meaning (the lexicon)
+ * is never selected: it is review only.
  */
 function select(v: PageView): { g: MarkGrammar | null; why: string; fallback?: MarkGrammar | null } {
   // a title the composition found weak gathers small in a corner: it is left quiet
@@ -79,16 +98,21 @@ function select(v: PageView): { g: MarkGrammar | null; why: string; fallback?: M
     return v.spatial.id === 'field'
       ? { g: phase, why: '題そのものの場：反復が一周の位相をもつ' }
       : { g: attenuation, why: '一つの字の長い並び：並んだ順に小さくなる' }
+  const tree = branchesDiffer(v) && branch.offer(v) ? branch : null
   const why = formed(v)
-  if (why) return { g: silhouette, why, fallback: orbit.offer(v) ? orbit : null }
+  if (why) return { g: silhouette, why, fallback: tree ?? (orbit.offer(v) ? orbit : null) }
+  if (occurrenceGrid(v)) return { g: lattice, why: '格子の行が反復の出現：行ごとに縮みながら続く' }
+  if (tree) return { g: branch, why: '題のまとまりが、それぞれ異なる数の構成要素でできている' }
   if (orbit.offer(v)) return { g: orbit, why: '二つの項が極として引き離されている' }
-  return { g: null, why: '粒・残響・位相・軌道の根拠がない：構成が書いたまま' }
+  // the lexicon never takes part in the selection: constellation is chosen from what the title itself holds
+  if (!v.semantic && constellation.offer(v)) return { g: constellation, why: '他の振る舞いの根拠がなく、題が構造と音の二種類の材料を持つ：それぞれが紙面の白に群をなす' }
+  return { g: null, why: '粒・残響・位相・格子・分岐・軌道・星座の根拠がない：構成が書いたまま' }
 }
 
-function applied(g: MarkGrammar, grounds: string[], uses: GrammarApplied['uses'], marks: Mark[]): GrammarApplied {
+function applied(g: MarkGrammar, grounds: string[], offer: GrammarOffer, marks: Mark[]): GrammarApplied {
   const derived: Record<string, number> = {}
   for (const k of marks) if (k.derived) derived[`${k.derived.kind}:${k.char}`] = (derived[`${k.derived.kind}:${k.char}`] ?? 0) + 1
-  return { id: g.id, grounds, uses, derived }
+  return { id: g.id, ...(offer.variant ? { variant: offer.variant } : {}), grounds, uses: offer.uses, derived }
 }
 
 /**
@@ -104,9 +128,10 @@ export function writeWith(
   spatial: Realization,
   placed: Placed,
   rng: Rng,
+  asked: Asked = {},
 ): { marks: Mark[]; applied: GrammarApplied } {
   if (!id || id === 'uniform') return { marks: placed.marks, applied: UNIFORM }
-  const view = viewOf(a, m, spatial, placed)
+  const view = viewOf(a, m, spatial, placed, asked)
   let g: MarkGrammar | undefined
   let why: string | undefined
   let fallback: MarkGrammar | null | undefined
@@ -121,18 +146,22 @@ export function writeWith(
   const offer = g.offer(view)
   if (!offer) return { marks: placed.marks, applied: { ...UNIFORM, grounds: [`${g.title}：この紙面には働く構造がない`] } }
   const marks = g.apply(view, rng)
+  // a grammar that found room for nothing leaves the page as the composition wrote it
+  if (marks.length === view.marks.length && marks.every((k, i) => k === view.marks[i]))
+    return { marks: placed.marks, applied: { ...UNIFORM, grounds: [`${g.title}：紙面に置く余地がない`] } }
   // a form drawn in too few grains is not the form: keep the page as it was
   if (g.id === 'silhouette') {
-    const grains = marks.filter((k) => k.derived?.grammar === 'silhouette').length
+    // the grains of the form itself: a trace of what was taken out is not the form
+    const grains = marks.filter((k) => k.derived?.grammar === 'silhouette' && k.role === 'grain').length
     if (grains < LEGIBLE_GRAINS || grains < LEGIBLE_PER_MARK * view.nucleus.length) {
       const note = `${g.title}：粒が${grains}しか落ちず、形として読めない`
       const f = fallback?.offer(view)
       if (fallback && f) {
         const alt = fallback.apply(view, rng)
-        return { marks: alt, applied: applied(fallback, [note, ...f.grounds], f.uses, alt) }
+        return { marks: alt, applied: applied(fallback, [note, ...f.grounds], f, alt) }
       }
       return { marks: placed.marks, applied: { ...UNIFORM, grounds: [note] } }
     }
   }
-  return { marks, applied: applied(g, why ? [why, ...offer.grounds] : offer.grounds, offer.uses, marks) }
+  return { marks, applied: applied(g, why ? [why, ...offer.grounds] : offer.grounds, offer, marks) }
 }
