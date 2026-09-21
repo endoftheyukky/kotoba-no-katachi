@@ -267,6 +267,13 @@ export interface Fit {
   /** 0–1: how strongly the title's relations call for this space */
   score: number
   grounds: string[]
+  /**
+   * Which of its own ways this composition will draw, when it has more than
+   * one but only one fitness: the choice is between two ways of holding the
+   * same relation, not between two relations, so it is settled here and does
+   * not compete. Compositions with a single way leave it out.
+   */
+  mode?: string
 }
 
 /**

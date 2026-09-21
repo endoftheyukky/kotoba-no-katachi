@@ -11,11 +11,14 @@
  *   /study.html?space=path      draw every title in one composition, where it fits
  *   /study.html?mode=turned     …and in one of that composition's ways
  *   /study.html?compare=auto|path/run|path/turned
- *                               one title drawn several ways, side by side at
- *                               one size (`auto` = the page as it was chosen)
+ *   /study.html?compare=%231|%232 one title drawn several ways, side by side at
+ *                               one size: a composition, `auto` (the page as
+ *                               it was chosen), or a place in the selection's
+ *                               own order (#1 winner, #2 runner-up)
+ *   /study.html?detail=1        …with grounds, marks and completeness too
  *   /study.html?size=420        how large those pages are drawn
  *
- * The last four are for looking only: they change which realization is drawn,
+ * The last five are for looking only: they change which realization is drawn,
  * never how one is chosen.
  */
 import './study.css'
@@ -23,7 +26,7 @@ import '../glyph/font-face'
 import type { Relation } from '../language/analysis'
 import { analyze, compose, type Force, MODIFIER_SALIENCE, OPERATIONS, SPACES } from '../poem/compose'
 import { measureAll, verdict } from '../poem/measure'
-import type { Analysis, Composition, Decision, Proposal, SpatialId } from '../poem/types'
+import type { Analysis, Composition, Decision, Proposal, Realization, SpatialId } from '../poem/types'
 import { renderCanvas } from '../render/png'
 import { PAGE } from '../render/stage'
 import { renderSVG } from '../render/svg'
@@ -41,14 +44,27 @@ const grid = params.get('view') === 'grid'
 /** look at one composition's page for every title it can hold (review only) */
 const space = params.get('space') as SpatialId | null
 const mode = params.get('mode')
-/** the same title drawn several ways at one size: `auto`, `path`, `path/turned` */
+/**
+ * The same title drawn several ways at one size. An entry names either a
+ * composition (`path`, `path/turned`), the page as it was chosen (`auto`), or
+ * a place in the selection's own order (`#1` the winner, `#2` the runner-up),
+ * which is how two titles with different winners can still be set beside each
+ * other. Nothing here takes part in the choice; it reads the order it made.
+ */
 const compare = params.get('compare')?.split('|').map((s) => s.trim()).filter(Boolean)
 const size = Number(params.get('size') ?? 0)
 if (size) document.documentElement.style.setProperty('--page', `${size}px`)
+/** also print the grounds, the marks and the completeness under each page */
+const detail = params.get('detail') === '1'
 
 /** a comparison entry → the review-only force that draws it */
-function forceOf(spec: string): Force {
+function forceOf(spec: string, fits: readonly Realization[]): Force | null {
   if (spec === 'auto') return {}
+  const rank = /^#(\d+)$/.exec(spec)
+  if (rank) {
+    const r = fits[Number(rank[1]) - 1]
+    return r ? { space: r.id, mode: r.mode } : null
+  }
   const [id, way] = spec.split('/')
   return { space: (id || undefined) as SpatialId | undefined, mode: way || undefined }
 }
@@ -364,42 +380,50 @@ async function comparison(list: HTMLElement): Promise<void> {
     item.append(head)
     const shots = el('div', 'shots')
     for (const spec of compare!) {
-      const c = compose(a, forceOf(spec))
+      const force = forceOf(spec, chosen.fits)
+      if (!force) {
+        // a place in an order that this title does not reach
+        const shot = el('div', 'shot')
+        shot.append(el('div', 'page'), el('div', 'caption', `${spec}：この題には無い`))
+        shots.append(shot)
+        continue
+      }
+      const c = compose(a, force)
       const r = c.spatial
       const same = r.id === chosen.spatial.id && r.mode === chosen.spatial.mode
       const shot = el('div', same ? 'shot chosen' : 'shot')
       const page = el('div', 'page')
       shot.append(page)
       renderSVG(page, c.draft, a.glyphs)
-      const mm = measureAll(c.draft.marks).total
-      const comp = completeness(a, c)
       const cap = el('div', 'caption')
       cap.append(
         el('p', 'shotname', `${spaceTitle(r.id)} / ${r.mode}${same ? '　← 採用' : ''}`),
-        el('p', undefined, `fitness ${f2(r.fitness)} · marks ${c.draft.marks.length} · reach ${f2(mm.reach)} · 最大字 ${f2(mm.maxEm)}`),
-        el('p', undefined, r.grounds.join('\n')),
+        el('p', undefined, `fitness ${f2(r.fitness)}`),
+        el('p', undefined, `使う: ${r.uses.length ? r.uses.map((u) => `${u.property} ${u.value}`).join(' · ') : '—'}`),
+        el('p', r.losses?.length ? 'dead' : undefined, `失う: ${r.losses?.length ? r.losses.map((u) => `${u.property} ${u.value}`).join(' · ') : '—'}`),
       )
-      if (r.uses.length) cap.append(el('p', undefined, `使う: ${r.uses.map((u) => `${u.property} ${u.value}`).join(' · ')}`))
-      if (r.losses?.length)
-        cap.append(el('p', 'dead', `失う: ${r.losses.map((u) => `${u.property} ${u.value}`).join(' · ')}`))
-      // what is actually on the paper, in the order it was placed
-      cap.append(
-        el(
-          'p',
-          undefined,
-          c.draft.marks
-            .map((k) => `${k.char}(${Math.round(k.x)},${Math.round(k.y)})r${(k.rotate ?? 0).toFixed(1)}`)
-            .join(' '),
-        ),
-      )
-      cap.append(
-        el(
-          'p',
-          comp.unexplained.length || !comp.ordered ? 'dead' : undefined,
-          (comp.unexplained.length ? `説明のつかない脱落「${comp.unexplained.join('')}」` : '脱落なし') +
-            (comp.ordered ? ' · 読み順は保たれている' : ' · 読み順が壊れている'),
-        ),
-      )
+      if (detail) {
+        const mm = measureAll(c.draft.marks).total
+        const comp = completeness(a, c)
+        cap.append(
+          el('p', undefined, r.grounds.join('\n')),
+          el('p', undefined, `marks ${c.draft.marks.length} · reach ${f2(mm.reach)} · 最大字 ${f2(mm.maxEm)}`),
+          // what is actually on the paper, in the order it was placed
+          el(
+            'p',
+            undefined,
+            c.draft.marks
+              .map((k) => `${k.char}(${Math.round(k.x)},${Math.round(k.y)})r${(k.rotate ?? 0).toFixed(1)}`)
+              .join(' '),
+          ),
+          el(
+            'p',
+            comp.unexplained.length || !comp.ordered ? 'dead' : undefined,
+            (comp.unexplained.length ? `説明のつかない脱落「${comp.unexplained.join('')}」` : '脱落なし') +
+              (comp.ordered ? ' · 読み順は保たれている' : ' · 読み順が壊れている'),
+          ),
+        )
+      }
       shot.append(cap)
       shots.append(shot)
     }

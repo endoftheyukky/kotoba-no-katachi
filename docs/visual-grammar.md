@@ -85,6 +85,54 @@ rotation. A break in the language is a corner in the path; where the language
 has no break the path may bend smoothly, and that curvature is recorded as
 plastic.
 
+## AXIS / 継ぎ目 (joint) — implemented, frozen at v1
+
+Not a new composition. One relation — a stem and its ending — held two ways
+inside AXIS, with one fitness between them. `POLE_SCORE` and the axis fitness
+are unchanged; nothing new competes in `fits`.
+
+**Why.** An audit of the thirteen titles AXIS held showed the six inflections
+all taking the same road: `DISTANCE[inflection] = 0.30` → reach 0.69 → band
+`large` → two big characters at the ends of the page. The quantity that
+differs between 触｜る and 見｜えない — how much stands on either side of the
+seam — reached the page nowhere.
+
+**Rules (v1).** The unit is the **grapheme seat**, never the mora: an unread
+kanji's two beats are a guess, and a guess must not become the size of a
+character. One seat, one glyph, **every glyph the same size**. Only the
+intervals vary:
+
+| what the language gives | what opens |
+| --- | --- |
+| a seam inside one word | half a seat |
+| a space the title writes | a whole seat |
+| a seat the poem writes as space | the seat itself, left empty |
+
+`pitch` and the glyph size are solved from the number of seats, not taken from
+a band. The rest of the title keeps its own seat and is written smaller — no
+annotation row beside the figure. No rotation. `whitePull` still places the
+line; `distance` and `scaleRatio` take no part.
+
+**Eligibility.** The seam becomes a line only where the line keeps something
+the two poles cannot: **two or more seats on one side of the cut**, **a seat
+the poem erases**, **a space the title writes**, or **the rest of the title in
+the same reading**. Where a word is one character and one ending and nothing
+else, the line says no more than the poles and says it smaller, so the poles
+keep it. This is a general rule about structure, not a list of titles: it takes
+美しい (1:2), 見えない (1:3, two erased), 花が咲く (erased + context), 白い 犬
+(written space + context), and leaves 触る and 走れ to the poles.
+
+**Effect on the series.** Pages with a mark over 0.36 of the page: 12 → 8.
+AXIS pages with a mark leaving the page: 10 → 6.
+
+見えない's large emptiness is the erased seats of ない holding their places. It
+is explained, and is not to be rescued.
+
+**Review.** `?compare=` accepts a place in the selection's own order (`#1`,
+`#2`), and AXIS answers two review-only forces: `axis/joint` draws the line
+even where the rule would not, `axis/poles` brings the two poles back. Neither
+touches fitness or selection.
+
 ## VOID
 
 `void.ts` is kept and is not a preferred choice. Its idea — a region that is

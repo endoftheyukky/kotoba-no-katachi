@@ -19,6 +19,7 @@ import { seatsOf } from '../scope'
 import type { Analysis, Decision, Fitted, Mark, Material, SpatialComposition, Unit, Vec } from '../types'
 import { centredLine, directions, isWritten, lineMarks, offCentre, placeRegion, unitMarks } from './common'
 import { axisShape, closeness, poles, POLE_SCORE, type Poles } from './axisParams'
+import { jointHolds, jointLine, layJoint } from './joint'
 
 /** a pole without the erased characters at its ends (inside, they hold their place) */
 function trim(units: Unit[]): Unit[] {
@@ -164,18 +165,40 @@ export const axis: SpatialComposition = {
     '題の一部だけが対象のとき、置かれなかった字は消えない：題の書字方向に、書かれた順のまま、一定の間隔で並ぶ（poem/context.ts）。対象が離れた席から引き出されているときは、その間隔が席の位置を保つ',
     '文脈は主要素より明確に小さく、しかし読める大きさを下回らない。対象は紙面の外へ出てよいが、文脈は出ない',
     '対象が題の一字だけのときは、二極にしない：題を一本の行として先に置き、その字は自分の席に留まったまま変質し、そこから生じたもの（読まれた形・引いた残り）だけが席の外へ伸びる。題は図の注釈ではなく、変形される前からある詩の本体である',
+    '継ぎ目（joint）：語幹と活用語尾の関係は、二極に引き離す代わりに、題を一本の行として一度だけ書き、言語が切るところで切ることができる。一席一字、どの字も同じ大きさ。開くのは境だけ——継ぎ目は半席、書かれた空白は一席、消された席は空席のまま。大きさは席の数から解かれ、帯から選ばない（joint.ts）',
+    '継ぎ目を行にするのは、その行が二極の保てないものを保つときだけ：継ぎ目の片側が二席以上ある、消された席がある、題が空白を書いている、同じ読みの列に題の残りがある。一字と語尾だけの語では、行は二極より多くを言わず、しかも小さく言うので、二極のままにする。二つの書き方に別々の適合度は与えない——同じ一つの関係である',
   ],
 
   fit(a, m) {
     const p = poles(a, m)
-    return p ? { id: 'axis', score: POLE_SCORE[p.kind], grounds: [p.ground] } : null
+    if (!p) return null
+    // one relation, two ways of holding it: the seam becomes a line only where
+    // the line keeps something the poles cannot. The fitness is the same
+    // either way — this is not a second candidate.
+    const held = p.kind === 'inflection' ? jointHolds(a, m) : null
+    return {
+      id: 'axis',
+      score: POLE_SCORE[p.kind],
+      grounds: held ? [p.ground, `一行に書いて継ぎ目で切る：${held.why}`] : [p.ground],
+      mode: held ? 'joint' : undefined,
+    }
   },
 
-  realize(a, m, rng, _scale) {
+  realize(a, m, rng, _scale, r) {
     const p = poles(a, m)!
     const shape = axisShape(a, m, p, PAGE, axis.bleed ?? false)
     const occ = shape.occupancy
     const close = closeness(p)
+
+    // 継ぎ目 — the word written as one line and cut where the language cuts
+    // it, instead of pulled to two poles. Which way this title takes was
+    // settled in `fit`; a review force may also name it ('joint'), or ask for
+    // the poles back ('poles'), without touching the fitness either way.
+    if (r?.mode === 'joint' && p.kind === 'inflection') {
+      const line = jointLine(a, m)
+      const laid = line && layJoint(a, line, rng, shape.whitePull, PAGE)
+      if (laid) return { marks: laid.marks, parameters: shape.parameters, contract: laid.contract }
+    }
 
     // one character of the title, changed where it stands
     const own = inPlace(a, m, p, rng, PAGE)

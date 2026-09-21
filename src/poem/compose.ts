@@ -267,7 +267,9 @@ export function compose(a: Analysis, force: Force = {}): Composition {
       ? [
           {
             id: f.id,
-            mode: 'default',
+            // a composition with one fitness may still know which of its ways
+            // this title asks for; it says so here, and nothing competes
+            mode: f.mode ?? 'default',
             uses: [],
             grounds: f.grounds,
             fitness: f.score,
@@ -297,14 +299,21 @@ export function compose(a: Analysis, force: Force = {}): Composition {
     ((force.space || force.mode) && fits.find(wanted)) || fits[Math.min(spaceRank, fits.length - 1)]
   const space = SPACES.find((s) => s.id === spatial.id)!
   const scale = decideScale(a, material, spatial.id)
-  const placed = space.realize(a, material, new Rng(seed).fork(spatial.id), scale, spatial)
+  // Review only. A composition may know a way to draw that it does not offer
+  // for selection; a force that names the composition and that way reaches
+  // realize, and nothing else. With no force this is the realization itself.
+  const drawn =
+    force.mode && force.space === spatial.id && force.mode !== spatial.mode
+      ? { ...spatial, mode: force.mode }
+      : spatial
+  const placed = space.realize(a, material, new Rng(seed).fork(spatial.id), scale, drawn)
 
   return {
     input: a.input,
     seed,
     primary,
     modifiers,
-    spatial,
+    spatial: drawn,
     scale,
     parameters: placed.parameters ?? [],
     contract: placed.contract ?? null,
