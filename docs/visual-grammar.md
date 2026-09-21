@@ -213,6 +213,35 @@ nondeterminism. Pages by their largest mark: micro 7, small 9, normal 11,
 large 5, macro 2. Contact sheets: `docs/contact/dev34-before.png` (before the
 visual language pass) and `docs/contact/dev34-v1.png`.
 
+## Holdout (v1)
+
+47 titles written down before the freeze and never used for design
+(`study/holdout.ts`), generated once after it. Contact sheet:
+`docs/contact/holdout-v1.png`.
+
+No unexplained loss, no reading-order break, no overlap, no error, no
+nondeterminism. Two pages fall under the dead-page measure — ない and 見ない —
+and both are what a negation leaves when it erases its own seats: the same
+emptiness 見えない has in the development set, kept on purpose.
+
+What the holdout shows about the generator as a whole, not changed in v1:
+
+- Quiet pages are common (片隅 11 of 47): single characters that do not split
+  into a band or a burst, and kana words with nothing repeated in them. The
+  work allows a title with no strong feature to stay small.
+- The joint line is frequent (9 of 47): any phrase whose inflected word has
+  the rest of the title in the same reading line qualifies, so short verb
+  phrases (風が吹く, 水を飲む, 今日は晴れ …) come out as similar vertical lines.
+  Each shows its own seats and gaps, but the family resemblance is strong.
+  The joint was frozen as it stands; this is left as a question for v2.
+- A character whose closed white can hold the rest of the title (日, 国, 月)
+  gives a page-sized glyph with the title written in its white (朝日, 国際空港,
+  3月): large by necessity, since the white has to hold writing.
+
+Distribution: 片隅 11, 二極 default 11, 二極 joint 9, 中心・周縁 6, 格子 3,
+入れ子 2, 散在 2, 場 1, 経路 1, 空洞 1. Pages by their largest mark: micro 12,
+small 17, normal 10, large 4, macro 4.
+
 ## VOID
 
 `void.ts` is kept and is not a preferred choice. Its idea — a region that is

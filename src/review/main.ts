@@ -6,11 +6,13 @@
  *
  *   /review.html
  *   /review.html?set=probe
+ *   /review.html?set=holdout
  */
 import './review.css'
 import '../glyph/font-face'
 import { analyze, compose, SPACES } from '../poem/compose'
 import { renderSVG } from '../render/svg'
+import { HOLDOUT_TITLES } from '../study/holdout'
 import { PROBE_TITLES } from '../study/probes'
 import { STUDY_TITLES } from '../study/titles'
 import { normalizeTitle } from '../title'
@@ -20,7 +22,8 @@ async function main(): Promise<void> {
   document.body.append(list)
 
   // lay out every place first, so the sheet does not jump while pages are drawn
-  const set = new URLSearchParams(location.search).get('set') === 'probe' ? PROBE_TITLES : STUDY_TITLES
+  const which = new URLSearchParams(location.search).get('set')
+  const set = which === 'probe' ? PROBE_TITLES : which === 'holdout' ? HOLDOUT_TITLES : STUDY_TITLES
   const slots = set.map((t) => {
     const figure = document.createElement('figure')
     const page = document.createElement('div')

@@ -8,6 +8,7 @@
  *   /study.html?only=嘘|海のあと  a subset
  *   /study.html?view=grid       pages only, as a contact sheet
  *   /study.html?set=probe       the probe set instead of the development set
+ *   /study.html?set=holdout     the holdout set (never used to design; look only)
  *   /study.html?space=path      draw every title in one composition, where it fits
  *   /study.html?mode=turned     …and in one of that composition's ways
  *   /study.html?compare=auto|path/run|path/turned
@@ -32,6 +33,7 @@ import { renderCanvas } from '../render/png'
 import { PAGE } from '../render/stage'
 import { renderSVG } from '../render/svg'
 import { normalizeTitle } from '../title'
+import { HOLDOUT_TITLES } from './holdout'
 import { PROBE_TITLES } from './probes'
 import { STUDY_TITLES, type StudyTitle } from './titles'
 
@@ -39,7 +41,8 @@ const params = new URLSearchParams(location.search)
 const variant = Number(params.get('variant') ?? 0)
 const only = params.get('only')?.split('|')
 const probe = params.get('set') === 'probe'
-const set = probe ? PROBE_TITLES : STUDY_TITLES
+const holdout = params.get('set') === 'holdout'
+const set = probe ? PROBE_TITLES : holdout ? HOLDOUT_TITLES : STUDY_TITLES
 const titles = only ? set.filter((t) => only.includes(t.text)) : set
 const grid = params.get('view') === 'grid'
 /** look at one composition's page for every title it can hold (review only) */
@@ -442,7 +445,7 @@ async function main(): Promise<void> {
   const header = el('header')
   header.append(
     el('h1', undefined, 'study sheet'),
-    el('p', undefined, `${probe ? 'probe set（特定のfeatureが設計どおり発火するかを見るための題。一般化の証拠ではない）' : 'development set'}${compare ? `  ⟨比較: ${compare.join('  ')}（同じ大きさで並べるだけ。選択には影響しない）⟩` : space || mode ? `  ⟨強制描画: ${space ?? ''}${mode ? '/' + mode : ''}（選択には影響しない）⟩` : ''} · ${titles.length} titles · variant ${variant} · the pages carry no text; what was read and decided is written beside them`),
+    el('p', undefined, `${probe ? 'probe set（特定のfeatureが設計どおり発火するかを見るための題。一般化の証拠ではない）' : holdout ? 'holdout set（設計に一度も使っていない題。見るだけ）' : 'development set'}${compare ? `  ⟨比較: ${compare.join('  ')}（同じ大きさで並べるだけ。選択には影響しない）⟩` : space || mode ? `  ⟨強制描画: ${space ?? ''}${mode ? '/' + mode : ''}（選択には影響しない）⟩` : ''} · ${titles.length} titles · variant ${variant} · the pages carry no text; what was read and decided is written beside them`),
   )
   const list = el('main', compare ? 'compare' : grid ? 'grid' : undefined)
   document.body.append(...(bare ? [list] : [header, list]))
