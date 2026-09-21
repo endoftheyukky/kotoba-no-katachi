@@ -188,6 +188,31 @@ actually has room, never on a stroke.
 **Edges.** Poles are fitted inside the page; a smaller band is accepted
 rather than a cropped pole.
 
+## Generator v1 — frozen
+
+From here the generator logic does not change for the look of a page. What
+may still change is a failure that recurs across unseen titles: a crash, an
+overlap, a lost character, a broken order, a pathological scale, a
+convergence, a rendering fault.
+
+Development set at the freeze (34 titles):
+
+| composition / way | titles |
+| --- | --- |
+| 二極 default | 9 |
+| 二極 joint | 4 |
+| 帯 | 5 |
+| 中心・周縁 | 4 |
+| 片隅 | 3 |
+| 格子 1×N / 2×2 | 2 / 1 |
+| 入れ子 | 2 |
+| 放射 · 経路 · 散在 · 場 | 1 each |
+
+No unexplained loss, no overlap, no reading-order break, no dead page, no
+nondeterminism. Pages by their largest mark: micro 7, small 9, normal 11,
+large 5, macro 2. Contact sheets: `docs/contact/dev34-before.png` (before the
+visual language pass) and `docs/contact/dev34-v1.png`.
+
 ## VOID
 
 `void.ts` is kept and is not a preferred choice. Its idea — a region that is
