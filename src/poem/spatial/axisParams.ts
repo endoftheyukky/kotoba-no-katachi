@@ -239,10 +239,14 @@ const VARY = 2
  */
 export function closeness(p: Poles): { close: boolean; band: ScaleBand; note: string } {
   switch (p.kind) {
+    // Two glyphs set side by side are compared, not magnified: the difference
+    // between 大 and 犬, or a stem and its ending, is plain at an ordinary
+    // size. Large is kept for a single character whose own structure is the
+    // subject, which is not what an axis holds.
     case 'similarity':
-      return { close: true, band: 'large', note: '二つの形の差そのものを読ませる → 元の形を大きく' }
+      return { close: true, band: 'normal', note: '二つの形の差そのものを読ませる → 並べて比べられる大きさに（拡大はしない）' }
     case 'inflection':
-      return { close: true, band: 'large', note: '語の継ぎ目を読ませる → 継ぎ目が見える大きさに' }
+      return { close: true, band: 'normal', note: '語の継ぎ目を読ませる → 継ぎ目が見える大きさに（拡大はしない）' }
     case 'containment':
       return { close: true, band: 'macro', note: '引き算の残りは操作が生んだもの → macro を許す' }
     default:

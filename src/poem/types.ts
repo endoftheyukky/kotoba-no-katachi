@@ -8,6 +8,7 @@
  * (造形) decisions inside the rules: margins, small offsets, how far a form
  * leaves the page, permitted ranges of proportion.
  */
+import type { Face } from '../glyph/font'
 import type { PartReading } from '../glyph/legibility'
 import type { GlyphMetrics } from '../glyph/metrics'
 import type { Arrangement, GlyphPart } from '../glyph/parts'
@@ -460,6 +461,12 @@ export interface Scale {
 /** One glyph (or part of one) on the page. Page units: the page is PAGE × PAGE. */
 export interface Mark {
   char: string
+  /**
+   * The face it is written in: the reading face (sans, the default) for a mark
+   * that is a reading of ink, the serif for the title written as writing.
+   * Set once for the whole page (poem/face.ts), never by a composition.
+   */
+  face?: Face
   x: number
   y: number
   /** em size in page units */

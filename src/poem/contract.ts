@@ -34,6 +34,14 @@ export const BANDS: Record<ScaleBand, readonly [number, number]> = {
 const ORDER: ScaleBand[] = ['micro', 'small', 'normal', 'large', 'macro']
 
 /**
+ * The size of a unit the poem multiplies: the copies of a repetition that
+ * crosses the page, the cells of a field. Where the many is the subject, the
+ * one is small — texture, not a figure — and the number of them is what is
+ * seen. From the bottom of micro to the bottom of small.
+ */
+export const TEXTURE: readonly [number, number] = [BANDS.micro[0], BANDS.small[0] - 0.01]
+
+/**
  * How far past the page a figure may run when the composition allows it:
  * at most half a mark over each edge, so that what leaves the page is a
  * cropped character and never a missing one. Never more than a third.

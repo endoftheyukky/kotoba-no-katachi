@@ -18,8 +18,8 @@ export const scattered: SpatialComposition = {
   title: '散在',
   rules: [
     '空白で隔てられた語、三つ以上並列された語は、互いに依存しない：一語ずつ紙面の別々の場所に置かれる',
-    '語どうしは一行を共有しない。置き場所は紙面の中央を避け、互いにできるだけ離れる',
-    '語の大きさは互いに異なってよい（造形）',
+    '語どうしは一行を共有しない：一語ずつ自分の行を持ち、行は読みの順に一段ずつ下がりながら紙面を渡る（段）。どの語も読みの順を越えない',
+    '段の幅は語の数から決まる：語が多いほど一段は浅い。語の大きさはすべて同じで、紙面が収められる大きさ',
     '散在は語どうしの置き方しか示せない：字形の関係・字の部品・語の継ぎ目が主操作のときは、それを表せないので使わない',
   ],
 
@@ -38,25 +38,25 @@ export const scattered: SpatialComposition = {
 
   realize(a, m, rng, scale) {
     const groups = independentGroups(a, m.tokens)
-    // candidate places: a 5 × 5 lattice without its centre, jittered
-    const places: Vec[] = []
-    for (let i = 0; i < 5; i++)
-      for (let j = 0; j < 5; j++) if (!(i === 2 && j === 2)) places.push({ x: (i + 0.5) * 200, y: (j + 0.5) * 200 })
-    const chosen: Vec[] = []
+    const n = groups.length
+    const vertical = a.direction === 'vertical'
+    const longest = Math.max(...groups.map((g) => g.length))
+    // one size for every word: the steps must fit, and so must the longest word
+    const margin = 0.1 * PAGE
+    const room = PAGE - 2 * margin
+    const s = Math.min(scale.range('body')[1] * 0.8, room / (n + 1), room / (longest + n - 1))
+    // 造形: how far each step goes across, between a half and a whole word
+    const across = (room - s) / Math.max(1, n - 1) * rng.range(0.75, 1)
+    const down = (room - longest * s) / Math.max(1, n - 1)
     const marks: Mark[] = []
-    for (const g of groups) {
-      // the first word near where writing begins; each next as far as possible from the others
-      const score = (p: Vec) =>
-        chosen.length
-          ? Math.min(...chosen.map((q) => Math.hypot(p.x - q.x, p.y - q.y))) + rng.range(0, 120)
-          : (a.direction === 'vertical' ? p.x - p.y : -p.x - p.y) + rng.range(0, 200)
-      const at = [...places].sort((p, q) => score(q) - score(p))[0]
-      places.splice(places.indexOf(at), 1)
-      const jittered = { x: at.x + rng.range(-40, 40), y: at.y + rng.range(-40, 40) }
-      chosen.push(jittered)
-      const s = Math.min(scale.pick('body', rng, [0, 0.5]), (0.7 * PAGE) / g.length)
-      marks.push(...centredLine(a, g, inside(a, jittered, g.length * s, s), s))
-    }
+    groups.forEach((g, i) => {
+      // vertical writing: columns step right to left, each a step lower;
+      // horizontal: rows step down, each a step to the right
+      const at: Vec = vertical
+        ? { x: PAGE - margin - s / 2 - i * across, y: margin + i * down + (g.length * s) / 2 }
+        : { x: margin + i * down + (g.length * s) / 2, y: margin + s / 2 + i * across }
+      marks.push(...centredLine(a, g, inside(a, at, g.length * s, s), s))
+    })
     return { marks }
   },
 }

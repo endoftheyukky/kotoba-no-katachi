@@ -34,7 +34,7 @@ export function renderCanvas(draft: Draft, glyphs: GlyphLibrary, px = 2048): HTM
   }
 
   for (const m of draft.marks) {
-    const glyph = glyphs.get(m.char)
+    const glyph = glyphs.get(m.char, m.face)
     if (!m.minus) {
       ctx.save()
       toEm(ctx, m)
@@ -51,7 +51,7 @@ export function renderCanvas(draft: Draft, glyphs: GlyphLibrary, px = 2048): HTM
     sctx.globalCompositeOperation = 'destination-out'
     sctx.translate(m.minus.dx, m.minus.dy)
     sctx.scale(m.minus.scale, m.minus.scale)
-    glyphs.get(m.minus.char).paint(sctx, { color: INK, spread: (2 * REMOVAL_MARGIN) / m.minus.scale })
+    glyphs.get(m.minus.char, m.face).paint(sctx, { color: INK, spread: (2 * REMOVAL_MARGIN) / m.minus.scale })
     sctx.restore()
     ctx.drawImage(scratch, 0, 0)
   }

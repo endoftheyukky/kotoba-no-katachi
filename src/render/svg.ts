@@ -8,11 +8,11 @@ import { Stage } from './stage'
 export function renderSVG(host: HTMLElement, draft: Draft, glyphs: GlyphLibrary): Stage {
   const stage = new Stage(host)
   for (const m of draft.marks) {
-    const fig = new GlyphFigure(stage, glyphs.get(m.char)).place(m)
+    const fig = new GlyphFigure(stage, glyphs.get(m.char, m.face)).place(m)
     if (m.keep) fig.crop(m.keep)
     if (m.minus)
       fig.subtract({
-        source: glyphs.get(m.minus.char),
+        source: glyphs.get(m.minus.char, m.face),
         dx: m.minus.dx,
         dy: m.minus.dy,
         scale: m.minus.scale,

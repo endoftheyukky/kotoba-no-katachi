@@ -7,7 +7,7 @@
  * Measured from a canvas rendering for now. An opentype.js outline source can
  * compute the same structure from path geometry later.
  */
-import { EM, FONT_FAMILY, FONT_WEIGHT } from './font'
+import { EM, fontOf, type Face } from './font'
 
 export type Axis = 'x' | 'y'
 
@@ -57,16 +57,17 @@ export const GRID = 24
 let canvas: HTMLCanvasElement | null = null
 
 /**
- * Measure a glyph of the fixed font. The font must already be loaded
- * (GlyphLibrary.prepare ensures it).
+ * Measure a glyph in one of the work's faces. The font must already be loaded
+ * (GlyphLibrary.prepare ensures it). Readings are only ever made in the
+ * reading face; another face is measured so that it can be placed.
  */
-export function measure(char: string): GlyphMetrics {
+export function measure(char: string, face: Face = 'sans'): GlyphMetrics {
   const size = PX * 3
   canvas ??= document.createElement('canvas')
   canvas.width = canvas.height = size
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!
   ctx.clearRect(0, 0, size, size)
-  ctx.font = `${FONT_WEIGHT} ${PX}px ${FONT_FAMILY}`
+  ctx.font = fontOf(face, PX)
   ctx.textBaseline = 'alphabetic'
   ctx.fillStyle = '#000'
   const ox = PX

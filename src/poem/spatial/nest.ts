@@ -6,8 +6,8 @@
  * left (中心・周縁). Neither draws the relation itself: a thing that is inside
  * another has never been put inside it.
  *
- * Here it is. The outer character is written at the size of the page with the
- * inner one taken out of it, so that its own ink leaves a hole exactly where
+ * Here it is. The outer character is written to hold most of the page, with
+ * the inner one taken out of it, so that its own ink leaves a hole exactly where
  * the reading found the inner form; and the inner is written small, inside
  * that hole, where it was found. Nothing is invented for the placement: the
  * reading already carries where the inner sits in the outer's em space and at
@@ -31,8 +31,12 @@ import { allUnits, isWritten } from './common'
 
 /** how much smaller than the hole the inner form is written, so that it is in it */
 const SHRINK = 0.45
-/** the outer, at the size of the page */
-const OUTER = 0.9
+/**
+ * The outer holds most of the page, not all of it: a container is read by
+ * its edge, and the white around it is what makes it one. The rest of the
+ * title then has room beside it instead of being written over it.
+ */
+const OUTER = 0.68
 /** below this share the outer has no body left to be an outside */
 const BODY_MIN = 0.12
 const BODY_FULL = 0.32
@@ -49,7 +53,7 @@ export const nest: SpatialComposition = {
   bleed: false,
   rules: [
     '字の中に字が読まれたとき、内にあるものを、実際に内側に置く：引き離しも、残りを中心に据えることもしない',
-    '外の字は紙面の大きさで書かれ、そのインクからは内の字が抜かれる：穴は、読みが内の字を見つけた場所そのものである',
+    '外の字は紙面の大半を占める大きさで書かれ、そのインクからは内の字が抜かれる：穴は、読みが内の字を見つけた場所そのものである。周りの白が、外を外として読ませる',
     '内の字は、その穴の中に、見つかった位置と縮尺で、穴より小さく書かれる（p = q·scale + (dx, dy) は読みがすでに持っている）',
     '引いた残りは第三項として外に出さない：残りは「外にあるもの」そのものであって、並べて見せる別の項ではない',
     '外が体として残らない読み（残りが少なすぎる、粒に砕けている）は、内と外の関係を作れない：適合しない',

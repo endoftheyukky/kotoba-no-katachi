@@ -7,16 +7,18 @@
 import { clamp } from '../../core/math'
 import { EM } from '../../glyph/font'
 import { PAGE } from '../../render/stage'
+import { TEXTURE } from '../contract'
 import { contentGraphemes } from '../salience'
 import type { Mark, SpatialComposition, Unit } from '../types'
-import { allUnits, directions, centredLine, isWritten, lineMarks, offCentre } from './common'
+import { allUnits, directions, centredLine, isWritten, lineMarks, offCentre, unitMarks } from './common'
 
 export const band: SpatialComposition = {
   id: 'band',
   title: '帯',
   rules: [
-    '題の一部が反復するとき（ささやき・許許・コーヒーのー）、反復する単位はその場で増殖し、題は紙面を端から端まで渡る一本の帯になる',
+    '題の一部が反復するとき（ささやき・許許・コーヒーのー）、反復する単位はその場で増殖し、題は紙面を端から端まで渡る一本の帯になる。帯の字は小さい：増えた数が帯を作るのであって、一字の大きさではない',
     '帯は書き始めの側の縁に寄る。帯以外は白',
+    '増えた字の並びは段をなす：一つ増えるごとに、帯は書字と直角の向きへ一段ずれ、ずれたまま先へ続く。段は題のどこが増えたかを示し、増えるたびに積み重なる。一段の深さは造形',
     '部品が一方向に並んで切れる字（川）は、部品が紙面を渡る帯としてほどける。題がその一字であるか、四つ以上の部品が縞をなすときに限る。元の題は小さく帯の始まりに残る',
   ],
 
@@ -50,14 +52,35 @@ export const band: SpatialComposition = {
     if (f.kind === 'repetition') {
       const recurring = new Set(f.occurrences.flat())
       const r = units.filter((u) => recurring.has(u.grapheme)).length
-      // 造形: the size of the band's characters
-      const target = Math.floor(PAGE / scale.pick('body', rng, [0, 0.15]))
+      // the band's characters are texture: how many of them cross the page is
+      // what is seen. 造形: where in that range
+      const target = Math.floor(1 / (TEXTURE[0] + (TEXTURE[1] - TEXTURE[0]) * rng.range(0.1, 0.5)))
       const times = Math.max(2, Math.floor((target - units.length) / Math.max(1, r)) + 1)
-      const line: Unit[] = units.flatMap((u) => (recurring.has(u.grapheme) ? Array(times).fill(u) : [u]))
+      const line: { unit: Unit; copy: number }[] = units.flatMap((u) =>
+        recurring.has(u.grapheme) ? Array.from({ length: times }, (_, copy) => ({ unit: u, copy })) : [{ unit: u, copy: -1 }],
+      )
       const s = PAGE / line.length
-      const across = s * rng.range(1.2, 3.4)
-      const start = vertical ? { x: PAGE - across, y: s / 2 } : { x: s / 2, y: across }
-      return { marks: lineMarks(a, line, start, s * 0.96) }
+      // every copy after the first of its run is one step: the line moves
+      // away from the edge it started from and keeps the distance it gained
+      const steps = line.filter((k) => k.copy > 0).length
+      // 造形: how deep a step is, and how far from the edge the band begins
+      const edge = rng.range(0.04, 0.12) * PAGE
+      const step = Math.min(s * rng.range(0.25, 0.45), (0.8 * PAGE - edge) / Math.max(1, steps))
+      const { along } = directions(a)
+      // away from the edge where the writing begins
+      const inward = vertical ? { x: -1, y: 0 } : { x: 0, y: 1 }
+      let depth = 0
+      const marks: Mark[] = []
+      line.forEach(({ unit, copy }, i) => {
+        if (copy > 0) depth += step
+        const base = vertical ? { x: PAGE - edge, y: s / 2 } : { x: s / 2, y: edge }
+        const at = {
+          x: base.x + along.x * i * s + inward.x * depth,
+          y: base.y + along.y * i * s + inward.y * depth,
+        }
+        marks.push(...unitMarks(a, unit, at, s * 0.96))
+      })
+      return { marks }
     }
 
     if (f.kind === 'absence') {

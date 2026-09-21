@@ -28,6 +28,7 @@ import { decomposition } from './operations/decomposition'
 import { proliferation } from './operations/proliferation'
 import { transformation } from './operations/transformation'
 import { poeticPotential, visualPotential } from './potential'
+import { withFaces } from './face'
 import { basisOf, scopeOf } from './scope'
 import { decideScale } from './scale'
 import { axis } from './spatial/axis'
@@ -103,6 +104,8 @@ export async function analyze(input: TitleInput, segmenter?: Segmenter): Promise
   // decomposes into: not an outside component, the character's own base
   const bases = [...new Set(language.phonology.flatMap((f) => (f.kind === 'voicing' ? [f.base] : [])))]
   await glyphs.prepare([...own, ...COMPONENTS, ...STROKES, ...bases])
+  // the title written as writing, in the second face (poem/face.ts)
+  await glyphs.prepare(own.filter((c) => c.trim()), 'serif')
   const letters = new Map(own.filter((c) => c.trim()).map((c) => [c, glyphs.get(c).metrics]))
   // what a part of a glyph may be read as: the inventory, and the title's own characters
   const readables = new Map([...COMPONENTS, ...STROKES, ...letters.keys()].map((c) => [c, glyphs.get(c).metrics]))
@@ -322,6 +325,6 @@ export function compose(a: Analysis, force: Force = {}): Composition {
     proposals,
     fits,
     rejected,
-    draft: { marks: placed.marks },
+    draft: { marks: withFaces(a, material, placed.marks) },
   }
 }

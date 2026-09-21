@@ -1,0 +1,55 @@
+/**
+ * Which face a mark is written in.
+ *
+ *   linguistic input  what the primary operation reads: a relation between
+ *                     letterforms (a form inside another, two alike), the
+ *                     parts a character comes apart into, the white its
+ *                     strokes close in — or the words themselves.
+ *   rule              a mark that is a reading of ink is drawn in the face the
+ *                     reading was made in; a mark that is the title written as
+ *                     writing is drawn in the thin serif.
+ *   visual output     the figure a relation between letterforms makes stands
+ *                     in the reading face; everything that is writing — words,
+ *                     the rest of a title, the units of a repetition, a line, a
+ *                     field — is a thin serif around it.
+ *
+ * The face says what a mark is, never what the title means. It is not chosen
+ * per title and it is not random.
+ *
+ * Which marks are readings of ink:
+ *   - anything cut, cropped or subtracted: a residue, a fragment, a part;
+ *   - a term of a relation between letterforms, written whole (川 beside the
+ *     residue of 州 is compared with it as ink, and so is 大 with 犬);
+ *   - a character whose closed white is what the poem uses.
+ * A character that falls into parts is not itself a reading: the parts are.
+ * Context — the rest of the title around a figure — is always writing.
+ */
+import type { Face } from '../glyph/font'
+import type { Analysis, Mark, Material } from './types'
+
+export function faceOf(a: Analysis, m: Material, k: Mark): Face {
+  if (k.minus || k.keep || k.shift) return 'sans'
+  if (k.context) return 'serif'
+  const f = m.primary.focus
+  if (f.kind === 'pair') return k.char === f.relation.inner || k.char === f.relation.outer ? 'sans' : 'serif'
+  if (f.kind === 'counter') return k.char === a.graphemes[f.grapheme]?.char ? 'sans' : 'serif'
+  return 'serif'
+}
+
+/** whether the second face can write this character at all */
+function writable(a: Analysis, char: string): boolean {
+  try {
+    return a.glyphs.get(char, 'serif').metrics.density > 0 || a.glyphs.get(char).metrics.density === 0
+  } catch {
+    return false
+  }
+}
+
+/** the page, with each mark's face set; sans is left implicit */
+export function withFaces(a: Analysis, m: Material, marks: Mark[]): Mark[] {
+  return marks.map((k) => {
+    // a character the serif does not have is written in the face that does
+    const face = faceOf(a, m, k) === 'serif' && writable(a, k.char) ? 'serif' : 'sans'
+    return face === 'sans' ? k : { ...k, face }
+  })
+}

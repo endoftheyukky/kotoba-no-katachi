@@ -50,7 +50,7 @@ export const centre: SpatialComposition = {
   rules: [
     '「AのB」では、Bが紙面の重心を占め、Aは紙面の縁に小さく退く。「の」は二つの間の距離である',
     '字形の包含では、外の字から内の字を引いた残りが重心を占め、題そのものは縁に小さく置かれる',
-    '重心は紙面の中央に置かない。周縁は重心から最も遠い縁に寄る',
+    '重心は紙面の中央に置かない。周縁は読みが始まる角に寄り、重心はその角から離れた側に置かれる：周縁は縁に退いても、読みの順では先に来る',
     '字がすでに抱えている閉じた白は、空いた場所である：その字は紙面いっぱいに書かれ、題の残りの字は白の中に、書かれた順に置かれる。白が二つ以上あれば一つずつ、余れば同じ白に重ねて置く',
   ],
 
@@ -103,7 +103,12 @@ export const centre: SpatialComposition = {
 
     const r = roles(a, m)!
     const { vertical } = directions(a)
+    // 造形: where the centre sits — but never in the quarter where the reading
+    // begins, which belongs to the periphery (top right when the title is
+    // written downward, top left when across)
     const c: Vec = { x: offCentre(rng, 0.3, 0.42), y: offCentre(rng, 0.3, 0.42) }
+    const early = (vertical ? c.x > PAGE / 2 : c.x < PAGE / 2) && c.y < PAGE / 2
+    if (early) c.x = PAGE - c.x
     const marks: Mark[] = []
 
     if (r.kind === 'containment') {
@@ -120,15 +125,11 @@ export const centre: SpatialComposition = {
       marks.push(...centredLine(a, r.centre, inside(a, c, n * S, S), S))
     }
 
-    // the periphery: small, at the edge farthest from the centre
+    // the periphery: small, in the corner where the reading begins, so that
+    // what is read first is still read first
     const s = scale.pick('aside', rng)
     const margin = rng.range(0.05, 0.1) * PAGE
-    const edgeX = c.x < PAGE / 2 ? PAGE - margin : margin
-    const edgeY = c.y < PAGE / 2 ? PAGE - margin : margin
-    const n = r.periphery.length
-    const start = vertical
-      ? { x: edgeX, y: edgeY > PAGE / 2 ? edgeY - (n - 1) * s : edgeY }
-      : { x: edgeX > PAGE / 2 ? edgeX - (n - 1) * s : edgeX, y: edgeY }
+    const start = vertical ? { x: PAGE - margin, y: margin } : { x: margin, y: margin }
     marks.push(...lineMarks(a, r.periphery, start, s))
     return { marks }
   },
