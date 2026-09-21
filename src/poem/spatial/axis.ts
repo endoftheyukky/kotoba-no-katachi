@@ -14,12 +14,30 @@ import { Rng } from '../../core/random'
 import { EM } from '../../glyph/font'
 import { PAGE } from '../../render/stage'
 import { MIN_READABLE, planContext, seatLine } from '../context'
-import { BANDS, fitSizes, jitter, midOf } from '../contract'
+import { bandOf, fitSizes, jitter, midOf } from '../contract'
 import { seatsOf } from '../scope'
 import type { Analysis, Decision, Fitted, Mark, Material, SpatialComposition, Unit, Vec } from '../types'
 import { centredLine, directions, isWritten, lineMarks, offCentre, placeRegion, unitMarks } from './common'
 import { axisShape, closeness, poles, POLE_SCORE, type Poles } from './axisParams'
 import { jointHolds, jointLine, layJoint } from './joint'
+
+/**
+ * How large the part is against the whole it was taken from, so that the part
+ * and what is left of the whole carry the same weight of ink:
+ *   ink(part) = density(part) · s²,  ink(residue) = share · density(whole) · S²
+ * The measure is the reading's (share of the outer's ink left in pieces); the
+ * decision to balance the two is one of form.
+ */
+function residueRatio(a: Analysis, inner: string, outer: string, share: number): number {
+  const d = (c: string) => {
+    try {
+      return a.glyphs.get(c).metrics.density
+    } catch {
+      return 0.25
+    }
+  }
+  return clamp(Math.sqrt((share * d(outer)) / Math.max(0.01, d(inner))), 0.2, 1)
+}
 
 /** a pole without the erased characters at its ends (inside, they hold their place) */
 function trim(units: Unit[]): Unit[] {
@@ -157,7 +175,7 @@ export const axis: SpatialComposition = {
     '二極の間の長い白が、その関係である。関係語は極の間に小さく置かれるか、欠落として白になる',
     '言語上の隔たりは、紙面の広さではなく図形の内側の白になる：近い関係は大きな字が接して置かれ、遠い関係は字を紙面の端へ離す',
     '字形の差・語の継ぎ目そのものを読ませる構成では、字を大きく書く。語と語の関係では、字の大きさではなく隔たりが働く（少数の小さな字と大きな余白も、それが関係の形であれば成り立つ）',
-    '包含の二極では、取り出された字は小さく、残りは大きい（残りは操作が生んだものなので macro を許す）',
+    '包含の二極（題が両方の字を書く場合）：取り出された字と、外の字からそれを引いた残りを並べる。大きさは帯から選ばず、残りが外の字のインクの何割を保つか（読みの測定値）から、二つが同じ量のインクを持つように解く。軸は残りの形の長い辺を横切る向きに取り、紙面の内に収める',
     '題の外の部品との関係では、一方の極に元の字をそのまま、もう一方にその字から部品を引いた残りを置き、間に見つかった部品を小さく置く：読み手が三者を一枚で辿れるようにする',
     '拍の重さが決めた大小の比は保たれる。紙面がそれを収めきれないときは、比を崩さずに全体を小さくし、それでも収まらなければ字を紙面の外へ出す',
     'この構成では、読める字を表現のために回さない（放射や流れのように、構成そのものが向きを持つ場合はその限りではない：これは二極に限った制約）',
@@ -226,7 +244,7 @@ export const axis: SpatialComposition = {
         },
       }
 
-    const vertical = shape.vertical
+    let vertical = shape.vertical
     const at = (t: number, cross: number): Vec => (vertical ? { x: cross, y: t } : { x: t, y: cross })
 
     // 造形: which line across the page the axis runs on
@@ -263,34 +281,55 @@ export const axis: SpatialComposition = {
     let inkA: number
 
     if (p.kind === 'containment') {
-      // the residue is what the operation produced: it keeps the macro band and
-      // is not divided by the reach — the page is given to it
-      const S = jitter(rng, BANDS.macro[0] * PAGE)
-      const sa = Math.min(0.3 * S, 0.35 * occ.reach * PAGE)
+      // Two terms taken out of one character: the part the reading found, and
+      // what is left of the character without it. Neither is given the page by
+      // default. Their sizes come from the reading itself — what share of the
+      // outer's ink the residue keeps — so that the two carry the same weight
+      // of ink and can be compared side by side; a thin residue is written
+      // larger than a solid one, and the part smaller than the remainder only
+      // where the remainder has the body to hold it.
+      const outer = p.b[0]
+      const r = m.primary.focus.kind === 'pair' ? m.primary.focus.relation : null
+      const box = r?.residue.box ?? { x: -EM / 2, y: -EM / 2, w: EM, h: EM }
+      const k = residueRatio(a, p.a[0]?.char ?? outer.char, outer.char, r?.residue.share ?? 1)
+      // the residue's own form sets the axis: the pair runs across its long
+      // side, so that a strip is seen as a strip and not cut lengthwise
+      vertical = box.w >= box.h
+      const along = (vertical ? box.h : box.w) / EM
+      const across = (vertical ? box.w : box.h) / EM
+      const span = occ.reach * PAGE
+      const S = Math.min((span - gap) / (k + along), (0.9 * PAGE) / Math.max(k, across)) * rng.range(0.97, 1)
+      const sa = k * S
+      const length = sa + gap + along * S
+      const centre = clamp(shape.whitePull * PAGE, length / 2, PAGE - length / 2)
+      startAt = centre - length / 2
+      endAt = centre + length / 2
+      inkA = sa
       fitted = {
         sizes: [sa, S],
-        desired: 'macro',
-        achieved: 'macro',
-        bled: S + sa + gap > PAGE,
+        desired: bandOf(Math.max(sa, along * S, across * S), PAGE),
+        achieved: bandOf(Math.max(sa, along * S, across * S), PAGE),
+        bled: false,
         decisions: [
-          { name: 'band', ground: 'linguistic', value: 'macro', note: close.note },
-          { name: 'inner', ground: 'plastic', value: (sa / PAGE).toFixed(2), note: '取り出された字は残りの3割：残りが紙面を持つ' },
+          {
+            name: 'ratio',
+            ground: 'linguistic',
+            value: k.toFixed(2),
+            note: `残りは外の字のインクの${((r?.residue.share ?? 1) * 100).toFixed(0)}%：取り出された字と残りが同じ量のインクを持つ大きさの比`,
+          },
+          {
+            name: 'axis',
+            ground: 'plastic',
+            value: vertical ? '縦' : '横',
+            note: `残りの形（${box.w.toFixed(0)}×${box.h.toFixed(0)}）の長い辺を横切る向き`,
+          },
         ],
       }
-      const span = occ.reach * PAGE
-      const centre = clamp(shape.whitePull * PAGE, span / 2, PAGE - span / 2)
-      startAt = centre - span / 2
-      endAt = centre + span / 2
-      inkA = sa
       const centreA = at(startAt + sa / 2, lineA)
       const halfA = ((unitsA.length - 1) * sa) / 2
       marks.push(...centredLine(a, unitsA, centreA, sa))
       put(unitsA, { x: centreA.x - reading.along.x * halfA, y: centreA.y - reading.along.y * halfA }, sa)
-      const outer = p.b[0]
-      const r = m.primary.focus.kind === 'pair' ? m.primary.focus.relation : null
-      const box = r?.residue.box ?? { x: -EM / 2, y: -EM / 2, w: EM, h: EM }
-      const extent = (vertical ? box.h : box.w) * (S / EM)
-      const g = placeRegion(box, S, at(Math.min(PAGE - extent / 2, endAt + extent / 2), lineB))
+      const g = placeRegion(box, S, at(endAt - (along * S) / 2, lineB))
       marks.push({ char: outer.char, x: g.x, y: g.y, size: S, minus: outer.minus, keep: outer.minus?.keep })
       // what is left of a character is still that character's place in the title
       if (isWritten(outer)) placedAt.push({ grapheme: outer.grapheme, x: g.x, y: g.y, size: S })

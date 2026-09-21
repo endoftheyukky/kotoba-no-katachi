@@ -133,6 +133,21 @@ is explained, and is not to be rescued.
 even where the rule would not, `axis/poles` brings the two poles back. Neither
 touches fitness or selection.
 
+## AXIS / containment — measured sizes
+
+Where the title writes both characters of a containment (川または州, 日と白),
+the axis used to give the residue the macro band and the part a fixed 0.3 of
+it, whatever the reading said. Score 1.00 and 0.665, a remainder of 22% in
+three crumbs and one of 28% in one bar, all came out as 0.21 : 0.71.
+
+Now the ratio is solved from the reading: the part and the remainder carry the
+same weight of ink, `s / S = √(share · density(outer) / density(inner))`. The
+axis runs across the remainder's long side (a wide remainder stacks, a tall
+one stands beside), and the pair is fitted inside the page. The measure is the
+reading's; balancing the ink is a decision of form. `scale` from the reading
+is not used: its search window bottoms out at 0.91 and three containments sit
+exactly there, so it says only "about the same size".
+
 ## VOID
 
 `void.ts` is kept and is not a preferred choice. Its idea — a region that is

@@ -17,6 +17,7 @@
  *                               own order (#1 winner, #2 runner-up)
  *   /study.html?detail=1        …with grounds, marks and completeness too
  *   /study.html?size=420        how large those pages are drawn
+ *   /study.html?bare=1          no header: the pages alone
  *
  * The last five are for looking only: they change which realization is drawn,
  * never how one is chosen.
@@ -53,9 +54,14 @@ const mode = params.get('mode')
  */
 const compare = params.get('compare')?.split('|').map((s) => s.trim()).filter(Boolean)
 const size = Number(params.get('size') ?? 0)
-if (size) document.documentElement.style.setProperty('--page', `${size}px`)
+if (size) {
+  document.documentElement.style.setProperty('--page', `${size}px`)
+  document.documentElement.style.setProperty('--cell', `${size}px`)
+}
 /** also print the grounds, the marks and the completeness under each page */
 const detail = params.get('detail') === '1'
+/** pages only: no header, no summary — a contact sheet to look at whole */
+const bare = params.get('bare') === '1'
 
 /** a comparison entry → the review-only force that draws it */
 function forceOf(spec: string, fits: readonly Realization[]): Force | null {
@@ -439,7 +445,7 @@ async function main(): Promise<void> {
     el('p', undefined, `${probe ? 'probe set（特定のfeatureが設計どおり発火するかを見るための題。一般化の証拠ではない）' : 'development set'}${compare ? `  ⟨比較: ${compare.join('  ')}（同じ大きさで並べるだけ。選択には影響しない）⟩` : space || mode ? `  ⟨強制描画: ${space ?? ''}${mode ? '/' + mode : ''}（選択には影響しない）⟩` : ''} · ${titles.length} titles · variant ${variant} · the pages carry no text; what was read and decided is written beside them`),
   )
   const list = el('main', compare ? 'compare' : grid ? 'grid' : undefined)
-  document.body.append(header, list)
+  document.body.append(...(bare ? [list] : [header, list]))
   // a comparison sheet has no distribution to count: the same title, several ways
   if (compare) return comparison(list)
 
