@@ -168,8 +168,10 @@ function inPlace(
 export const axis: SpatialComposition = {
   id: 'axis',
   title: '二極',
-  // two marks at the ends of a relation may leave the page rather than shrink
-  bleed: true,
+  // Two poles are fitted inside the page: where the page cannot hold the band
+  // the grounds asked for, the marks are written smaller rather than cut by
+  // its edge. A pole cropped by the paper says nothing the relation needs.
+  bleed: false,
   rules: [
     '二項の関係（A または B、A と B、AがB、AをB、鏡像、よく似た二つの字形、語幹と活用語尾）は、一本の軸の両端に引き離される',
     '二極の間の長い白が、その関係である。関係語は極の間に小さく置かれるか、欠落として白になる',
@@ -177,7 +179,7 @@ export const axis: SpatialComposition = {
     '字形の差・語の継ぎ目を読ませる構成でも、字は拡大しない：二つを並べて比べられる大きさ（normal）で足りる。語と語の関係では、字の大きさではなく隔たりが働く（少数の小さな字と大きな余白も、それが関係の形であれば成り立つ）',
     '包含の二極（題が両方の字を書く場合）：取り出された字と、外の字からそれを引いた残りを並べる。大きさは帯から選ばず、残りが外の字のインクの何割を保つか（読みの測定値）から、二つが同じ量のインクを持つように解く。軸は残りの形の長い辺を横切る向きに取り、紙面の内に収める',
     '題の外の部品との関係では、一方の極に元の字をそのまま、もう一方にその字から部品を引いた残りを置き、間に見つかった部品を小さく置く：読み手が三者を一枚で辿れるようにする',
-    '拍の重さが決めた大小の比は保たれる。紙面がそれを収めきれないときは、比を崩さずに全体を小さくし、それでも収まらなければ字を紙面の外へ出す',
+    '拍の重さが決めた大小の比は保たれる。紙面がそれを収めきれないときは、比を崩さずに全体を小さくする：極を紙面の縁で切ることはしない',
     'この構成では、読める字を表現のために回さない（放射や流れのように、構成そのものが向きを持つ場合はその限りではない：これは二極に限った制約）',
     '距離・大小の比・揃え方・白の寄り・軸の向き・横ずれは、題の特徴から決まる（axisParams.ts）。一篇で中立から動くのは、最も強い二つだけ',
     '題の一部だけが対象のとき、置かれなかった字は消えない：題の書字方向に、書かれた順のまま、一定の間隔で並ぶ（poem/context.ts）。対象が離れた席から引き出されているときは、その間隔が席の位置を保つ',

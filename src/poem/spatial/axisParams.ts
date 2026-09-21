@@ -245,12 +245,15 @@ export function closeness(p: Poles): { close: boolean; band: ScaleBand; note: st
     // subject, which is not what an axis holds.
     case 'similarity':
       return { close: true, band: 'normal', note: '二つの形の差そのものを読ませる → 並べて比べられる大きさに（拡大はしない）' }
+    // a seam inside a word is read in the gap, not in the letters: when the
+    // two poles are all there is, they are small and the white between them
+    // is what the page shows
     case 'inflection':
-      return { close: true, band: 'normal', note: '語の継ぎ目を読ませる → 継ぎ目が見える大きさに（拡大はしない）' }
+      return { close: true, band: 'small', note: '語の継ぎ目は字と字の間にある → 字は小さく、隔たりが継ぎ目を見せる' }
     case 'containment':
       return { close: true, band: 'macro', note: '引き算の残りは操作が生んだもの → macro を許す' }
     default:
-      return { close: false, band: 'normal', note: '語と語の関係は、字の大きさではなく隔たりで見せる' }
+      return { close: false, band: 'small', note: '語と語の関係は、字の大きさではなく隔たりで見せる → 字は小さく' }
   }
 }
 

@@ -503,6 +503,11 @@ async function main(): Promise<void> {
     else if (used) inventory.modifier++
   }
 
+  // nothing matched (?only= with no such title): there is nothing to summarise
+  if (!titles.length || !reaches.length) {
+    header.append(el('p', 'coverline', '該当する題がありません'))
+    return
+  }
   const summary = el('div', 'summary')
   for (const [title, m] of [
     ['primary operation', byOp],

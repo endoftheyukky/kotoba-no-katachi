@@ -3,10 +3,66 @@
  * One term holds the page; what depends on it stays at the edge.
  */
 import { EM } from '../../glyph/font'
+import type { GlyphMetrics } from '../../glyph/metrics'
 import { PAGE } from '../../render/stage'
+import { MIN_READABLE } from '../context'
 import type { Analysis, Material, Mark, SpatialComposition, Unit, Vec } from '../types'
 import { allUnits, centredLine, directions, inside, isWritten, lineMarks, offCentre, placeRegion, unitMarks } from './common'
 import { coordinated, dependencyBy } from './relations'
+
+/**
+ * Where, inside a counter, a character can be written without touching ink.
+ *
+ * A counter is read as a region of white, but its box can hold strokes of the
+ * character itself (玉 inside 囗). So the places are found in the ink, not in
+ * the box: for each point of the box, how far it is to the nearest ink in
+ * every direction; the roomiest point takes the next character, and the room
+ * it used is taken away. What comes back is in em units of the glyph.
+ */
+function roomIn(m: GlyphMetrics, box: { x: number; y: number; w: number; h: number }, count: number): { x: number; y: number; half: number }[] {
+  const { w, h, data, left, top, px } = m.ink
+  const step = Math.max(px, 1)
+  const cols = Math.max(1, Math.floor(box.w / step))
+  const rows = Math.max(1, Math.floor(box.h / step))
+  const inkAt = (x: number, y: number) => {
+    const i = Math.floor((x - left) / px)
+    const j = Math.floor((y - top) / px)
+    return i >= 0 && j >= 0 && i < w && j < h && data[j * w + i] > 96
+  }
+  // occupied: ink, or a character already placed
+  const taken: { x: number; y: number; half: number }[] = []
+  const blocked = (x: number, y: number) =>
+    inkAt(x, y) || taken.some((t) => Math.abs(x - t.x) < t.half && Math.abs(y - t.y) < t.half) ||
+    x < box.x || y < box.y || x > box.x + box.w || y > box.y + box.h
+  // the half-size of the largest free square centred at (x, y)
+  const clearance = (x: number, y: number) => {
+    let d = 0
+    for (;;) {
+      const r = d + step
+      let hit = false
+      for (let t = -r; t <= r && !hit; t += step)
+        hit = blocked(x + t, y - r) || blocked(x + t, y + r) || blocked(x - r, y + t) || blocked(x + r, y + t)
+      if (hit || r > Math.max(box.w, box.h)) return d
+      d = r
+    }
+  }
+  const out: { x: number; y: number; half: number }[] = []
+  for (let n = 0; n < count; n++) {
+    let best = { x: 0, y: 0, half: -1 }
+    for (let j = 0; j < rows; j++)
+      for (let i = 0; i < cols; i++) {
+        const x = box.x + (i + 0.5) * (box.w / cols)
+        const y = box.y + (j + 0.5) * (box.h / rows)
+        if (blocked(x, y)) continue
+        const d = clearance(x, y)
+        if (d > best.half) best = { x, y, half: d }
+      }
+    if (best.half <= 0) break
+    out.push(best)
+    taken.push(best)
+  }
+  return out
+}
 
 interface Roles {
   centre: Unit[]
@@ -89,14 +145,24 @@ export const centre: SpatialComposition = {
       const k = S / EM
       const groups: Unit[][] = focus.holes.map(() => [])
       others.forEach((u, i) => groups[i % groups.length].push(u))
+      const { vertical: down } = directions(a)
       focus.holes.forEach((hole, i) => {
         const group = groups[i]
         if (!group.length) return
-        const w = hole.box.w * k
-        const h = hole.box.h * k
-        const s = Math.min(w, h) * 0.62
-        const centre = { x: at.x + hole.centre.x * k, y: at.y + hole.centre.y * k }
-        marks.push(...centredLine(a, group, centre, Math.min(s, (Math.max(w, h) * 0.8) / group.length)))
+        // each character where the white actually has room for it, never on
+        // a stroke; the places are then taken in reading order
+        const spots = roomIn(metrics, hole.box, group.length)
+          .sort((p, q) => (down ? p.y - q.y || q.x - p.x : p.x - q.x || p.y - q.y))
+        const size = Math.min(...spots.map((p) => p.half * 2 * 0.92 * k), (Math.min(hole.box.w, hole.box.h) * 0.62) * k)
+        if (spots.length < group.length || size < MIN_READABLE * PAGE) {
+          // no white wide enough: the rest of the title goes beside the
+          // character, on the reading line, rather than over its strokes
+          const s = MIN_READABLE * PAGE * 1.2
+          const edge = { x: down ? PAGE - s : PAGE / 2, y: down ? PAGE / 2 : PAGE - s }
+          marks.push(...centredLine(a, group, edge, s))
+          return
+        }
+        group.forEach((u, n) => marks.push(...unitMarks(a, u, { x: at.x + spots[n].x * k, y: at.y + spots[n].y * k }, size)))
       })
       return { marks }
     }
@@ -119,9 +185,10 @@ export const centre: SpatialComposition = {
       const g = placeRegion(box, S, c)
       marks.push({ char: u.char, x: g.x, y: g.y, size: S, minus: u.minus, keep: u.minus?.keep })
     } else {
-      // the centre holds the page by its place, at body size, not by being enlarged past it
+      // the centre holds the page by its place, not by its size: a word that
+      // depends on another is a relation between words, and is written small
       const n = Math.max(1, r.centre.length)
-      const S = Math.min(scale.pick('body', rng, [0.5, 1]), (0.7 * PAGE) / n)
+      const S = Math.min(scale.pick('body', rng, [0.15, 0.45]), (0.7 * PAGE) / n)
       marks.push(...centredLine(a, r.centre, inside(a, c, n * S, S), S))
     }
 

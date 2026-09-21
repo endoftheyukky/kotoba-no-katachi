@@ -61,7 +61,13 @@ export const radial: SpatialComposition = {
       const len = Math.hypot(c.x, c.y)
       const angle = len > 1 ? Math.atan2(c.y, c.x) : (i / f.parts.length) * 2 * Math.PI
       const r = S * (0.25 + 0.25 * openness(p)) * rng.range(0.9, 1.15)
-      const inside = (v: number) => Math.min(PAGE * 0.94, Math.max(PAGE * 0.06, v))
+      // the part's own ink, about its centroid, must stay on the page: a part
+      // is read whole or not at all (half its larger side, turned or not)
+      const x0 = Math.min(...p.keep.map((q) => q.x)), x1 = Math.max(...p.keep.map((q) => q.x + q.w))
+      const y0 = Math.min(...p.keep.map((q) => q.y)), y1 = Math.max(...p.keep.map((q) => q.y + q.h))
+      const reachOut = Math.max(Math.abs(x0 - c.x), Math.abs(x1 - c.x), Math.abs(y0 - c.y), Math.abs(y1 - c.y)) * k
+      const margin = Math.min(PAGE * 0.45, Math.max(PAGE * 0.04, reachOut + PAGE * 0.02))
+      const inside = (v: number) => Math.min(PAGE - margin, Math.max(margin, v))
       const target = { x: inside(focus.x + Math.cos(angle) * r), y: inside(focus.y + Math.sin(angle) * r) }
       // turned toward the way it leaves, as far as it had opened: a part that
       // left upward stays upright, one that left sideways leans into its ray

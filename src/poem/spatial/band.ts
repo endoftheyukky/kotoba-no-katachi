@@ -7,7 +7,7 @@
 import { clamp } from '../../core/math'
 import { EM } from '../../glyph/font'
 import { PAGE } from '../../render/stage'
-import { TEXTURE } from '../contract'
+import { BANDS, TEXTURE } from '../contract'
 import { contentGraphemes } from '../salience'
 import type { Mark, SpatialComposition, Unit } from '../types'
 import { allUnits, directions, centredLine, isWritten, lineMarks, offCentre, unitMarks } from './common'
@@ -19,7 +19,7 @@ export const band: SpatialComposition = {
     '題の一部が反復するとき（ささやき・許許・コーヒーのー）、反復する単位はその場で増殖し、題は紙面を端から端まで渡る一本の帯になる。帯の字は小さい：増えた数が帯を作るのであって、一字の大きさではない',
     '帯は書き始めの側の縁に寄る。帯以外は白',
     '増えた字の並びは段をなす：一つ増えるごとに、帯は書字と直角の向きへ一段ずれ、ずれたまま先へ続く。段は題のどこが増えたかを示し、増えるたびに積み重なる。一段の深さは造形',
-    '部品が一方向に並んで切れる字（川）は、部品が紙面を渡る帯としてほどける。題がその一字であるか、四つ以上の部品が縞をなすときに限る。元の題は小さく帯の始まりに残る',
+    '部品が一方向に並んで切れる字（川）は、部品が紙面を渡る帯としてほどける。題がその一字であるか、四つ以上の部品が縞をなすときに限る。元の題は小さく帯の始まりに残る。部品は拡大しない：ほどけた間隔が紙面を渡る（large の帯）',
   ],
 
   fit(a, m) {
@@ -105,7 +105,10 @@ export const band: SpatialComposition = {
 
     if (f.kind === 'parts') {
       const g = a.graphemes[f.grapheme]
-      const S = scale.pick('result', rng, [0.05, 0.35])
+      // the parts cross the page by being spread out, not by being enlarged:
+      // each keeps the size it would have in a large character. 造形: where in
+      // the large band
+      const S = (BANDS.large[0] + (BANDS.large[1] - BANDS.large[0]) * rng.range(0.2, 0.6)) * PAGE
       const k = S / EM
       // the parts spread across the page along the direction of their cuts
       const byX = f.arrangement === 'row'

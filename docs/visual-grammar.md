@@ -148,6 +148,46 @@ reading's; balancing the ink is a decision of form. `scale` from the reading
 is not used: its search window bottoms out at 0.91 and three containments sit
 exactly there, so it says only "about the same size".
 
+## Visual language pass (v1)
+
+The analysis was frozen; what changed is how the page writes what was read.
+Measured on the development set, before → after this pass:
+
+| | before | after |
+| --- | --- | --- |
+| pages whose largest mark is over 0.36 of the page | 13 | 7 |
+| pages with ink leaving the page | 11 | 5 (a path running on, a field that begins off the page, a band of parts crossing it, the counter page) |
+| reading-order breaks | 3 | 0 |
+| overlapping marks | 3 | 0 |
+| marks on the whole sheet | 171 | 469 |
+| pages by their largest mark: micro / small / normal / large / macro | 3 / 9 / 9 / 8 / 5 | 7 / 9 / 11 / 5 / 2 |
+
+**Two faces, by what a mark is.** A reading of ink — a residue, a part, a
+term of a relation between letterforms, a character whose white holds the
+rest — stays in the face it was read in (Noto Sans JP 500). The title written
+as writing is Noto Serif JP 300. Not by meaning, not per title (poem/face.ts).
+
+**The many are small.** A unit the poem multiplies is texture: fields and
+bands are written between micro and small, and the count is what is seen. A
+field thins out at its end in a fixed dither order.
+
+**Relations between words are written small**: coordination, dependency, an
+imperative, a stem and ending with nothing else — the distance does the work.
+Two glyphs compared (a similarity) are written at an ordinary size, not
+enlarged. Large and macro are left to a single character whose own ink is the
+subject: its parts, its counters, what is left of it.
+
+**Geometry from structure.** A band's copies step away from the edge as they
+multiply (the page shows where in the title the repetition is). Scattered
+words step through the page in reading order and each step turns a little
+further (the turn per step is plastic). A radial part turns toward its ray by
+how far it opened, and stays on the page. A periphery sits where the reading
+begins. The rest of a title written inside a counter is placed where the white
+actually has room, never on a stroke.
+
+**Edges.** Poles are fitted inside the page; a smaller band is accepted
+rather than a cropped pole.
+
 ## VOID
 
 `void.ts` is kept and is not a preferred choice. Its idea — a region that is
