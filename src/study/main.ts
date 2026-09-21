@@ -8,13 +8,22 @@
  *   /study.html?only=嘘|海のあと  a subset
  *   /study.html?view=grid       pages only, as a contact sheet
  *   /study.html?set=probe       the probe set instead of the development set
+ *   /study.html?space=path      draw every title in one composition, where it fits
+ *   /study.html?mode=turned     …and in one of that composition's ways
+ *   /study.html?compare=auto|path/run|path/turned
+ *                               one title drawn several ways, side by side at
+ *                               one size (`auto` = the page as it was chosen)
+ *   /study.html?size=420        how large those pages are drawn
+ *
+ * The last four are for looking only: they change which realization is drawn,
+ * never how one is chosen.
  */
 import './study.css'
 import '../glyph/font-face'
 import type { Relation } from '../language/analysis'
-import { analyze, compose, MODIFIER_SALIENCE, OPERATIONS, SPACES } from '../poem/compose'
+import { analyze, compose, type Force, MODIFIER_SALIENCE, OPERATIONS, SPACES } from '../poem/compose'
 import { measureAll, verdict } from '../poem/measure'
-import type { Analysis, Composition, Decision, Proposal } from '../poem/types'
+import type { Analysis, Composition, Decision, Proposal, SpatialId } from '../poem/types'
 import { renderCanvas } from '../render/png'
 import { PAGE } from '../render/stage'
 import { renderSVG } from '../render/svg'
@@ -29,6 +38,20 @@ const probe = params.get('set') === 'probe'
 const set = probe ? PROBE_TITLES : STUDY_TITLES
 const titles = only ? set.filter((t) => only.includes(t.text)) : set
 const grid = params.get('view') === 'grid'
+/** look at one composition's page for every title it can hold (review only) */
+const space = params.get('space') as SpatialId | null
+const mode = params.get('mode')
+/** the same title drawn several ways at one size: `auto`, `path`, `path/turned` */
+const compare = params.get('compare')?.split('|').map((s) => s.trim()).filter(Boolean)
+const size = Number(params.get('size') ?? 0)
+if (size) document.documentElement.style.setProperty('--page', `${size}px`)
+
+/** a comparison entry → the review-only force that draws it */
+function forceOf(spec: string): Force {
+  if (spec === 'auto') return {}
+  const [id, way] = spec.split('/')
+  return { space: (id || undefined) as SpatialId | undefined, mode: way || undefined }
+}
 
 const opTitle = (id: string) => OPERATIONS.find((o) => o.id === id)?.title ?? id
 const spaceTitle = (id: string) => SPACES.find((s) => s.id === id)?.title ?? id
@@ -322,14 +345,79 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
   return box
 }
 
+/**
+ * Review only. One title, drawn several ways, at one size, with nothing beside
+ * each page but what that way did: which composition and which of its ways,
+ * its fitness, what it uses and what it cannot keep. The choice is untouched —
+ * the page marked 採用 is the one the system would have made on its own.
+ */
+async function comparison(list: HTMLElement): Promise<void> {
+  for (const t of titles) {
+    const input = normalizeTitle({ text: t.text, reading: t.reading, variant })
+    if (typeof input === 'string') continue
+    const a = await analyze(input)
+    const chosen = compose(a)
+    const item = el('section', 'item')
+    const head = el('h2')
+    head.append(el('span', 'title', t.text))
+    if (t.reading) head.append(el('span', 'reading', `（${t.reading}）`))
+    item.append(head)
+    const shots = el('div', 'shots')
+    for (const spec of compare!) {
+      const c = compose(a, forceOf(spec))
+      const r = c.spatial
+      const same = r.id === chosen.spatial.id && r.mode === chosen.spatial.mode
+      const shot = el('div', same ? 'shot chosen' : 'shot')
+      const page = el('div', 'page')
+      shot.append(page)
+      renderSVG(page, c.draft, a.glyphs)
+      const mm = measureAll(c.draft.marks).total
+      const comp = completeness(a, c)
+      const cap = el('div', 'caption')
+      cap.append(
+        el('p', 'shotname', `${spaceTitle(r.id)} / ${r.mode}${same ? '　← 採用' : ''}`),
+        el('p', undefined, `fitness ${f2(r.fitness)} · marks ${c.draft.marks.length} · reach ${f2(mm.reach)} · 最大字 ${f2(mm.maxEm)}`),
+        el('p', undefined, r.grounds.join('\n')),
+      )
+      if (r.uses.length) cap.append(el('p', undefined, `使う: ${r.uses.map((u) => `${u.property} ${u.value}`).join(' · ')}`))
+      if (r.losses?.length)
+        cap.append(el('p', 'dead', `失う: ${r.losses.map((u) => `${u.property} ${u.value}`).join(' · ')}`))
+      // what is actually on the paper, in the order it was placed
+      cap.append(
+        el(
+          'p',
+          undefined,
+          c.draft.marks
+            .map((k) => `${k.char}(${Math.round(k.x)},${Math.round(k.y)})r${(k.rotate ?? 0).toFixed(1)}`)
+            .join(' '),
+        ),
+      )
+      cap.append(
+        el(
+          'p',
+          comp.unexplained.length || !comp.ordered ? 'dead' : undefined,
+          (comp.unexplained.length ? `説明のつかない脱落「${comp.unexplained.join('')}」` : '脱落なし') +
+            (comp.ordered ? ' · 読み順は保たれている' : ' · 読み順が壊れている'),
+        ),
+      )
+      shot.append(cap)
+      shots.append(shot)
+    }
+    item.append(shots)
+    list.append(item)
+  }
+}
+
 async function main(): Promise<void> {
   const header = el('header')
   header.append(
     el('h1', undefined, 'study sheet'),
-    el('p', undefined, `${probe ? 'probe set（特定のfeatureが設計どおり発火するかを見るための題。一般化の証拠ではない）' : 'development set'} · ${titles.length} titles · variant ${variant} · the pages carry no text; what was read and decided is written beside them`),
+    el('p', undefined, `${probe ? 'probe set（特定のfeatureが設計どおり発火するかを見るための題。一般化の証拠ではない）' : 'development set'}${compare ? `  ⟨比較: ${compare.join('  ')}（同じ大きさで並べるだけ。選択には影響しない）⟩` : space || mode ? `  ⟨強制描画: ${space ?? ''}${mode ? '/' + mode : ''}（選択には影響しない）⟩` : ''} · ${titles.length} titles · variant ${variant} · the pages carry no text; what was read and decided is written beside them`),
   )
-  const list = el('main', grid ? 'grid' : undefined)
+  const list = el('main', compare ? 'compare' : grid ? 'grid' : undefined)
   document.body.append(header, list)
+  // a comparison sheet has no distribution to count: the same title, several ways
+  if (compare) return comparison(list)
 
   const byOp = new Map<string, number>()
   const bySpace = new Map<string, number>()
@@ -353,7 +441,7 @@ async function main(): Promise<void> {
     item.append(page)
     list.append(item)
     const a = await analyze(input)
-    const c = compose(a)
+    const c = compose(a, space || mode ? { space: space ?? undefined, mode: mode ?? undefined } : {})
     renderSVG(page, c.draft, a.glyphs)
     const cover = inkCover(c, a)
     covers.push(cover)

@@ -263,6 +263,50 @@ main.grid .caption {
   color: var(--mute);
 }
 
+/* comparison sheet: one title, several ways, all pages the same size */
+main.compare {
+  grid-template-columns: 1fr;
+}
+
+main.compare .item {
+  display: block;
+}
+
+.shots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.shot {
+  width: var(--page);
+}
+
+.shot .caption {
+  margin: 6px 0 0;
+  color: var(--mute);
+}
+
+.shot .caption p {
+  margin: 0 0 2px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.shot .shotname {
+  color: var(--ink);
+  font-weight: bold;
+}
+
+.shot.chosen .page {
+  outline: 2px solid var(--ink);
+}
+
+.shot .caption .dead {
+  color: #b00;
+}
+
 .params {
   margin: 0;
   padding-left: 18px;

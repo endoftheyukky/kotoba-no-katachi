@@ -37,6 +37,7 @@ import { cluster } from './spatial/cluster'
 import { field } from './spatial/field'
 import { grid } from './spatial/grid'
 import { nest } from './spatial/nest'
+import { path } from './spatial/path'
 import { radial } from './spatial/radial'
 import { scattered } from './spatial/scattered'
 import { voidSpace } from './spatial/void'
@@ -55,7 +56,7 @@ import type {
 } from './types'
 
 export const OPERATIONS: readonly PoeticOperation[] = [proliferation, decomposition, transformation, absence]
-export const SPACES: readonly SpatialComposition[] = [field, band, grid, radial, axis, centre, nest, voidSpace, scattered, cluster]
+export const SPACES: readonly SpatialComposition[] = [field, band, grid, path, radial, axis, centre, nest, voidSpace, scattered, cluster]
 
 /** a modifier must be at least this salient to enter the poem */
 export const MODIFIER_SALIENCE = 0.4
@@ -86,6 +87,13 @@ const FITNESS_EPS = 0.05
 const GENERIC = new Set(['count', 'order'])
 const specificity = (r: Realization) =>
   Math.min(1, r.uses.filter((u) => !GENERIC.has(u.property)).length / 3)
+/**
+ * Specificity compares what two ways of holding the material actually read.
+ * A composition not yet moved to `offer` declares nothing, so the comparison
+ * would be empty — and would hand every near-tie to whichever composition
+ * happens to be migrated. Where any near-best cannot declare, fitness alone
+ * decides.
+ */
 
 export async function analyze(input: TitleInput, segmenter?: Segmenter): Promise<Analysis> {
   const language = analyzeLanguage(input, segmenter)
@@ -121,9 +129,16 @@ export async function analyze(input: TitleInput, segmenter?: Segmenter): Promise
   return { ...language, glyphs, glyphRelations, readables, voicing, interiors }
 }
 
+/**
+ * Review only. Draw the poem the way a named composition would hold it,
+ * instead of the way it was chosen. Nothing here takes part in the choice:
+ * fitness, eligibility and geometry are the same whether or not it is used.
+ */
 export interface Force {
   op?: OperationId
   space?: SpatialId
+  /** which of that composition's ways to draw ('run', 'turned', '2x2'…) */
+  mode?: string
 }
 
 export function compose(a: Analysis, force: Force = {}): Composition {
@@ -265,10 +280,21 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   // A hard gate first: a way the page cannot hold at a readable size is not a
   // way. Then fitness alone; specificity only separates near-equals, and is
   // capped so that naming more properties cannot by itself win.
-  const fits = offers
-    .filter((o) => o.realisable)
-    .sort((x, y) => (Math.abs(y.fitness - x.fitness) > FITNESS_EPS ? y.fitness - x.fitness : specificity(y) - specificity(x)))
-  const spatial = (force.space && fits.find((f) => f.id === force.space)) || fits[Math.min(spaceRank, fits.length - 1)]
+  // Fitness alone gives the order — an epsilon band inside a comparator is
+  // not a total order, and would leave the result to the sort's internals.
+  // The tie-break is a separate step over the near-best, and only where every
+  // one of them declares what it reads.
+  const fits = offers.filter((o) => o.realisable).sort((x, y) => y.fitness - x.fitness)
+  const near = fits.filter((r) => fits[0].fitness - r.fitness <= FITNESS_EPS)
+  if (near.length > 1 && near.every((r) => r.uses.length > 0)) {
+    const first = [...near].sort((x, y) => specificity(y) - specificity(x) || y.fitness - x.fitness)[0]
+    fits.splice(fits.indexOf(first), 1)
+    fits.unshift(first)
+  }
+  const wanted = (f: Realization) =>
+    (!force.space || f.id === force.space) && (!force.mode || f.mode === force.mode)
+  const spatial =
+    ((force.space || force.mode) && fits.find(wanted)) || fits[Math.min(spaceRank, fits.length - 1)]
   const space = SPACES.find((s) => s.id === spatial.id)!
   const scale = decideScale(a, material, spatial.id)
   const placed = space.realize(a, material, new Rng(seed).fork(spatial.id), scale, spatial)

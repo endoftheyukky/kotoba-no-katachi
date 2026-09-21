@@ -260,7 +260,7 @@ export interface PoeticOperation {
 // ---------------------------------------------------------------------------
 // space
 
-export type SpatialId = 'field' | 'band' | 'radial' | 'axis' | 'centre' | 'void' | 'scattered' | 'cluster' | 'nest' | 'grid'
+export type SpatialId = 'field' | 'band' | 'radial' | 'axis' | 'centre' | 'void' | 'scattered' | 'cluster' | 'nest' | 'grid' | 'path'
 
 export interface Fit {
   id: SpatialId
