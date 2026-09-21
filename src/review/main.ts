@@ -1,14 +1,15 @@
 /**
  * Review sheet: the study titles as works, to be looked at without their
- * reasons. Only the page and its title are shown; nothing about relations,
- * operations or salience. Generation is exactly that of the work.
+ * reasons. The page, its title, and one quiet line saying which composition
+ * held it and how well it fitted — nothing about relations, operations or
+ * salience. Generation is exactly that of the work.
  *
  *   /review.html
  *   /review.html?set=probe
  */
 import './review.css'
 import '../glyph/font-face'
-import { analyze, compose } from '../poem/compose'
+import { analyze, compose, SPACES } from '../poem/compose'
 import { renderSVG } from '../render/svg'
 import { PROBE_TITLES } from '../study/probes'
 import { STUDY_TITLES } from '../study/titles'
@@ -32,16 +33,22 @@ async function main(): Promise<void> {
       reading.textContent = `（${t.reading}）`
       caption.append(reading)
     }
-    figure.append(page, caption)
+    // filled in once the page is composed, so the line never precedes its page
+    const held = document.createElement('div')
+    held.className = 'held'
+    figure.append(page, caption, held)
     list.append(figure)
-    return { t, page }
+    return { t, page, held }
   })
 
-  for (const { t, page } of slots) {
+  for (const { t, page, held } of slots) {
     const input = normalizeTitle({ text: t.text, reading: t.reading })
     if (typeof input === 'string') continue
     const a = await analyze(input)
-    renderSVG(page, compose(a).draft, a.glyphs)
+    const c = compose(a)
+    renderSVG(page, c.draft, a.glyphs)
+    const space = SPACES.find((s) => s.id === c.spatial.id)
+    held.textContent = `${space?.title ?? c.spatial.id} / ${c.spatial.mode} · ${c.spatial.fitness.toFixed(2)}`
   }
 }
 

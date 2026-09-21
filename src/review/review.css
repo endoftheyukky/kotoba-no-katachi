@@ -47,6 +47,15 @@ figcaption .reading {
   color: #888;
 }
 
+/* which composition held the page, kept quiet enough not to be read first */
+.held {
+  margin-top: 2px;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: #a0a0a0;
+}
+
 @media (max-width: 500px) {
   main {
     padding: 16px 16px 48px;
