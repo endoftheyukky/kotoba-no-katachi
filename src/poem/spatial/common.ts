@@ -40,6 +40,7 @@ export function unitMarks(a: Analysis, u: Unit, at: Vec, size: number, spread = 
   const adj = g ? cellAdjust(g, a.direction === 'vertical') : { dx: 0, dy: 0, rotate: 0 }
   const base: Mark = {
     char: u.char,
+    ...(u.grapheme >= 0 ? { grapheme: u.grapheme } : {}),
     x: at.x + adj.dx * size,
     y: at.y + adj.dy * size,
     size,

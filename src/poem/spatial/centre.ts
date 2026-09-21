@@ -183,7 +183,7 @@ export const centre: SpatialComposition = {
       const box = f.kind === 'pair' ? f.relation.residue.box : { x: -EM / 2, y: -EM / 2, w: EM, h: EM }
       const S = scale.pick('result', rng, [0.2, 0.6])
       const g = placeRegion(box, S, c)
-      marks.push({ char: u.char, x: g.x, y: g.y, size: S, minus: u.minus, keep: u.minus?.keep })
+      marks.push({ char: u.char, ...(u.grapheme >= 0 ? { grapheme: u.grapheme } : {}), x: g.x, y: g.y, size: S, minus: u.minus, keep: u.minus?.keep })
     } else {
       // the centre holds the page by its place, not by its size: a word that
       // depends on another is a relation between words, and is written small

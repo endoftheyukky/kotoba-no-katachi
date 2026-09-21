@@ -332,6 +332,11 @@ export interface Parameter {
 
 export interface Placed {
   marks: Mark[]
+  /**
+   * Where the composition laid the title's seats along the reading, written
+   * or not, when it lays them in a line (v2: a grammar can use an empty seat).
+   */
+  seats?: { grapheme: number; x: number; y: number; size: number; written: boolean }[]
   /** what the composition decided, and why (for study; never drawn) */
   parameters?: Parameter[]
   /** the contract this composition worked under, where it works under one */
@@ -483,6 +488,48 @@ export interface Mark {
    * measured separately and never leaves the page. Renderers ignore this.
    */
   context?: boolean
+  /** the character of the title this mark writes, when it writes one */
+  grapheme?: number
+  /** what the mark is in the page's hierarchy (v2; set by a mark grammar) */
+  role?: MarkRole
+  /** where a mark the title does not itself write came from (v2) */
+  derived?: Provenance
+  /**
+   * A group of derived marks that together write one character of the title
+   * (a form drawn in small marks): the grapheme it stands for. The character
+   * is present on the page as that form, not as one mark.
+   */
+  represents?: number
+}
+
+/**
+ * What a mark is in the page's own hierarchy (v2). A spatial composition
+ * decides where things go; a mark grammar decides how they behave there.
+ *   nucleus    the mark the page is organised around
+ *   body       the title's own characters, written
+ *   context    the rest of the title beside a figure
+ *   satellite  a small mark placed in relation to a nucleus
+ *   grain      one of many small marks that together make a field or a form
+ *   trace      what remains of a mark: an echo, a decay
+ */
+export type MarkRole = 'nucleus' | 'body' | 'context' | 'satellite' | 'grain' | 'trace'
+
+export type GrammarId = 'uniform' | 'attenuation' | 'field' | 'silhouette' | 'phase'
+
+/** where a mark the title does not itself write came from */
+export interface Provenance {
+  /** the grammar that added it */
+  grammar: GrammarId
+  /**
+   *   repeat    the title's own character again (a repetition carried further)
+   *   echo      a mark's own character, fading (a decay, an afterimage)
+   *   form      a form the reading found inside a character (an echo form, an inner glyph)
+   *   rest      the rest of the title, used as material for a form
+   */
+  kind: 'repeat' | 'echo' | 'form' | 'rest'
+  /** the grapheme it derives from, when it derives from one */
+  from?: number
+  note: string
 }
 
 export interface Draft {
@@ -520,5 +567,15 @@ export interface Composition {
   /** every way a space could hold the material, ranked */
   fits: Realization[]
   rejected: Rejection[]
+  /** how the marks behave inside the composition (v2); 'uniform' is v1 */
+  grammar: GrammarApplied
   draft: Draft
+}
+
+export interface GrammarApplied {
+  id: GrammarId
+  grounds: string[]
+  uses: { property: string; value: string }[]
+  /** derived marks added, by where they came from */
+  derived: Record<string, number>
 }

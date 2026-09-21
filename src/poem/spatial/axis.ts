@@ -134,7 +134,7 @@ function inPlace(
   // the residue is sized by how much of it has form, not by its em square
   const S = clamp(residue / Math.max(0.08, boxAcross), 0, Math.min(1.3 * page, (pitch * 2.2) / Math.max(0.08, boxAlong)))
   const g = placeRegion(box, S, place(seatAlong, residueAt))
-  marks.push({ char: outer.char, x: g.x, y: g.y, size: S, minus: outer.minus, keep: outer.minus?.keep })
+  marks.push({ char: outer.char, ...(outer.grapheme >= 0 ? { grapheme: outer.grapheme } : {}), x: g.x, y: g.y, size: S, minus: outer.minus, keep: outer.minus?.keep })
 
   const fitted: Fitted = {
     sizes: [base, target, found, S],
@@ -217,7 +217,7 @@ export const axis: SpatialComposition = {
     if (r?.mode === 'joint' && p.kind === 'inflection') {
       const line = jointLine(a, m)
       const laid = line && layJoint(a, line, rng, shape.whitePull, PAGE)
-      if (laid) return { marks: laid.marks, parameters: shape.parameters, contract: laid.contract }
+      if (laid) return { marks: laid.marks, parameters: shape.parameters, contract: laid.contract, seats: laid.seats }
     }
 
     // one character of the title, changed where it stands
@@ -332,7 +332,7 @@ export const axis: SpatialComposition = {
       marks.push(...centredLine(a, unitsA, centreA, sa))
       put(unitsA, { x: centreA.x - reading.along.x * halfA, y: centreA.y - reading.along.y * halfA }, sa)
       const g = placeRegion(box, S, at(endAt - (along * S) / 2, lineB))
-      marks.push({ char: outer.char, x: g.x, y: g.y, size: S, minus: outer.minus, keep: outer.minus?.keep })
+      marks.push({ char: outer.char, ...(outer.grapheme >= 0 ? { grapheme: outer.grapheme } : {}), x: g.x, y: g.y, size: S, minus: outer.minus, keep: outer.minus?.keep })
       // what is left of a character is still that character's place in the title
       if (isWritten(outer)) placedAt.push({ grapheme: outer.grapheme, x: g.x, y: g.y, size: S })
     } else {

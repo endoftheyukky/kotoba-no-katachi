@@ -68,6 +68,7 @@ export const cluster: SpatialComposition = {
         const off = (Math.sign(side) || 1) * S * 0.25
         marks.push({
           char,
+          grapheme: f.grapheme,
           x: at.x - p.centroid.x * k + (vertical ? off : 0),
           y: at.y - p.centroid.y * k + (vertical ? 0 : off),
           size: S,

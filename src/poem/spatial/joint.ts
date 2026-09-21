@@ -28,7 +28,7 @@ import type { Rng } from '../../core/random'
 import { MIN_READABLE } from '../context'
 import { bandOf, BANDS } from '../contract'
 import { seatsOf } from '../scope'
-import type { Analysis, Contract, Decision, Fitted, Mark, Material, Occupancy, Unit, Vec } from '../types'
+import type { Analysis, Contract, Decision, Fitted, Mark, Material, Occupancy, Placed, Unit, Vec } from '../types'
 import { directions, isWritten, offCentre, unitMarks } from './common'
 
 /** the line takes this much of the page along the reading */
@@ -164,7 +164,7 @@ export function layJoint(
   rng: Rng,
   whitePull: number,
   page: number,
-): { marks: Mark[]; contract: Contract } | null {
+): { marks: Mark[]; contract: Contract; seats: NonNullable<Placed['seats']> } | null {
   const pitch = Math.min((EXTENT * page) / line.total, (BANDS.normal[1] * page) / SOLID)
   const size = pitch * SOLID
   if (size < MIN_READABLE * page) return null
@@ -178,6 +178,12 @@ export function layJoint(
   const place = (t: number): Vec => (vertical ? { x: cross, y: t } : { x: t, y: cross })
 
   const marks: Mark[] = []
+  const seats: NonNullable<Placed['seats']> = line.seats.map((s) => ({
+    grapheme: s.grapheme,
+    ...place(head + (s.at + 0.5) * pitch),
+    size: s.target ? size : context,
+    written: !!s.unit && isWritten(s.unit),
+  }))
   for (const s of line.seats) {
     if (!s.unit || !isWritten(s.unit)) continue
     const where = place(head + (s.at + 0.5) * pitch)
@@ -233,7 +239,7 @@ export function layJoint(
       ...cuts(line),
     ],
   }
-  const seats: Decision[] = [
+  const decisions: Decision[] = [
     {
       name: 'context',
       ground: 'linguistic',
@@ -253,7 +259,7 @@ export function layJoint(
       note: '行が紙面のどこを走るかは造形であり、題の種から決まる',
     },
   ]
-  return { marks, contract: { occupancy, fitted, context: seats } }
+  return { marks, contract: { occupancy, fitted, context: decisions }, seats }
 }
 
 /** every interval the language opened in the line, in the order they fall */

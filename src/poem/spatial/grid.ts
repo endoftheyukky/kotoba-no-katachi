@@ -163,7 +163,18 @@ export const grid: SpatialComposition = {
         marks.push(...centredLine(a, units, place(ci, ri), size / units.length))
       }),
     )
-    return { marks }
+    // a row of beats is a row of seats, the silent one among them (v2)
+    const read = a.morae.filter((mo) => mo.kind !== 'unread')
+    const seats =
+      mode === '1xN'
+        ? shape.cells[0].map((units, ci) => ({
+            grapheme: units[0]?.grapheme ?? read[ci]?.graphemes[0] ?? -1,
+            ...place(ci, 0),
+            size,
+            written: units.length > 0,
+          }))
+        : undefined
+    return { marks, seats }
   },
 }
 

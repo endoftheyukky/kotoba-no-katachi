@@ -29,6 +29,8 @@ import type { Face } from '../glyph/font'
 import type { Analysis, Mark, Material } from './types'
 
 export function faceOf(a: Analysis, m: Material, k: Mark): Face {
+  // a mark the title does not itself write (a grain, an echo) is writing
+  if (k.derived) return 'serif'
   if (k.minus || k.keep || k.shift) return 'sans'
   if (k.context) return 'serif'
   const f = m.primary.focus

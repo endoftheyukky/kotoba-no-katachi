@@ -28,7 +28,7 @@ import '../glyph/font-face'
 import type { Relation } from '../language/analysis'
 import { analyze, compose, type Force, MODIFIER_SALIENCE, OPERATIONS, SPACES } from '../poem/compose'
 import { measureAll, verdict } from '../poem/measure'
-import type { Analysis, Composition, Decision, Proposal, Realization, SpatialId } from '../poem/types'
+import type { Analysis, Composition, Decision, GrammarId, Proposal, Realization, SpatialId } from '../poem/types'
 import { renderCanvas } from '../render/png'
 import { PAGE } from '../render/stage'
 import { renderSVG } from '../render/svg'
@@ -66,16 +66,21 @@ const detail = params.get('detail') === '1'
 /** pages only: no header, no summary — a contact sheet to look at whole */
 const bare = params.get('bare') === '1'
 
-/** a comparison entry → the review-only force that draws it */
+/**
+ * a comparison entry → the review-only force that draws it. An entry may end
+ * in `+grammar` (v2): `#1+field` is the chosen page written as a density field.
+ */
 function forceOf(spec: string, fits: readonly Realization[]): Force | null {
-  if (spec === 'auto') return {}
-  const rank = /^#(\d+)$/.exec(spec)
+  const [base, g] = spec.split('+')
+  const grammar = g ? { grammar: g as GrammarId | 'auto' } : {}
+  if (base === 'auto' || base === '') return { ...grammar }
+  const rank = /^#(\d+)$/.exec(base)
   if (rank) {
     const r = fits[Number(rank[1]) - 1]
-    return r ? { space: r.id, mode: r.mode } : null
+    return r ? { space: r.id, mode: r.mode, ...grammar } : null
   }
-  const [id, way] = spec.split('/')
-  return { space: (id || undefined) as SpatialId | undefined, mode: way || undefined }
+  const [id, way] = base.split('/')
+  return { space: (id || undefined) as SpatialId | undefined, mode: way || undefined, ...grammar }
 }
 
 const opTitle = (id: string) => OPERATIONS.find((o) => o.id === id)?.title ?? id
@@ -406,11 +411,16 @@ async function comparison(list: HTMLElement): Promise<void> {
       renderSVG(page, c.draft, a.glyphs)
       const cap = el('div', 'caption')
       cap.append(
-        el('p', 'shotname', `${spaceTitle(r.id)} / ${r.mode}${same ? '　← 採用' : ''}`),
+        el('p', 'shotname', `${spaceTitle(r.id)} / ${r.mode}${c.grammar.id !== 'uniform' ? ` + ${c.grammar.id}` : ''}${same && c.grammar.id === 'uniform' ? '　← 採用' : ''}`),
         el('p', undefined, `fitness ${f2(r.fitness)}`),
         el('p', undefined, `使う: ${r.uses.length ? r.uses.map((u) => `${u.property} ${u.value}`).join(' · ') : '—'}`),
         el('p', r.losses?.length ? 'dead' : undefined, `失う: ${r.losses?.length ? r.losses.map((u) => `${u.property} ${u.value}`).join(' · ') : '—'}`),
       )
+      if (c.grammar.id !== 'uniform' || c.grammar.grounds.length)
+        cap.append(
+          el('p', undefined, `grammar: ${c.grammar.grounds.join(' / ')}`),
+          el('p', undefined, `派生: ${Object.entries(c.grammar.derived).map(([k, n]) => `${k}×${n}`).join(' ') || '—'}`),
+        )
       if (detail) {
         const mm = measureAll(c.draft.marks).total
         const comp = completeness(a, c)

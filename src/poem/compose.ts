@@ -29,6 +29,7 @@ import { proliferation } from './operations/proliferation'
 import { transformation } from './operations/transformation'
 import { poeticPotential, visualPotential } from './potential'
 import { withFaces } from './face'
+import { writeWith } from './grammar'
 import { basisOf, scopeOf } from './scope'
 import { decideScale } from './scale'
 import { axis } from './spatial/axis'
@@ -49,6 +50,7 @@ import type {
   OperationId,
   PoeticOperation,
   Proposal,
+  GrammarId,
   Rejection,
   Realization,
   SpatialComposition,
@@ -142,6 +144,8 @@ export interface Force {
   space?: SpatialId
   /** which of that composition's ways to draw ('run', 'turned', '2x2'…) */
   mode?: string
+  /** how the marks behave inside it (v2): a grammar, or 'auto' for the v2 selection */
+  grammar?: GrammarId | 'auto'
 }
 
 export function compose(a: Analysis, force: Force = {}): Composition {
@@ -310,6 +314,9 @@ export function compose(a: Analysis, force: Force = {}): Composition {
       ? { ...spatial, mode: force.mode }
       : spatial
   const placed = space.realize(a, material, new Rng(seed).fork(spatial.id), scale, drawn)
+  // v2: how the marks behave inside the composition. Without a named grammar
+  // this is the composition's own marks, exactly as v1 wrote them.
+  const behaved = writeWith(force.grammar, a, material, drawn, placed, new Rng(seed).fork(`grammar:${force.grammar ?? 'uniform'}`))
 
   return {
     input: a.input,
@@ -325,6 +332,7 @@ export function compose(a: Analysis, force: Force = {}): Composition {
     proposals,
     fits,
     rejected,
-    draft: { marks: withFaces(a, material, placed.marks) },
+    grammar: behaved.applied,
+    draft: { marks: withFaces(a, material, behaved.marks) },
   }
 }

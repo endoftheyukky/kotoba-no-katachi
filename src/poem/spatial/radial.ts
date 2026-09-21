@@ -77,7 +77,7 @@ export const radial: SpatialComposition = {
       // once turned, lands on its ray
       const t = (rotate * Math.PI) / 180
       const off = { x: (c.x * Math.cos(t) - c.y * Math.sin(t)) * k, y: (c.x * Math.sin(t) + c.y * Math.cos(t)) * k }
-      return { char, x: target.x - off.x, y: target.y - off.y, size: S, keep: p.keep, rotate: rotate || undefined }
+      return { char, grapheme: f.grapheme, x: target.x - off.x, y: target.y - off.y, size: S, keep: p.keep, rotate: rotate || undefined }
     })
     return { marks: rays.concat(word) }
   },

@@ -117,8 +117,8 @@ export const band: SpatialComposition = {
       const marks: Mark[] = order.map((p, i) => {
         const t = ((i + 0.5) / order.length) * PAGE + rng.range(-0.03, 0.03) * PAGE
         return byX
-          ? { char: g.char, x: t - p.centroid.x * k, y: line, size: S, keep: p.keep }
-          : { char: g.char, x: line, y: t - p.centroid.y * k, size: S, keep: p.keep }
+          ? { char: g.char, grapheme: g.index, x: t - p.centroid.x * k, y: line, size: S, keep: p.keep }
+          : { char: g.char, grapheme: g.index, x: line, y: t - p.centroid.y * k, size: S, keep: p.keep }
       })
       // the whole title, small, where the band begins
       const s = scale.pick('aside', rng)

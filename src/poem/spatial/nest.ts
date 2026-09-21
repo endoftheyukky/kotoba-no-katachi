@@ -111,15 +111,15 @@ export const nest: SpatialComposition = {
     // 造形: the outer sits a little off the middle of the page
     const at = { x: PAGE / 2 + rng.range(-0.03, 0.03) * PAGE, y: PAGE / 2 + rng.range(-0.03, 0.03) * PAGE }
     const minus = { char: r.inner, dx: r.dx, dy: r.dy, scale: r.scale, keep: r.residue.pieces }
-    const marks: Mark[] = [{ char: outer.char, x: at.x, y: at.y, size, minus, keep: r.residue.pieces }]
+    const marks: Mark[] = [{ char: outer.char, grapheme: outer.grapheme, x: at.x, y: at.y, size, minus, keep: r.residue.pieces }]
 
     // the inner, in the hole it left, smaller than the hole
     const k = size / EM
     const inner = r.scale * size * SHRINK
-    marks.push({ char: r.inner, x: at.x + r.dx * k, y: at.y + r.dy * k, size: inner })
+    const held2 = allUnits(m).find((u) => u.char === r.inner && isWritten(u) && u.grapheme !== outer.grapheme)
+    marks.push({ char: r.inner, ...(held2 ? { grapheme: held2.grapheme } : {}), x: at.x + r.dx * k, y: at.y + r.dy * k, size: inner })
 
     const placed = [{ grapheme: outer.grapheme, x: at.x, y: at.y, size }]
-    const held2 = allUnits(m).find((u) => u.char === r.inner && isWritten(u) && u.grapheme !== outer.grapheme)
     if (held2) placed.push({ grapheme: held2.grapheme, x: at.x + r.dx * k, y: at.y + r.dy * k, size: inner })
     const context = layContext(a, m, placed, PAGE)
     if (context) marks.push(...context.marks)
