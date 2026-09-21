@@ -1,26 +1,54 @@
-/* The page is paper. Nothing here should compete with the poem. */
+/*
+ * The page is paper on a quiet ground, so that its edge — which crops like the
+ * edge of a sheet — can be seen. Nothing here should compete with the poem.
+ */
 :root {
   --paper: #fff;
+  --ground: #f2f2f0;
   --ink: #000;
-  --type: "Noto Sans JP", sans-serif;
+  --mute: #8a8a86;
+  --line: #c9c9c4;
+  --type: "Noto Sans JP", system-ui, sans-serif;
+  --bar: 104px;
+  --gutter: 16px;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 html,
 body {
   margin: 0;
   height: 100%;
-  background: var(--paper);
+  background: var(--ground);
   color: var(--ink);
 }
 
 body {
   overflow: hidden;
   font-family: var(--type);
+  -webkit-text-size-adjust: 100%;
 }
 
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* the sheet: always square, as large as the window allows above the bar */
 #stage {
   position: fixed;
-  inset: 0 0 72px;
+  left: 50%;
+  top: calc((100% - var(--bar)) / 2);
+  transform: translate(-50%, -50%);
+  width: min(calc(100vw - 2 * var(--gutter)), calc(100dvh - var(--bar) - 2 * var(--gutter)));
+  aspect-ratio: 1;
+  background: var(--paper);
 }
 
 #stage svg {
@@ -37,62 +65,163 @@ body {
   top: 50%;
   transform: translate(-50%, -50%);
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: baseline;
-  gap: 0.9em;
-  transition: opacity 0.6s;
+  gap: 0.6em 0.9em;
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--gutter));
+  transition: opacity 0.4s;
 }
 
 #entry input,
-#entry button {
+#entry button,
+#about-open,
+dialog button {
   font: inherit;
   color: var(--ink);
   background: none;
   border: 0;
   border-radius: 0;
   padding: 0.2em 0;
-  outline: none;
 }
 
 #entry input {
   text-align: center;
   border-bottom: 1px solid var(--ink);
+  outline: none;
+}
+
+#entry input:focus-visible {
+  border-bottom-width: 2px;
+}
+
+#entry button:focus-visible,
+#about-open:focus-visible,
+dialog button:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
 }
 
 #entry input::placeholder {
-  color: #bbb;
+  color: #b5b5b0;
 }
 
 #title {
-  width: 9em;
+  width: 8.5em;
   font-size: 22px;
 }
 
 #reading {
   width: 9em;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 #entry button {
-  font-size: 20px;
   cursor: pointer;
+}
+
+#go {
+  font-size: 20px;
 }
 
 #save {
   display: none;
-  font-size: 12px !important;
-  letter-spacing: 0.1em;
+  font-size: 12px;
+  letter-spacing: 0.12em;
 }
 
 #title[aria-invalid="true"] {
   border-bottom-style: dashed;
 }
 
-/* A page is shown: the entry steps aside, small. */
-body[data-state="shown"] #entry {
-  top: auto;
-  bottom: 20px;
+#note {
+  position: fixed;
+  left: 50%;
+  top: calc(50% + 3.2em);
   transform: translateX(-50%);
-  opacity: 0.3;
+  margin: 0;
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--gutter));
+  text-align: center;
+  font-size: 12px;
+  color: var(--mute);
+  letter-spacing: 0.04em;
+}
+
+#about-open {
+  position: fixed;
+  right: var(--gutter);
+  bottom: calc(var(--gutter) + env(safe-area-inset-bottom));
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--mute);
+  cursor: pointer;
+}
+
+#about-open:hover {
+  color: var(--ink);
+}
+
+dialog {
+  max-width: min(30em, calc(100vw - 2 * var(--gutter)));
+  padding: 28px 28px 20px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+dialog::backdrop {
+  background: rgba(242, 242, 240, 0.85);
+}
+
+dialog h1 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+}
+
+dialog p {
+  margin: 0 0 10px;
+}
+
+dialog dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 14px;
+  margin: 16px 0 0;
+  font-size: 12px;
+  color: var(--mute);
+}
+
+dialog dd {
+  margin: 0;
+}
+
+dialog form {
+  margin-top: 14px;
+  text-align: right;
+}
+
+dialog button {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+/* A page is shown: the entry steps down below the sheet, small. */
+body[data-state="shown"] #entry,
+body[data-state="working"] #entry {
+  top: auto;
+  bottom: calc(var(--gutter) + 18px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+}
+
+body[data-state="shown"] #entry {
+  opacity: 0.35;
 }
 
 body[data-state="shown"] #entry:hover,
@@ -104,6 +233,40 @@ body[data-state="shown"] #save {
   display: inline;
 }
 
+body[data-state="shown"] #note,
+body[data-state="working"] #note {
+  top: auto;
+  bottom: calc(var(--gutter) + env(safe-area-inset-bottom));
+}
+
 body[data-state="idle"] #stage {
   display: none;
+}
+
+@media (max-width: 520px) {
+  :root {
+    --bar: 132px;
+  }
+
+  #title {
+    width: 7em;
+    font-size: 20px;
+  }
+
+  #reading {
+    width: 8em;
+  }
+
+  #about-open {
+    right: 50%;
+    transform: translateX(50%);
+    bottom: auto;
+    top: calc(var(--gutter) + env(safe-area-inset-top));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #entry {
+    transition: none;
+  }
 }

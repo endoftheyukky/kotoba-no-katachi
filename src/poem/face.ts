@@ -24,6 +24,7 @@
  * A character that falls into parts is not itself a reading: the parts are.
  * Context — the rest of the title around a figure — is always writing.
  */
+import { covers } from '../glyph/coverage'
 import type { Face } from '../glyph/font'
 import type { Analysis, Mark, Material } from './types'
 
@@ -36,8 +37,9 @@ export function faceOf(a: Analysis, m: Material, k: Mark): Face {
   return 'serif'
 }
 
-/** whether the second face can write this character at all */
+/** whether the second face can write this character at all (its own glyph, never a fallback) */
 function writable(a: Analysis, char: string): boolean {
+  if (!covers('serif', char)) return false
   try {
     return a.glyphs.get(char, 'serif').metrics.density > 0 || a.glyphs.get(char).metrics.density === 0
   } catch {
