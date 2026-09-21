@@ -2,6 +2,7 @@
  * The shell: a title, an optional reading, one page.
  *
  *   ?title=子供の城&reading=こどものしろ&variant=1   the same page, every time
+ *   &v=1       the generator as it was frozen at v1 (v2 is the default here)
  *   &debug=1   why the page is as it is, in the console (never on the page)
  *
  * The development sheets are /study.html and /review.html.
@@ -25,6 +26,8 @@ const about = document.getElementById('about') as HTMLDialogElement
 const aboutOpen = document.getElementById('about-open') as HTMLButtonElement
 const params = new URLSearchParams(location.search)
 const debug = params.has('debug')
+/** which generator writes the page: v2 (mark grammars) unless v1 is asked for */
+const version = params.get('v') === '1' ? 1 : 2
 
 let current: { analysis: Analysis; composition: Composition } | null = null
 /** only the latest request may draw: a slow page must not replace a newer one */
@@ -42,7 +45,7 @@ async function show(input: TitleInput): Promise<void> {
   try {
     const analysis = await analyze(input)
     if (mine !== ticket) return
-    const composition = compose(analysis)
+    const composition = compose(analysis, version === 2 ? { grammar: 'auto' } : {})
     current = { analysis, composition }
     const stage = renderSVG(host, composition.draft, analysis.glyphs)
     stage.svg.setAttribute('role', 'img')
@@ -54,6 +57,7 @@ async function show(input: TitleInput): Promise<void> {
     const q = new URLSearchParams({ title: input.text })
     if (input.reading) q.set('reading', input.reading)
     if (input.variant) q.set('variant', String(input.variant))
+    if (version === 1) q.set('v', '1')
     history.replaceState(null, '', `?${q}`)
   } catch (e) {
     if (mine !== ticket) return
@@ -80,6 +84,10 @@ function report(a: Analysis, c: Composition): void {
   console.group(`${space.title}（${c.spatial.mode}）`)
   c.spatial.grounds.forEach((g) => console.log('根拠:', g))
   space.rules.forEach((r) => console.log('規則:', r))
+  console.groupEnd()
+  console.group(`字の振る舞い: ${c.grammar.id}`)
+  c.grammar.grounds.forEach((g) => console.log('根拠:', g))
+  Object.entries(c.grammar.derived).forEach(([k, n]) => console.log('派生:', k, n))
   console.groupEnd()
   console.groupEnd()
 }

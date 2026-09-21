@@ -7,6 +7,7 @@
  *   /review.html
  *   /review.html?set=probe
  *   /review.html?set=holdout
+ *   /review.html?v=1            as frozen at v1 (v2 by default)
  */
 import './review.css'
 import '../glyph/font-face'
@@ -48,10 +49,10 @@ async function main(): Promise<void> {
     const input = normalizeTitle({ text: t.text, reading: t.reading })
     if (typeof input === 'string') continue
     const a = await analyze(input)
-    const c = compose(a)
+    const c = compose(a, new URLSearchParams(location.search).get('v') === '1' ? {} : { grammar: 'auto' })
     renderSVG(page, c.draft, a.glyphs)
     const space = SPACES.find((s) => s.id === c.spatial.id)
-    held.textContent = `${space?.title ?? c.spatial.id} / ${c.spatial.mode} · ${c.spatial.fitness.toFixed(2)}`
+    held.textContent = `${space?.title ?? c.spatial.id} / ${c.spatial.mode}${c.grammar.id !== 'uniform' ? ` + ${c.grammar.id}` : ''} · ${c.spatial.fitness.toFixed(2)}`
   }
 }
 

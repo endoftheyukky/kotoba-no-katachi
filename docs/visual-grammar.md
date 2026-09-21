@@ -242,6 +242,58 @@ Distribution: 片隅 11, 二極 default 11, 二極 joint 9, 中心・周縁 6, �
 入れ子 2, 散在 2, 場 1, 経路 1, 空洞 1. Pages by their largest mark: micro 12,
 small 17, normal 10, large 4, macro 4.
 
+## v2 — mark grammars (branch `v2`)
+
+v1 is kept as it was frozen (tag `v1`, branch `main`); on this branch it is
+still what `compose()` returns when no grammar is named, identical to the mark.
+
+**The layer.** A spatial composition decides where the title is held. A mark
+grammar decides how its marks behave there. They are chosen apart, so one
+composition can be written several ways. Marks now know which character of the
+title they write, their role on the page (nucleus, body, context, satellite,
+grain, trace) and, when the title does not write them itself, where they came
+from (provenance: the grammar, and whether they repeat the title, echo a mark,
+use a form read inside a character, or use the rest of the title).
+
+**Material.** Small marks are never chosen for meaning and never borrowed. In
+order: the title's content repetition; a form read inside the character (its
+own parts read as a character — 森's 木 — or a character the title writes found
+inside it above the reading threshold — 中 in 雨); the rest of the title in
+reading order, only if it holds some content; what the poem erased; the
+character itself.
+
+**Five grammars.**
+
+| grammar | where | what the page does |
+| --- | --- | --- |
+| attenuation | a silent beat (sokuon); an erased ending; a long run of copies | the next beat grows toward itself through the silent seat (a sokuon is the next consonant held early); an erased ending trails off as its last character's echo; a run dwindles |
+| field | seats the poem erases; a page that is already a field | the erased characters stay as dust where their seats were; a field thins along its reading |
+| silhouette | a nucleus that is a reading of ink, or the head a dependency hangs on | the nucleus's form drawn in small marks of the material (国 in 王の, 言 in 葉, あと in 海, 日 in 朝) |
+| phase | a long run of copies | the run turns through one cycle along its order |
+| orbit | two terms held apart as poles | symmetric (A と B, A ≈ B): each is ringed by the other; directed (stem ← ending, dependency): the dependent circles its head in a ring left open toward it |
+
+**Where v1 and v2 live.** `compose()` with no grammar is v1, to the mark. The
+public page and the review sheet write v2 (`grammar: 'auto'`); `?v=1` on either
+gives the frozen v1 page for the same title.
+
+**Selection (`auto`).** One grammar per page, decided by structure, with no
+fitness and no contest: an erasure (silent beat → attenuation, anything else
+→ field); a run of eight or more (field page → phase, otherwise attenuation);
+a nucleus that is ink or a head (silhouette, if at least twelve grains and six
+per nucleus mark fall on it; otherwise orbit where it applies); poles
+(orbit); otherwise the page stays as v1. A corner page (片隅) stays quiet.
+
+**Results.** Development set: 24 of 34 pages change; no loss, no
+reading-order break, no overlap, no grain on the title's ink, no grain on a
+grain; all 81 development and holdout titles generate identically twice. Pages by their largest mark: v1 micro 7 / small 9 /
+normal 11 / large 5 / macro 2 → v2 micro 13 / small 9 / normal 11 / large 1 /
+macro 0. Holdout (47, once): the same invariants hold; 22 titles take a
+grammar. Contact sheets: `docs/contact/dev34-v2.png`, `docs/contact/holdout-v2.png`.
+
+**Still weak.** Silhouettes share one texture (a square lattice of one grain
+size), so several of them read as a family; orbits are circles; a quiet page
+stays quiet; the joint line and the corner page are untouched.
+
 ## VOID
 
 `void.ts` is kept and is not a preferred choice. Its idea — a region that is

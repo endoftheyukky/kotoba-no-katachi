@@ -514,7 +514,7 @@ export interface Mark {
  */
 export type MarkRole = 'nucleus' | 'body' | 'context' | 'satellite' | 'grain' | 'trace'
 
-export type GrammarId = 'uniform' | 'attenuation' | 'field' | 'silhouette' | 'phase'
+export type GrammarId = 'uniform' | 'attenuation' | 'field' | 'silhouette' | 'phase' | 'orbit'
 
 /** where a mark the title does not itself write came from */
 export interface Provenance {

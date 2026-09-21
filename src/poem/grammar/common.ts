@@ -10,7 +10,7 @@
 import type { Rng } from '../../core/random'
 import { BANDS } from '../contract'
 import type { GrammarId, Mark, Provenance } from '../types'
-import { boxOf, type PageView } from './page'
+import { boxOf, inkAt, type PageView } from './page'
 
 export interface GrammarOffer {
   grounds: string[]
@@ -55,6 +55,23 @@ export function clear(v: PageView, others: Mark[], x: number, y: number, size: n
   }
   void v
   return true
+}
+
+/**
+ * Whether a small mark can stand at this point: nowhere on the ink of the
+ * page's own marks (their white is free), and not on another small mark.
+ * Ink, not boxes: a ring round a character may pass through the corners of
+ * its em square, never through a stroke.
+ */
+export function free(v: PageView, own: Mark[], added: Mark[], x: number, y: number, size: number): boolean {
+  const pts = [
+    [0, 0], [0.42, 0.42], [-0.42, 0.42], [0.42, -0.42], [-0.42, -0.42], [0, 0.45], [0.45, 0], [0, -0.45], [-0.45, 0],
+    [0.22, 0.22], [-0.22, 0.22], [0.22, -0.22], [-0.22, -0.22],
+  ].map(
+    ([u, w]) => ({ x: x + u * size, y: y + w * size }),
+  )
+  if (own.some((k) => pts.some((p) => inkAt(v, k, p)))) return false
+  return added.every((k) => Math.abs(k.x - x) >= (k.size + size) * 0.5 || Math.abs(k.y - y) >= (k.size + size) * 0.5)
 }
 
 /** an erased seat that is a silent beat (a sokuon) rather than a character taken away */

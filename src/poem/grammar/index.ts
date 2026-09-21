@@ -13,10 +13,11 @@ import { attenuation } from './attenuation'
 import { silentSeat, type MarkGrammar } from './common'
 import { field } from './field'
 import { viewOf, type PageView } from './page'
+import { orbit } from './orbit'
 import { phase } from './phase'
 import { silhouette } from './silhouette'
 
-export const GRAMMARS: readonly MarkGrammar[] = [attenuation, field, silhouette, phase]
+export const GRAMMARS: readonly MarkGrammar[] = [attenuation, field, silhouette, phase, orbit]
 
 export const UNIFORM: GrammarApplied = { id: 'uniform', grounds: [], uses: [], derived: {} }
 
@@ -61,9 +62,14 @@ function formed(v: PageView): string | null {
  *   3. a nucleus that is a reading of ink or the word another depends on —
  *      its form is drawn in small marks (silhouette), where enough of them
  *      fall on it for the form to be read
- *   4. otherwise the page stays as the composition wrote it (v1)
+ *   4. two terms held apart as poles — each is ringed by the other where the
+ *      relation is symmetric, the dependent circles its head where it is not
+ *      (orbit)
+ *   5. otherwise the page stays as the composition wrote it (v1)
  */
-function select(v: PageView): { g: MarkGrammar | null; why: string } {
+function select(v: PageView): { g: MarkGrammar | null; why: string; fallback?: MarkGrammar | null } {
+  // a title the composition found weak gathers small in a corner: it is left quiet
+  if (v.spatial.id === 'cluster') return { g: null, why: '片隅：弱い題は小さく静かなまま' }
   const e = erasedSeats(v)
   if (e.length) {
     if (e.every((s) => silentSeat(v, s.grapheme))) return { g: attenuation, why: '黙った拍の席：次の拍の子音がそこで先に鳴っている' }
@@ -74,8 +80,9 @@ function select(v: PageView): { g: MarkGrammar | null; why: string } {
       ? { g: phase, why: '題そのものの場：反復が一周の位相をもつ' }
       : { g: attenuation, why: '一つの字の長い並び：並んだ順に小さくなる' }
   const why = formed(v)
-  if (why) return { g: silhouette, why }
-  return { g: null, why: '粒・残響・位相の根拠がない：構成が書いたまま' }
+  if (why) return { g: silhouette, why, fallback: orbit.offer(v) ? orbit : null }
+  if (orbit.offer(v)) return { g: orbit, why: '二つの項が極として引き離されている' }
+  return { g: null, why: '粒・残響・位相・軌道の根拠がない：構成が書いたまま' }
 }
 
 function applied(g: MarkGrammar, grounds: string[], uses: GrammarApplied['uses'], marks: Mark[]): GrammarApplied {
@@ -102,11 +109,13 @@ export function writeWith(
   const view = viewOf(a, m, spatial, placed)
   let g: MarkGrammar | undefined
   let why: string | undefined
+  let fallback: MarkGrammar | null | undefined
   if (id === 'auto') {
     const s = select(view)
     if (!s.g) return { marks: placed.marks, applied: { ...UNIFORM, grounds: [s.why] } }
     g = s.g
     why = s.why
+    fallback = s.fallback
   } else g = GRAMMARS.find((x) => x.id === id)
   if (!g) return { marks: placed.marks, applied: UNIFORM }
   const offer = g.offer(view)
@@ -115,8 +124,15 @@ export function writeWith(
   // a form drawn in too few grains is not the form: keep the page as it was
   if (g.id === 'silhouette') {
     const grains = marks.filter((k) => k.derived?.grammar === 'silhouette').length
-    if (grains < LEGIBLE_GRAINS || grains < LEGIBLE_PER_MARK * view.nucleus.length)
-      return { marks: placed.marks, applied: { ...UNIFORM, grounds: [`${g.title}：粒が${grains}しか落ちず、形として読めない`] } }
+    if (grains < LEGIBLE_GRAINS || grains < LEGIBLE_PER_MARK * view.nucleus.length) {
+      const note = `${g.title}：粒が${grains}しか落ちず、形として読めない`
+      const f = fallback?.offer(view)
+      if (fallback && f) {
+        const alt = fallback.apply(view, rng)
+        return { marks: alt, applied: applied(fallback, [note, ...f.grounds], f.uses, alt) }
+      }
+      return { marks: placed.marks, applied: { ...UNIFORM, grounds: [note] } }
+    }
   }
   return { marks, applied: applied(g, why ? [why, ...offer.grounds] : offer.grounds, offer.uses, marks) }
 }
