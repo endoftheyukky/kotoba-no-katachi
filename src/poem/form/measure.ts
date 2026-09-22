@@ -24,6 +24,8 @@ interface Pt {
   w: number
   rot: number
   partial: boolean
+  /** which character of the title it writes, when it writes one (for the reading's own curve) */
+  g?: number
 }
 
 export interface FormMeasure {
@@ -51,6 +53,7 @@ function points(marks: Mark[]): Pt[] {
       w: k.size * visible * Math.sqrt(Math.max(0.05, kept)),
       rot: ((k.rotate ?? 0) * Math.PI) / 180,
       partial: !!(k.keep?.length || k.minus),
+      ...(k.grapheme !== undefined && !k.derived && !k.context ? { g: k.grapheme } : {}),
     })
   }
   return out
@@ -185,6 +188,29 @@ function ringOf(ps: Pt[]): { curvature: number; closure: number } {
   for (let i = 1; i < angles.length; i++) widest = Math.max(widest, angles[i] - angles[i - 1])
   const span = TAU - widest
   return { curvature: arcness * clip(span / Math.PI), closure: arcness * clip((span - Math.PI) / Math.PI) }
+}
+
+/**
+ * The curve the reading makes: the title's own marks in the order they are
+ * read. A page of four large characters has no ring to fit, but it can still
+ * bend and close, and this is how far it does — the turning along the line
+ * they make, and how near its end comes back to its beginning.
+ */
+function readingCurve(ps: Pt[]): { curvature: number; closure: number } {
+  const seen = new Map<number, Pt>()
+  for (const p of ps) if (p.g !== undefined && (!seen.has(p.g) || seen.get(p.g)!.s < p.s)) seen.set(p.g, p)
+  const line = [...seen.entries()].sort((a, b) => a[0] - b[0]).map(([, p]) => p)
+  if (line.length < 4) return { curvature: 0, closure: 0 }
+  let turning = 0
+  let length = 0
+  for (let i = 1; i < line.length; i++) length += Math.hypot(line[i].x - line[i - 1].x, line[i].y - line[i - 1].y)
+  for (let i = 1; i < line.length - 1; i++) {
+    const a = Math.atan2(line[i].y - line[i - 1].y, line[i].x - line[i - 1].x)
+    const b = Math.atan2(line[i + 1].y - line[i].y, line[i + 1].x - line[i].x)
+    turning += Math.abs(Math.atan2(Math.sin(b - a), Math.cos(b - a)))
+  }
+  const gap = Math.hypot(line[line.length - 1].x - line[0].x, line[line.length - 1].y - line[0].y)
+  return { curvature: clip(turning / TAU), closure: length > 0 ? clip(1 - gap / length) : 0 }
 }
 
 /**
@@ -392,6 +418,10 @@ export function measureForm(marks: Mark[]): FormMeasure {
   profile.curvature = rw ? profile.curvature / rw : 0
   profile.closure = rw ? profile.closure / rw : 0
   profile.radiality = radialOf(ps, m.mx, m.my)
+  // a page of a few large characters carries its curve in the reading itself
+  const reading = readingCurve(ps)
+  profile.curvature = Math.max(profile.curvature, reading.curvature)
+  profile.closure = Math.max(profile.closure, reading.closure)
 
   // spacing of the dominant population
   const sizes = ps.map((p) => p.s).sort((a, b) => a - b)

@@ -593,6 +593,8 @@ export interface Composition {
   draft: Draft
   /** v3 experiment, review only: how the page was moved in the form space (poem/form) */
   form?: import('./form').FormApplied
+  /** v4 experiment, review only: the parametric generator that drew it (poem/parametric) */
+  parametric?: import('./parametric').ParametricApplied
 }
 
 export interface GrammarApplied {

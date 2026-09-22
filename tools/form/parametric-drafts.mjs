@@ -1,0 +1,27 @@
+// dump v4 parametric pages with their soundness, for measuring in node
+export default async function ({ evaluate, load }) {
+  await load('/index.html', 1280, 800)
+  return evaluate(`(async () => {
+    const C = await import('/src/poem/compose.ts'); const N = await import('/src/title.ts')
+    const I = await import('/src/poem/form/invariants.ts')
+    const T = await import('/src/study/titles.ts'); const H = await import('/src/study/holdout.ts'); const P = await import('/src/study/probes.ts')
+    const titles = [...T.STUDY_TITLES.map((t) => ({ ...t, set: 'dev' })), ...H.HOLDOUT_TITLES.map((t) => ({ ...t, set: 'holdout' })), ...P.PROBE_TITLES.map((t) => ({ ...t, set: 'probe' }))]
+    const r = (v) => Math.round(v * 100) / 100
+    const out = []
+    for (const t of titles) {
+      const input = N.normalizeTitle({ text: t.text, reading: t.reading })
+      if (typeof input === 'string') continue
+      try {
+        const a = await C.analyze(input)
+        const c = C.compose(a, { parametric: 'auto' })
+        const sound = I.soundness(a, c.draft.marks, { repetition: c.primary.op === "proliferation", absent: c.absent, alongCurve: (c.parametric.params.closure ?? 0) >= 0.35 || c.parametric.kind === 'lattice' })
+        const p = c.parametric.params
+        out.push({ text: t.text, reading: t.reading ?? '', set: t.set, variant: 0, space: 'trace', mode: 'v4', grammar: 'uniform', gvariant: '',
+          params: c.parametric.kind === 'lattice' ? { kind: 'lattice', rows: p.rows, regularity: +p.regularity.toFixed(3), shear: +p.shear.toFixed(3), decay: +p.decay.toFixed(3), curl: +p.curl.toFixed(3) } : { kind: 'trace', closure: +p.closure.toFixed(3), corners: +p.corners.toFixed(3), opening: +p.opening.toFixed(3), eccentricity: +p.eccentricity.toFixed(3), tangency: +p.tangency.toFixed(3), branch: !!p.branch },
+          grounds: c.parametric.grounds, sound,
+          marks: c.draft.marks.map((k) => ({ c: k.char, x: r(k.x), y: r(k.y), s: r(k.size), ...(k.rotate ? { r: r(k.rotate) } : {}), ...(k.keep ? { keep: k.keep } : {}), ...(k.grapheme !== undefined ? { g: k.grapheme } : {}) })) })
+      } catch (e) { out.push({ text: t.text, set: t.set, variant: 0, error: String(e).slice(0, 200) }) }
+    }
+    return out
+  })()`)
+}

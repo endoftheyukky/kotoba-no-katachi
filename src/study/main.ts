@@ -75,11 +75,15 @@ const bare = params.get('bare') === '1'
  * (`#1+constellation+sem`). Both are review only. `+v3` (v3 experiment)
  * moves the drawn page in the continuous form space (poem/form):
  * `study.html?compare=%231%2Bauto|%231%2Bauto%2Bv3` is v2c beside v3.
+ * `+p4` (v4 experiment) draws the page from the parametric generators
+ * (poem/parametric) instead; `+trace` and `+lattice` name one of them.
  */
 function forceOf(spec: string, fits: readonly Realization[]): Force | null {
   const [base, ...more] = spec.split('+')
   const SEM = ['sym', 'aozora', 'chive', 'hybrid'] as const
-  const g = more.find((x) => x !== 'sem' && x !== 'v3' && !(SEM as readonly string[]).includes(x))
+  const P4 = ['p4', 'trace', 'lattice'] as const
+  const parametric = more.find((x) => (P4 as readonly string[]).includes(x))
+  const g = more.find((x) => x !== 'sem' && x !== 'v3' && !(P4 as readonly string[]).includes(x) && !(SEM as readonly string[]).includes(x))
   const [gid, named] = (g ?? '').split('/')
   const source = more.find((x) => (SEM as readonly string[]).includes(x))
   const grammar = {
@@ -89,6 +93,7 @@ function forceOf(spec: string, fits: readonly Realization[]): Force | null {
     // v2d experiment: `+hybrid`, `+aozora`, `+chive`, `+sym`
     ...(source ? { semanticSource: (source === 'sym' ? 'symbolic' : source) as 'symbolic' | 'aozora' | 'chive' | 'hybrid' } : {}),
     ...(more.includes('v3') ? { form: 'v3' as const } : {}),
+    ...(parametric ? { parametric: (parametric === 'p4' ? 'auto' : parametric) as 'auto' | 'trace' | 'lattice' } : {}),
   }
   if (base === 'auto' || base === '') return { ...grammar }
   const rank = /^#(\d+)$/.exec(base)

@@ -7,8 +7,10 @@
  *               mark of which at least half is on the page, stood for by a
  *               form of small marks, or written as space by the poem
  *   order       characters the title writes once keep their reading order
- *               along the writing direction (a repetition page is exempt, as
- *               in the audits)
+ *               along the writing direction. A repetition page is exempt (as
+ *               in the audits), and so is a figure that is read along itself:
+ *               where the page is a curve that closes, the order is the
+ *               curve's own, and the writing direction says nothing about it.
  *   overlap     no two of the title's own marks of comparable size cover each
  *               other by more than a quarter
  *   inkHit      derived marks do not stand on the title's own ink
@@ -78,7 +80,11 @@ const visible = (k: Mark) => {
  * `repetition`: the page is a repetition page (proliferation), exempt from
  * the order check as in the audits. `absent`: graphemes the poem writes as space.
  */
-export function soundness(a: Analysis, marks: Mark[], o: { repetition: boolean; absent: number[] }): Soundness {
+export function soundness(
+  a: Analysis,
+  marks: Mark[],
+  o: { repetition: boolean; absent: number[]; alongCurve?: boolean },
+): Soundness {
   const own = marks.filter((k) => !k.derived)
   const derived = marks.filter((k) => k.derived)
   const title = a.graphemes.filter((g) => g.char.trim())
@@ -101,7 +107,7 @@ export function soundness(a: Analysis, marks: Mark[], o: { repetition: boolean; 
     return hits.length === 1 ? [{ at: along(hits[0]), size: hits[0].size }] : []
   })
   let disordered = 0
-  if (!o.repetition)
+  if (!o.repetition && !o.alongCurve)
     for (let i = 1; i < seen.length; i++) if (seen[i].at < seen[i - 1].at - Math.max(seen[i].size, seen[i - 1].size) * 0.75) disordered++
   let overlaps = 0
   const plain = own.filter((k) => !k.minus && !k.keep)

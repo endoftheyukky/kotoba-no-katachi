@@ -33,6 +33,7 @@ import { transformation } from './operations/transformation'
 import { poeticPotential, visualPotential } from './potential'
 import { withFaces } from './face'
 import { formSpace } from './form'
+import { parametricPage, type ParametricKind, type TraceParams } from './parametric'
 import { RATIO_FLOOR } from './form/morph'
 import { writeWith } from './grammar'
 import { basisOf, scopeOf } from './scope'
@@ -170,6 +171,13 @@ export interface Force {
    */
   form?: 'v3'
   formGain?: number
+  /**
+   * v4 experiment, review only: draw the page from a parametric generator
+   * (poem/parametric) instead of from a composition and a grammar.
+   * `params` overrides single parameters, for sweeps in the study sheet.
+   */
+  parametric?: ParametricKind
+  params?: Partial<TraceParams> & Partial<import('./parametric').LatticeParams>
 }
 
 export function compose(a: Analysis, force: Force = {}): Composition {
@@ -340,6 +348,10 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   const placed = space.realize(a, material, new Rng(seed).fork(spatial.id), scale, drawn)
   // v2: how the marks behave inside the composition. Without a named grammar
   // this is the composition's own marks, exactly as v1 wrote them.
+  // v4, review only: the page drawn from continuous parameters instead
+  const drawn4 = force.parametric
+    ? parametricPage(a, material, force.parametric, new Rng(seed).fork('parametric'), force.params)
+    : null!
   const behaved = writeWith(force.grammar, a, material, drawn, placed, new Rng(seed).fork(`grammar:${force.grammar ?? 'uniform'}`), {
     semantic: force.semantic,
     variant: force.variant,
@@ -361,7 +373,8 @@ export function compose(a: Analysis, force: Force = {}): Composition {
     fits,
     rejected,
     grammar: behaved.applied,
-    ...shaped(a, force, seed, primary.op === 'proliferation', tokens, withFaces(a, material, behaved.marks), () => {
+    ...(force.parametric ? { parametric: drawn4.applied } : {}),
+    ...shaped(a, force, seed, primary.op === 'proliferation', tokens, withFaces(a, material, force.parametric ? drawn4.marks : behaved.marks), () => {
       // v3: the composition that holds this title almost as well as the chosen one, if any
       const r = fits.find((f) => f !== spatial && f.id !== spatial.id && f.fitness >= RATIO_FLOOR * spatial.fitness)
       if (!r) return null
