@@ -39,6 +39,8 @@ function site(): Plugin {
   ]
   return {
     name: 'site-meta',
+    // the page's own script knows the same name and address (browser title, what is shared)
+    config: () => ({ define: { __SITE__: JSON.stringify({ title: config.title, url }) } }),
     transformIndexHtml: {
       order: 'pre',
       handler(html, ctx) {

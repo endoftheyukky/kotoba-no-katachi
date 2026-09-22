@@ -2,7 +2,7 @@
  * The shell: a sheet of paper, one line to write on, and nothing else.
  *
  *   /                                   blank paper and the line
- *   /?title=見えない                     the poem first; the line comes later
+ *   /?title=見えない                     the poem first; 別のことばで試す opens the line
  *   /?title=子供の城&reading=こどものしろ  with its reading
  *   &v=1       the generator as it was frozen at v1 (v2 is the default)
  *   &debug=1   why the page is as it is, in the console (never on the page)
@@ -51,7 +51,7 @@ function say(text: string, fade = false): void {
   if (fade && text) quiet = window.setTimeout(() => (note.textContent = ''), 2400)
 }
 
-/** write: the line is open. view: a poem arrived by its address, and is looked at first */
+/** write: the line is open. view: a poem is on the paper and is looked at first (保存 · 共有 · 別のことばで試す) */
 function mode(m: 'write' | 'view'): void {
   body.dataset.mode = m
 }
@@ -93,7 +93,7 @@ function blank(): void {
   stage.setAttribute('aria-label', '白い紙面')
   caption.textContent = ''
   body.dataset.state = 'idle'
-  document.title = '具体詩'
+  document.title = __SITE__.title
 }
 
 async function show(input: TitleInput, history: 'push' | 'replace' | 'none'): Promise<void> {
@@ -111,9 +111,12 @@ async function show(input: TitleInput, history: 'push' | 'replace' | 'none'): Pr
     stage.setAttribute('aria-label', `「${label}」の紙面`)
     caption.textContent = `「${label}」`
     body.dataset.state = 'shown'
+    // a poem on the paper is looked at first, however it came: the line closes
+    // until 別のことばで試す opens it again
+    mode('view')
     // once a poem has been written, the examples have done their work
     examples.hidden = true
-    document.title = `${input.text} — 具体詩`
+    document.title = `${input.text} — ${__SITE__.title}`
     if (history === 'push') window.history.pushState(null, '', addressOf(input))
     if (history === 'replace') window.history.replaceState(null, '', addressOf(input))
     if (debug) report(analysis, composition)
@@ -185,7 +188,11 @@ form.addEventListener('submit', (e) => {
   field.removeAttribute('aria-invalid')
   // the keyboard would keep covering the poem
   field.blur()
-  if (same(input, current?.input ?? null) && body.dataset.state === 'shown') return
+  // the poem already on the paper: nothing to write again, only to look at
+  if (same(input, current?.input ?? null) && body.dataset.state === 'shown') {
+    mode('view')
+    return
+  }
   void show(input, 'push')
 })
 
@@ -208,11 +215,13 @@ save.addEventListener('click', () => {
 
 share.addEventListener('click', async () => {
   if (!current) return
-  const url = new URL(addressOf(current.input), location.href).href
+  // the poem's canonical address: the site's own, wherever the page was opened from
+  const url = new URL(addressOf(current.input), __SITE__.url ? `${__SITE__.url}/` : location.href).href
   const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }
   if (typeof nav.share === 'function') {
     try {
-      await nav.share({ title: `「${current.input.text}」 — 具体詩`, url })
+      // the name as text too: some places a link is shared to ignore the title
+      await nav.share({ title: __SITE__.title, text: __SITE__.title, url })
       return
     } catch (e) {
       // the person closed the sheet: nothing to say
@@ -220,16 +229,20 @@ share.addEventListener('click', async () => {
     }
   }
   try {
-    await navigator.clipboard.writeText(url)
+    await navigator.clipboard.writeText(`${__SITE__.title}\n${url}`)
     say('リンクをコピーしました', true)
   } catch {
     say(url)
   }
 })
 
+// 別のことばで試す: the line opens again on this page. The address and the
+// history stay as they are until new words are written (then a new entry).
 tryOwn.addEventListener('click', () => {
   mode('write')
   field.value = ''
+  field.removeAttribute('aria-invalid')
+  say('')
   field.focus()
 })
 
@@ -253,7 +266,6 @@ window.addEventListener('popstate', () => {
     say(input)
     return
   }
-  if (body.dataset.mode === 'write') field.value = input.reading ? `${input.text}（${input.reading}）` : input.text
   void show(input, 'none')
 })
 

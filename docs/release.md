@@ -15,7 +15,7 @@ are served by `npm run dev`; they are not built for publication.
 | address | page |
 | --- | --- |
 | `/` | blank paper, the line, three example words (until a poem is written) |
-| `/?title=見えない` | the poem first, its title under it, then 保存 · 共有 · 自分のことばで試す |
+| `/?title=見えない` | the poem first, its title under it, then 保存 · 共有 · 別のことばで試す |
 | `/?title=子供の城&reading=こどものしろ` | the same, with its reading |
 | `…&v=1` | the generator as frozen at v1 (not offered anywhere; kept for the archive) |
 | `…&debug=1` | the reasons, in the console only |
@@ -40,14 +40,16 @@ npx vite preview       # serves dist/ on :4173 to check it (.claude/launch.json:
 
 ## Where it is published
 
-- Cloudflare Pages, project `one-reading` (direct upload), production branch
-  label `release`: https://one-reading.pages.dev/ . The name is only the
-  address; the page shows no title.
+- Cloudflare Pages, project `kotoba-no-katachi` (direct upload), production
+  branch label `release`: https://kotoba-no-katachi.pages.dev/ . The public
+  name ことばのかたち is used in the metadata and in what is shared, never on
+  the page itself. (An earlier project, `one-reading`, served the same build
+  at https://one-reading.pages.dev/ before the name was chosen.)
 - `wrangler.toml` holds the project name and the output directory.
 - Deploy (after `npm ci && npm run build`, logged in with `npx wrangler@4 login`):
 
 ```
-npx wrangler@4 pages deploy dist --project-name one-reading --branch release --commit-hash $(git rev-parse HEAD)
+npx wrangler@4 pages deploy dist --project-name kotoba-no-katachi --branch release --commit-hash $(git rev-parse HEAD)
 ```
 
 ## Hosting
@@ -69,8 +71,11 @@ and `og:image` / `twitter:image` stay relative, which some link previews
 (X among them) do not resolve. Set it there, or build with
 `SITE_URL=https://… npm run build`.
 
-State now: `url` is `https://one-reading.pages.dev`, so canonical, `og:url`,
-`og:image` and `twitter:image` are absolute. A custom domain later: add it to
+State now: `url` is `https://kotoba-no-katachi.pages.dev` and `title` is
+ことばのかたち, so canonical, `og:url`, `og:image` and `twitter:image` are
+absolute, and the browser title, `og:title`, `twitter:title` and what is
+shared use the name. Shared: title and text ことばのかたち, and the poem's
+canonical address (the clipboard fallback copies the two lines). A custom domain later: add it to
 the Pages project, set `url` to it, rebuild and deploy.
 
 ## Manual check on a phone (before publishing)
@@ -89,7 +94,8 @@ address or `vite preview` on the local network:
 - [ ] 共有: the native share sheet opens with the address; the shared
       address opens the same poem on another device
 - [ ] a shared address (`/?title=…`, with and without `&reading=…`) shows
-      the poem first; 自分のことばで試す opens the line
+      the poem first; 別のことばで試す opens the line (and after any poem,
+      however it was made)
 - [ ] Back / Forward (the browser's own gestures) move between poems
 - [ ] About opens at its first line and closes
 - [ ] an unsupported character (an emoji) is refused with a quiet line
