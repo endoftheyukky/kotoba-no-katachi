@@ -378,6 +378,12 @@ dialog dd {
   margin: 0;
 }
 
+/* what is recorded: the last words of About */
+dialog .record {
+  margin: 16px 0 0;
+  line-height: 1.8;
+}
+
 /* the top edge of About, with × in its corner: it stays while the text scrolls under it */
 #about-bar {
   position: sticky;

@@ -44,24 +44,52 @@ function site(): Plugin {
     transformIndexHtml: {
       order: 'pre',
       handler(html, ctx) {
-        // only the public page: the study sheets keep their own heads
-        if (!ctx.filename.endsWith('index.html')) return html
+        // only the public page: the study sheets and the admin sheet keep their own heads
+        if (ctx.path !== '/index.html') return html
         return html.replace('<!--site-meta-->', tags.join('\n    '))
       },
     },
   }
 }
 
+/**
+ * The archive's endpoint lives in Cloudflare Pages Functions (functions/),
+ * which `vite` and `vite preview` do not run. Here it quietly accepts and
+ * keeps nothing, so a local page makes no noise. The real one runs under
+ * `npm run dev:archive` (wrangler pages dev), with a local database.
+ */
+function archiveStub(): Plugin {
+  type Req = { method?: string; url?: string }
+  type Res = { statusCode: number; setHeader(k: string, v: string): void; end(): void }
+  const stub = (req: Req, res: Res, next: () => void) => {
+    if (req.method === 'POST' && req.url?.startsWith('/api/generations')) {
+      res.statusCode = 204
+      res.setHeader('x-archive', 'local stub')
+      res.end()
+      return
+    }
+    next()
+  }
+  return {
+    name: 'archive-stub',
+    configureServer: (server) => void server.middlewares.use(stub),
+    configurePreviewServer: (server) => void server.middlewares.use(stub),
+  }
+}
+
 export default defineConfig({
-  plugins: [site()],
+  plugins: [site(), archiveStub()],
   build: {
     rollupOptions: {
       // The published build is the work alone. The development sheets —
       // study.html (what was read and decided), review.html (the pages with
       // their titles), experiments.html (study-dynamic-v1) — are served by
       // `npm run dev` and are not published.
+      // admin/index.html is the archive sheet: published, but served only
+      // behind /admin's login (functions/admin/_middleware.ts).
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
+        admin: resolve(import.meta.dirname, 'admin/index.html'),
       },
     },
   },

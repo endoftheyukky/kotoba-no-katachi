@@ -56,7 +56,10 @@ npx wrangler@4 pages deploy dist --project-name kotoba-no-katachi --branch relea
 
 ## Hosting
 
-- Any static host. No server code, no functions, no environment at run time.
+- The work itself is static: it needs no server code and keeps working if
+  the archive is down. Around it, the anonymous archive runs on Cloudflare
+  Pages Functions (`/api/*`, `/admin*` only, see `public/_routes.json`) with
+  one D1 database — see docs/archive.md.
 - One page: every address is `/` with a query string (`?title=…&reading=…`).
   No SPA rewrite and no 404 fallback are needed; the host only has to serve
   `index.html` at `/` and keep the query string.
@@ -131,5 +134,8 @@ address or `vite preview` on the local network:
       however it was made)
 - [ ] Back / Forward (the browser's own gestures) move between poems
 - [ ] About opens at its first line; it closes with × (still in reach after
-      scrolling), a tap outside it, and Escape on a keyboard
+      scrolling), a tap outside it, and Escape on a keyboard; its last lines
+      say what is recorded
+- [ ] a poem written on the phone appears in /admin/ (newest first), with
+      its visit; opening a shared address adds nothing
 - [ ] an unsupported character (an emoji) is refused with a quiet line

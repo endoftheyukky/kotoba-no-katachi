@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Generations</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <!-- the archive: the pages people wrote, newest first. Served only behind /admin's login (functions/admin/_middleware.ts). -->
+    <header id="head">
+      <a id="home" href="/admin/">Generations</a>
+      <span id="totals" aria-live="polite"></span>
+      <form id="out" method="post" action="/admin/logout"><button type="submit">log out</button></form>
+    </header>
+
+    <nav id="filters" aria-label="filters">
+      <span class="group" role="group" aria-label="order">
+        <button type="button" data-order="newest" aria-pressed="true">newest</button>
+        <button type="button" data-order="oldest" aria-pressed="false">oldest</button>
+      </span>
+      <span class="group" role="group" aria-label="source">
+        <button type="button" data-source="" aria-pressed="true">all</button>
+        <button type="button" data-source="manual" aria-pressed="false">manual</button>
+        <button type="button" data-source="example" aria-pressed="false">example</button>
+      </span>
+      <label class="search"><span class="hidden">title</span><input id="q" type="search" placeholder="title" maxlength="32" autocomplete="off" /></label>
+    </nav>
+
+    <section id="context" hidden></section>
+    <main id="sheets"></main>
+    <p id="more" hidden><button type="button">more</button></p>
+    <p id="status" role="status"></p>
+
+    <dialog id="detail" aria-label="Generation">
+      <form method="dialog" class="bar"><button type="submit" aria-label="閉じる">×</button></form>
+      <div class="body">
+        <div class="paper big"></div>
+        <dl></dl>
+      </div>
+    </dialog>
+
+    <script type="module" src="/src/admin/main.ts"></script>
+  </body>
+</html>

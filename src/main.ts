@@ -12,9 +12,15 @@
  * shuffle or vary. Every poem written is a place in the browser's history, so
  * Back and Forward walk through them. The development sheets are
  * /study.html and /review.html.
+ *
+ * A poem someone newly writes (typed, or an example) is also recorded, after
+ * it is drawn and without waiting, in the anonymous archive (archive/record.ts,
+ * docs/archive.md). Nothing else is.
  */
 import './style.css'
 import './glyph/font-face'
+import type { Source } from './archive/protocol'
+import { record } from './archive/record'
 import { uncovered } from './glyph/coverage'
 import { analyze, compose, OPERATIONS, SPACES } from './poem/compose'
 import type { Analysis, Composition } from './poem/types'
@@ -143,7 +149,12 @@ function blank(): void {
   document.title = __SITE__.title
 }
 
-async function show(input: TitleInput, history: 'push' | 'replace' | 'none'): Promise<void> {
+/**
+ * Draw the poem for these words. `source` is given only when someone has just
+ * written it (typed words, or an example chosen): that poem, and only that
+ * one, is recorded in the archive — after it is on the paper, never before.
+ */
+async function show(input: TitleInput, history: 'push' | 'replace' | 'none', source?: Source): Promise<void> {
   const mine = ++ticket
   const was = body.dataset.state
   body.dataset.state = 'working'
@@ -155,7 +166,7 @@ async function show(input: TitleInput, history: 'push' | 'replace' | 'none'): Pr
     if (mine !== ticket) return
     const composition = compose(analysis, version === 2 ? { grammar: 'auto' } : {})
     current = { input, analysis, composition }
-    renderSVG(stage, composition.draft, analysis.glyphs)
+    const drawn = renderSVG(stage, composition.draft, analysis.glyphs)
     const label = input.reading ? `${input.text}（${input.reading}）` : input.text
     stage.setAttribute('aria-label', `「${label}」の紙面`)
     caption.textContent = `「${label}」`
@@ -169,6 +180,9 @@ async function show(input: TitleInput, history: 'push' | 'replace' | 'none'): Pr
     if (history === 'push') window.history.pushState(null, '', addressOf(input))
     if (history === 'replace') window.history.replaceState(null, '', addressOf(input))
     if (debug) report(analysis, composition)
+    if (source && history === 'push') {
+      record({ text: input.text, reading: input.reading ?? '', source, generator: version === 1 ? 'v1' : 'v2c', svg: drawn.svg })
+    }
   } catch (e) {
     if (mine !== ticket) return
     body.dataset.state = was === 'shown' ? 'shown' : 'idle'
@@ -242,7 +256,7 @@ form.addEventListener('submit', (e) => {
     mode('view')
     return
   }
-  void show(input, 'push')
+  void show(input, 'push', 'manual')
 })
 
 examples.addEventListener('click', (e) => {
@@ -252,7 +266,7 @@ examples.addEventListener('click', (e) => {
   const input = read(a.textContent ?? '', '')
   if (typeof input === 'string') return
   field.value = input.text
-  void show(input, 'push')
+  void show(input, 'push', 'example')
 })
 
 save.addEventListener('click', () => {
