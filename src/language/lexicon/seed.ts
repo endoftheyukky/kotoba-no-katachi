@@ -1,14 +1,19 @@
 /**
- * seed-lexicon v0 — a small lexicon of single characters, written by hand for
- * this work. It holds no data taken from another dictionary: every line is a
- * common, literal relation between two everyday characters (rain is made of
- * water; a bud becomes a flower; the moon is there with the night). Nothing
- * figurative, nothing emotional, nothing cultural beyond the literal.
+ * seed-lexicon v0 — a prototype of the finite semantic vocabulary this work
+ * defines for itself: single characters, written by hand by its author, with
+ * no data taken from another dictionary. Every line is a common, literal
+ * relation between two everyday characters (rain is made of water; a bud
+ * becomes a flower; the moon is there with the night). Nothing figurative,
+ * nothing emotional, nothing cultural beyond the literal.
  *
- * It is not a dictionary of the development titles: it covers whole fields
+ * It is not a general resource for Japanese meaning. It covers whole fields
  * (sky, light, water, land, plants, animals, the body, people, dwellings,
- * time, things, sound, a few actions) and a title meets it only where it
- * happens to write one of their characters.
+ * time, things, sound, a few actions), but it was written with the
+ * development titles in view, and some of its entries were written for
+ * characters those titles use; the holdout titles were not consulted, though
+ * they had been seen. Its order of nearness (inside, beside, before or after)
+ * is this work's rule, not a claim about meaning in general.
+ * It is used only in review; the published page never takes from it.
  *
  * Format, one statement per line:
  *   @id 名前: 字字字…            a category and its members

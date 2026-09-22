@@ -376,7 +376,11 @@ three, never a character the title writes or the structure already gives.
 That order — inside (made-of, part, unit), then beside at the same moment
 (with, organ), then before or after (source, becomes, yields) — is adopted as
 the default of seed-lexicon v0; it is not fitted to any list of expected
-characters.
+characters. It is this work's rule, not a claim that meaning is ordered so in
+general. seed-lexicon v0 (139 heads, 318 stated relations, 13 categories, 175
+characters) is a prototype of a finite vocabulary the author defines for the
+work, written partly with the development titles in view — not a general
+resource for Japanese meaning.
 No generated text, no model; the same title always gets the same few. It
 enters only the grammars that place several materials (constellation,
 emanation, branch), only as auxiliary marks, only when a review asks for it
@@ -401,6 +405,33 @@ a second family texture. Branch reads the computer's island readings as they
 are (林's left island reads 扌). Lattice finds grids and fields only. Density
 needs a single nucleus that can grow to twice the smallest grain across
 twenty-two grains; word nuclei stay fill.
+
+## v2c — curation for a first public release
+
+Nothing was added. The selection was narrowed so that a grammar fires only
+where the page it makes is one decision, not the composition plus something
+laid on it; a page where nothing fires is a result.
+
+| rule | why | pages it changed (dev / holdout) |
+| --- | --- | --- |
+| constellation leaves auto (review only) | it was chosen only where nothing else was, so it added clusters to pages already whole; they read as tags | 美しい, 空をさがせ！ / 歩きながら, ない, 春はあけぼの |
+| an orbit ring the page cuts below 60% of itself is not drawn | a ring in fragments reads as sparkle | 走れ / 書け |
+| orbit only where the rings reach a quarter of the way across to the other pole | smaller, each pole is only haloed and the relation does not cross the page (ratio 0.16 on the halo pages, 0.30–0.54 on the others) | 1と2 / 手と足 |
+| silhouette only where the form is made of something the title relates to it, and the title stays written beside it | a glyph drawn in itself, or a title dissolved entirely into grains, keeps no structure | 川 / 木と本 (now orbit) |
+| branch only where at least half the branches are writing (what a part reads as) | where the parts read as nothing, the tree only counts islands: a diagram | 川または州 / 雪または霧, 王と玉 (now orbit) |
+
+Tried and reverted: rings of two similar forms left open toward each other
+(the difference between them). 大きな犬 improved; on every other page the
+pole near the page edge lost its ring altogether, so the exchange was
+broken.
+
+Grammars in use under auto: development — v2b uniform 5 / 9 kinds → v2c
+uniform 11 / 8 kinds; holdout — 28 → 22 of 47 take a grammar. Untouched:
+silhouette's four ways, field and attenuation, phase, lattice, the orbit
+shapes, every page listed as strong (王の国, 夜の位置, 海のあと, 見えない,
+雨の中の雨, 国際空港, 朝日, 3月, 人々, 木と林と森). Sheets:
+`docs/contact/dev34-v2c.png`, `docs/contact/holdout-v2c.png`,
+`docs/contact/v2c-before-after.png`.
 
 ## VOID
 

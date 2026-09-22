@@ -1,34 +1,38 @@
 /*
- * The page is paper on a quiet ground, so that its edge — which crops like the
- * edge of a sheet — can be seen. Nothing here should compete with the poem.
+ * A sheet of paper on a quiet ground, one line to write on under it, and a
+ * few words said small. Nothing here should compete with the poem: the paper
+ * is the work, everything else is the room it hangs in.
  */
 :root {
+  --ground: #e8e6e1;
   --paper: #fff;
-  --ground: #f2f2f0;
-  --ink: #000;
-  --mute: #8a8a86;
-  --line: #c9c9c4;
-  --type: "Noto Sans JP", system-ui, sans-serif;
-  --bar: 104px;
+  --ink: #1b1b19;
+  --mute: #85837c;
+  --faint: #aeaba3;
+  --line: #cfccc5;
+  --ui: system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
   --gutter: 16px;
+  /* the room under the paper: one line, one row of words, one quiet note */
+  --under: 148px;
 }
 
 * {
   box-sizing: border-box;
 }
 
-html,
-body {
-  margin: 0;
-  height: 100%;
+html {
   background: var(--ground);
-  color: var(--ink);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  overflow: hidden;
-  font-family: var(--type);
-  -webkit-text-size-adjust: 100%;
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--ui);
+  -webkit-font-smoothing: antialiased;
 }
 
 .hidden {
@@ -40,15 +44,24 @@ body {
   white-space: nowrap;
 }
 
-/* the sheet: always square, as large as the window allows above the bar */
+#work {
+  --sheet: min(calc(100vw - 2 * var(--gutter)), calc(100dvh - var(--under) - 5 * var(--gutter)), 76vh);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--gutter) * 2 + env(safe-area-inset-top)) var(--gutter) calc(var(--gutter) + env(safe-area-inset-bottom));
+}
+
+/* the paper: always square, as large as the room allows */
 #stage {
-  position: fixed;
-  left: 50%;
-  top: calc((100% - var(--bar)) / 2);
-  transform: translate(-50%, -50%);
-  width: min(calc(100vw - 2 * var(--gutter)), calc(100dvh - var(--bar) - 2 * var(--gutter)));
+  width: var(--sheet);
   aspect-ratio: 1;
+  flex: none;
   background: var(--paper);
+  box-shadow: 0 1px 2px rgba(40, 36, 28, 0.06), 0 8px 28px rgba(40, 36, 28, 0.05);
 }
 
 #stage svg {
@@ -59,133 +72,217 @@ body {
   will-change: transform;
 }
 
-#entry {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: baseline;
-  gap: 0.6em 0.9em;
-  width: max-content;
-  max-width: calc(100vw - 2 * var(--gutter));
-  transition: opacity 0.4s;
-}
-
-#entry input,
-#entry button,
-#about-open,
-dialog button {
-  font: inherit;
-  color: var(--ink);
-  background: none;
-  border: 0;
-  border-radius: 0;
-  padding: 0.2em 0;
-}
-
-#entry input {
+#under {
+  width: max(var(--sheet), min(20em, 100%));
+  max-width: 100%;
+  height: var(--under);
+  padding-top: 20px;
   text-align: center;
-  border-bottom: 1px solid var(--ink);
-  outline: none;
 }
 
-#entry input:focus-visible {
-  border-bottom-width: 2px;
+#under p {
+  margin: 0;
 }
 
-#entry button:focus-visible,
-#about-open:focus-visible,
-dialog button:focus-visible {
-  outline: 1px solid var(--ink);
-  outline-offset: 3px;
-}
-
-#entry input::placeholder {
-  color: #b5b5b0;
+/* the line */
+#entry {
+  display: flex;
+  justify-content: center;
 }
 
 #title {
-  width: 8.5em;
-  font-size: 22px;
+  width: min(16em, 100%);
+  font: inherit;
+  /* at least 16px, so that a phone does not zoom into the line */
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  border-radius: 0;
+  padding: 6px 0 7px;
+  outline: none;
 }
 
-#reading {
-  width: 9em;
-  font-size: 14px;
+#title::placeholder {
+  color: var(--faint);
+  letter-spacing: 0.1em;
 }
 
-#entry button {
-  cursor: pointer;
-}
-
-#go {
-  font-size: 20px;
-}
-
-#save {
-  display: none;
-  font-size: 12px;
-  letter-spacing: 0.12em;
+#title:focus-visible {
+  border-bottom-color: var(--ink);
+  box-shadow: 0 1px 0 var(--ink);
 }
 
 #title[aria-invalid="true"] {
   border-bottom-style: dashed;
 }
 
-#note {
-  position: fixed;
-  left: 50%;
-  top: calc(50% + 3.2em);
-  transform: translateX(-50%);
-  margin: 0;
-  width: max-content;
-  max-width: calc(100vw - 2 * var(--gutter));
-  text-align: center;
-  font-size: 12px;
+/* the title of a poem that arrived by its address */
+#caption {
+  min-height: 38px;
+  padding-top: 8px;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+}
+
+/* the first time only: a few words to begin with, written as words */
+#examples {
+  margin-top: 14px !important;
+  font-size: 13px;
+  letter-spacing: 0.08em;
   color: var(--mute);
+}
+
+#examples .lead {
+  margin-right: 0.6em;
+}
+
+#examples a {
+  display: inline-block;
+  white-space: nowrap;
+  color: var(--ink);
+  text-decoration: none;
+  margin: 0 0.45em;
+  padding: 6px 0;
+}
+
+#examples a:hover,
+#examples a:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  outline: none;
+}
+
+#actions {
+  margin-top: 10px !important;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 0.8em;
+}
+
+#actions button,
+#about-open,
+dialog button {
+  font: inherit;
+  color: var(--mute);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+#actions button {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  min-height: 44px;
+  padding: 0 10px;
+}
+
+#actions button:hover,
+#about-open:hover,
+dialog button:hover {
+  color: var(--ink);
+}
+
+#actions button:focus-visible,
+#about-open:focus-visible,
+dialog button:focus-visible {
+  color: var(--ink);
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
+}
+
+#note {
+  min-height: 20px;
+  margin-top: 6px !important;
+  font-size: 12px;
   letter-spacing: 0.04em;
+  color: var(--mute);
+  overflow-wrap: anywhere;
+}
+
+/* --- what shows when -------------------------------------------------- */
+
+/* writing: the line is open, the caption is the line itself */
+body[data-mode="write"] #caption {
+  display: none;
+}
+
+/* looking at a poem that arrived by its address: the poem, its title, then the rest */
+body[data-mode="view"] #entry,
+body[data-mode="view"] #examples {
+  display: none;
+}
+
+#examples[hidden] {
+  display: none;
+}
+
+/* the examples and the actions share one row: words to begin with, then what to do with a poem */
+body:not([data-state="shown"]) #actions {
+  display: none;
+}
+
+body[data-mode="write"] #try {
+  display: none;
+}
+
+body[data-state="shown"] #examples {
+  display: none;
+}
+
+body[data-state="working"] #stage svg {
+  opacity: 0.35;
+  transition: opacity 0.2s;
 }
 
 #about-open {
   position: fixed;
-  right: var(--gutter);
+  right: calc(var(--gutter) + env(safe-area-inset-right));
   bottom: calc(var(--gutter) + env(safe-area-inset-bottom));
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--mute);
-  cursor: pointer;
-}
-
-#about-open:hover {
-  color: var(--ink);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  padding: 8px 4px;
 }
 
 dialog {
-  max-width: min(30em, calc(100vw - 2 * var(--gutter)));
-  padding: 28px 28px 20px;
+  width: min(34em, calc(100vw - 2 * var(--gutter)));
+  max-height: calc(100dvh - 4 * var(--gutter));
+  padding: 30px 30px 20px;
   border: 1px solid var(--line);
+  border-radius: 0;
   background: var(--paper);
   color: var(--ink);
   font-size: 14px;
-  line-height: 1.9;
+  line-height: 2;
+  letter-spacing: 0.02em;
 }
 
 dialog::backdrop {
-  background: rgba(242, 242, 240, 0.85);
+  background: rgba(232, 230, 225, 0.88);
 }
 
 dialog h1 {
-  margin: 0 0 12px;
-  font-size: 16px;
+  outline: none;
+  margin: 0 0 14px;
+  font-size: 15px;
   font-weight: 500;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.24em;
 }
 
 dialog p {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
+}
+
+dialog .aside {
+  font-size: 12px;
+  color: var(--mute);
 }
 
 dialog dl {
@@ -194,6 +291,7 @@ dialog dl {
   gap: 2px 14px;
   margin: 16px 0 0;
   font-size: 12px;
+  line-height: 1.8;
   color: var(--mute);
 }
 
@@ -202,71 +300,35 @@ dialog dd {
 }
 
 dialog form {
-  margin-top: 14px;
+  margin-top: 12px;
   text-align: right;
 }
 
 dialog button {
   font-size: 12px;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-}
-
-/* A page is shown: the entry steps down below the sheet, small. */
-body[data-state="shown"] #entry,
-body[data-state="working"] #entry {
-  top: auto;
-  bottom: calc(var(--gutter) + 18px + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
-}
-
-body[data-state="shown"] #entry {
-  opacity: 0.35;
-}
-
-body[data-state="shown"] #entry:hover,
-body[data-state="shown"] #entry:focus-within {
-  opacity: 1;
-}
-
-body[data-state="shown"] #save {
-  display: inline;
-}
-
-body[data-state="shown"] #note,
-body[data-state="working"] #note {
-  top: auto;
-  bottom: calc(var(--gutter) + env(safe-area-inset-bottom));
-}
-
-body[data-state="idle"] #stage {
-  display: none;
+  letter-spacing: 0.12em;
+  min-height: 40px;
 }
 
 @media (max-width: 520px) {
   :root {
-    --bar: 132px;
+    --under: 148px;
   }
 
-  #title {
-    width: 7em;
-    font-size: 20px;
+  #work {
+    justify-content: flex-start;
+    padding-top: calc(var(--gutter) * 3 + env(safe-area-inset-top));
   }
 
-  #reading {
-    width: 8em;
-  }
-
-  #about-open {
-    right: 50%;
-    transform: translateX(50%);
-    bottom: auto;
-    top: calc(var(--gutter) + env(safe-area-inset-top));
+  dialog {
+    padding: 24px 22px 14px;
+    font-size: 13.5px;
+    line-height: 1.95;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #entry {
+  body[data-state="working"] #stage svg {
     transition: none;
   }
 }

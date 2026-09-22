@@ -31,6 +31,33 @@ interface Pair {
   note: string
   /** a dependence: the ring stays open toward the term that hangs on it */
   toward?: Mark[]
+  /** the other pole: the white between the two is what the rings must reach into */
+  other: Mark[]
+}
+
+/** a ring the page lets fewer than this share of stand is a fragment, not a ring */
+const WHOLE_RING = 0.6
+/** the rings must reach at least this share of the way from a pole to the other */
+const REACH_ACROSS = 0.25
+
+const centreOf = (ks: Mark[]) => ({ x: ks.reduce((t, k) => t + k.x, 0) / ks.length, y: ks.reduce((t, k) => t + k.y, 0) / ks.length })
+const reachOf = (ks: Mark[]) => {
+  const c = centreOf(ks)
+  return Math.max(...ks.map((k) => Math.hypot(k.x - c.x, k.y - c.y) + k.size / 2))
+}
+
+/**
+ * Whether the rings reach into the white between the poles. A ring much
+ * smaller than the distance it stands across is a halo round one pole, not an
+ * orbit that exchanges or depends: the relation is not drawn across the page.
+ * Judged at the middle of the plastic range of the first ring's radius.
+ */
+function reachesAcross(p: Pair): boolean {
+  const a = centreOf(p.around)
+  const b = centreOf(p.other)
+  const d = Math.hypot(a.x - b.x, a.y - b.y)
+  const r = reachOf(p.around) * 1.5 + 0.027 * PAGE
+  return r >= REACH_ACROSS * d
 }
 
 function pairs(v: PageView): Pair[] | null {
@@ -48,14 +75,14 @@ function pairs(v: PageView): Pair[] | null {
     case 'similarity':
     case 'mirror':
       return [
-        { around: A, by: written(p.b), note: `「${text(p.a)}」を「${text(p.b)}」が巡る（対称な関係：交換）` },
-        { around: B, by: written(p.a), note: `「${text(p.b)}」を「${text(p.a)}」が巡る（対称な関係：交換）` },
+        { around: A, by: written(p.b), other: B, note: `「${text(p.a)}」を「${text(p.b)}」が巡る（対称な関係：交換）` },
+        { around: B, by: written(p.a), other: A, note: `「${text(p.b)}」を「${text(p.a)}」が巡る（対称な関係：交換）` },
       ]
     case 'inflection':
-      return [{ around: A, by: written(p.b), toward: B, note: `語尾「${text(p.b)}」が語幹「${text(p.a)}」を巡る（語尾の側で開く）` }]
+      return [{ around: A, by: written(p.b), toward: B, other: B, note: `語尾「${text(p.b)}」が語幹「${text(p.a)}」を巡る（語尾の側で開く）` }]
     case 'dependency':
     case 'imperative':
-      return [{ around: B, by: written(p.a), toward: A, note: `「${text(p.a)}」が「${text(p.b)}」を巡る（依存する側で開く）` }]
+      return [{ around: B, by: written(p.a), toward: A, other: A, note: `「${text(p.a)}」が「${text(p.b)}」を巡る（依存する側で開く）` }]
     default:
       return null
   }
@@ -68,12 +95,15 @@ export const orbit: MarkGrammar = {
     '二つの項が引き離された紙面で、関係が対称なら交換になる：どちらの項も、相手の小さな字の環に巡られる',
     '関係に向きがあれば依存になる：依存する側の字が、依存される側を巡る（語尾は語幹を、目的語は動詞を）。その環は閉じず、依存する側に向かって開く：かかる向きが環の切れ目になる',
     '環は巡る側の字の数だけ、読みの順に内から外へ重なる。どの環も周の長さが許すだけ満ちる',
+    '環は二極の間の白へ届くときだけ：環の半径が極から相手の極までの距離の四分の一に満たなければ、それは一方の極の光輪であって、関係を紙面に渡さない。描かない',
+    '紙面が環の六割未満しか立たせないなら、その環は断片であって環ではない：描かない',
     '最初の環の半径と環の間隔は造形。どちらがどちらを巡るか、環がいくつかは造形ではない',
   ],
 
   offer(v) {
     const ps = pairs(v)
     if (!ps?.length || ps.every((p) => !p.by.length)) return null
+    if (!ps.every(reachesAcross)) return null
     return {
       grounds: ps.map((p) => p.note),
       uses: ps.map((p) => ({ property: 'ring', value: `${p.around.map((k) => k.char).join('')}←${p.by.map((u) => u.char).join('')}` })),
@@ -82,7 +112,7 @@ export const orbit: MarkGrammar = {
 
   apply(v, rng) {
     const ps = pairs(v)
-    if (!ps) return v.marks
+    if (!ps || !ps.every(reachesAcross)) return v.marks
     const out: Mark[] = [...v.marks]
     const added: Mark[] = []
     const grain = within(rng, 0.024, 0.03) * PAGE
@@ -92,9 +122,8 @@ export const orbit: MarkGrammar = {
     for (const p of ps) {
       if (!p.by.length) continue
       // the term's centre and extent, whatever its number of characters
-      const cx = p.around.reduce((t, k) => t + k.x, 0) / p.around.length
-      const cy = p.around.reduce((t, k) => t + k.y, 0) / p.around.length
-      const reach = Math.max(...p.around.map((k) => Math.hypot(k.x - cx, k.y - cy) + k.size / 2))
+      const { x: cx, y: cy } = centreOf(p.around)
+      const reach = reachOf(p.around)
       // where the dependent term lies: the ring is open there, a third of the way round
       const opening = p.toward?.length
         ? Math.atan2(
@@ -107,9 +136,12 @@ export const orbit: MarkGrammar = {
         const n = Math.max(8, Math.floor((2 * Math.PI * r) / (grain * 1.6)))
         // the ring begins where the reading begins (top for vertical writing, left for horizontal)
         const start = v.a.direction === 'vertical' ? -Math.PI / 2 : Math.PI
+        const ring0 = added.length
+        let wanted = 0
         for (let i = 0; i < n; i++) {
           const t = start + (i / n) * 2 * Math.PI
           if (opening !== null && Math.abs(Math.atan2(Math.sin(t - opening), Math.cos(t - opening))) < Math.PI / 3) continue
+          wanted++
           const x = cx + Math.cos(t) * r
           const y = cy + Math.sin(t) * r
           if (x < grain || y < grain || x > PAGE - grain || y > PAGE - grain) continue
@@ -123,6 +155,8 @@ export const orbit: MarkGrammar = {
             derived: derive('orbit', 'repeat', p.note, u.grapheme),
           })
         }
+        // what the page cut to pieces is not a ring
+        if (added.length - ring0 < WHOLE_RING * wanted) added.length = ring0
       })
     }
     return [...out, ...added]

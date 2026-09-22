@@ -41,6 +41,8 @@ interface Member {
   char: string
   from: number | undefined
   note: string
+  /** the branch is writing: a character of the group, or what its part reads as — not the group's own glyph standing in for a part that reads as nothing */
+  read: boolean
 }
 interface Group {
   marks: Mark[]
@@ -84,16 +86,16 @@ function groups(v: PageView): Group[] {
     const y = marks.reduce((s, k) => s + k.y, 0) / marks.length
     const text = written.map((g) => a.graphemes[g].char).join('')
     let members: Member[]
-    if (written.length >= 2) members = written.map((g) => ({ char: a.graphemes[g].char, from: g, note: `「${text}」の字「${a.graphemes[g].char}」` }))
+    if (written.length >= 2) members = written.map((g) => ({ char: a.graphemes[g].char, from: g, note: `「${text}」の字「${a.graphemes[g].char}」`, read: true }))
     else {
       const g = written[0]
       const parts = partsRead(v, g, 'islands')
       members = parts.length
         ? parts.map((p) => {
             const c = p.char && covers('serif', p.char) ? p.char : a.graphemes[g].char
-            return { char: c, from: g, note: p.char ? `「${text}」の部品（「${p.char}」と読める）` : `「${text}」の部品（字として読めない：「${text}」のまま）` }
+            return { char: c, from: g, note: p.char ? `「${text}」の部品（「${p.char}」と読める）` : `「${text}」の部品（字として読めない：「${text}」のまま）`, read: c !== a.graphemes[g].char }
           })
-        : [{ char: a.graphemes[g].char, from: g, note: `「${text}」は分かれない` }]
+        : [{ char: a.graphemes[g].char, from: g, note: `「${text}」は分かれない`, read: false }]
     }
     out.push({ marks, x, y, members, note: `${why}「${text}」` })
   }
@@ -112,6 +114,17 @@ function groups(v: PageView): Group[] {
 export function branchesDiffer(v: PageView): boolean {
   const gs = groups(v)
   return gs.length >= 2 && new Set(gs.map((g) => g.members.length)).size >= 2
+}
+
+/**
+ * Whether the branches are writing rather than a count: at least half of them
+ * written in what their parts read as (or in the group's own characters).
+ * Where the parts read as nothing, every branch is the group's glyph again,
+ * and the tree only counts islands of ink — a diagram, not a page.
+ */
+export function branchesWrite(v: PageView): boolean {
+  const ms = groups(v).flatMap((g) => g.members)
+  return ms.length > 0 && ms.filter((m) => m.read).length >= ms.length / 2
 }
 
 export const branch: MarkGrammar = {

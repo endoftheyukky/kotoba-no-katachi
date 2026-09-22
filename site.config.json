@@ -1,0 +1,8 @@
+{
+  "//": "Everything the published page says about itself, in one place. url: the site's absolute address (https://…, no trailing slash), used for canonical and og:url/og:image; leave empty until the domain is decided — those tags are then left out and og:image stays relative. SITE_URL in the environment overrides it at build time.",
+  "url": "",
+  "title": "具体詩",
+  "description": "入力された言葉を、意味だけでなく、音、文字の形、反復、欠落、語のまとまりとして読み取り、一枚の詩へ変換する作品。同じ言葉からは、いつも同じ詩が生まれます。",
+  "ogImage": "/ogp.png",
+  "themeColor": "#e8e6e1"
+}

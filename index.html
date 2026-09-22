@@ -3,45 +3,64 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>具体詩</title>
-    <meta
-      name="description"
-      content="入力された言葉を、意味だけでなく、文字・音・反復・欠落・包含・語の継ぎ目など、機械が測ることのできる性質として読み、一枚の紙面の上の関係へ置き換える。"
-    />
-    <meta name="theme-color" content="#f2f2f0" />
+    <!--site-meta-->
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="具体詩" />
-    <meta
-      property="og:description"
-      content="言葉を、文字・音・反復・欠落・包含・語の継ぎ目として読み、一枚の紙面へ。"
-    />
-    <meta property="og:image" content="/ogp.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta name="twitter:card" content="summary_large_image" />
   </head>
-  <body data-state="idle">
-    <main id="stage"></main>
+  <body data-mode="write" data-state="idle">
+    <main id="work">
+      <!-- the paper: the work, and nothing else -->
+      <div id="stage" role="img" aria-label="白い紙面"></div>
 
-    <form id="entry" autocomplete="off">
-      <label class="hidden" for="title">題</label>
-      <input id="title" lang="ja" maxlength="32" spellcheck="false" placeholder="題" enterkeyhint="go" />
-      <label class="hidden" for="reading">よみ（任意）</label>
-      <input id="reading" lang="ja" maxlength="40" spellcheck="false" placeholder="よみ（任意）" enterkeyhint="go" />
-      <button type="submit" id="go" aria-label="紙面をつくる">→</button>
-      <button type="button" id="save" aria-label="PNGで保存">PNG</button>
-    </form>
-    <p id="note" role="status" aria-live="polite"></p>
+      <div id="under">
+        <p id="caption" aria-live="polite"></p>
 
-    <button type="button" id="about-open" aria-haspopup="dialog">この作品について</button>
+        <form id="entry" autocomplete="off">
+          <label class="hidden" for="title">ことば</label>
+          <input
+            id="title"
+            lang="ja"
+            maxlength="48"
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+            placeholder="ことばを入力"
+            enterkeyhint="go"
+          />
+        </form>
+
+        <p id="examples">
+          <span class="lead">たとえば</span>
+          <a href="?title=%E6%A3%AE">森</a>
+          <a href="?title=%E8%A6%8B%E3%81%88%E3%81%AA%E3%81%84">見えない</a>
+          <a href="?title=%E9%9B%A8%E3%81%AE%E4%B8%AD%E3%81%AE%E9%9B%A8">雨の中の雨</a>
+        </p>
+
+        <p id="actions">
+          <button type="button" id="save">保存</button>
+          <button type="button" id="share">共有</button>
+          <button type="button" id="try">自分のことばで試す</button>
+        </p>
+
+        <p id="note" role="status" aria-live="polite"></p>
+      </div>
+    </main>
+
+    <button type="button" id="about-open" aria-haspopup="dialog">About</button>
+
+    <!-- About: the only text about the work, kept here in one place -->
     <dialog id="about" aria-labelledby="about-title">
-      <h1 id="about-title">具体詩</h1>
+      <h1 id="about-title" tabindex="-1" autofocus>具体詩</h1>
       <p>
-        入力された言葉を、意味だけでなく、文字・音・反復・欠落・包含・語の継ぎ目・順序といった、機械が測ることのできる性質として読み、一枚の紙面の上の関係へ置き換えます。
+        この作品は、入力された言葉を、意味だけでなく、音、文字の形、反復、欠落、語のまとまりなど複数の構造として読み取り、一枚の詩へ変換します。
       </p>
-      <p>同じ題からは、いつも同じ一枚が生まれます。よみを添えると音の読みが変わり、紙面が変わることがあります。</p>
-      <p>題は一語から短い句まで、十六字まで。</p>
+      <p>
+        あらかじめ用意されたデザインに言葉を当てはめるのではなく、言葉から得られた特徴を、反復する、分かれる、消える、集まる、離れるといった操作として実行し、その結果として紙面を生成します。
+      </p>
+      <p>同じ言葉からは、いつも同じ詩が生まれます。生成の違いは偶然ではなく、入力された言葉そのものの違いから生まれます。</p>
+      <p>
+        本作を考えるうえで、コンクリート・ポエトリー、とりわけ新國誠一による視覚詩の実践を参照しています。言葉を意味の伝達手段としてだけでなく、文字の形、音、配置、反復、空白を含む素材として扱うその問題意識を踏まえつつ、本作では言語解析や字形の計測を通して、現在の計算環境から別の方法を試みています。
+      </p>
+      <p class="aside">ことばは十六字まで。読みを指定するときは「子供の城（こどものしろ）」のように括弧で添えます。</p>
       <dl>
         <dt>字体</dt>
         <dd>Noto Sans JP・Noto Serif JP（SIL Open Font License 1.1）</dd>

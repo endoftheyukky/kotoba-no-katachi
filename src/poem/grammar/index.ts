@@ -10,12 +10,13 @@
 import type { Rng } from '../../core/random'
 import type { Analysis, GrammarApplied, GrammarId, Material, Mark, Placed, Realization } from '../types'
 import { attenuation } from './attenuation'
-import { branch, branchesDiffer } from './branch'
-import { silentSeat, type GrammarOffer, type MarkGrammar } from './common'
+import { branch, branchesDiffer, branchesWrite } from './branch'
 import { constellation } from './constellation'
+import { silentSeat, type GrammarOffer, type MarkGrammar } from './common'
 import { emanation } from './emanation'
 import { field } from './field'
 import { lattice, occurrenceGrid } from './lattice'
+import { materialOf } from './material'
 import { viewOf, type Asked, type PageView } from './page'
 import { orbit } from './orbit'
 import { phase } from './phase'
@@ -57,6 +58,21 @@ function formed(v: PageView): string | null {
 }
 
 /**
+ * Whether drawing the nucleus as a form of small marks keeps the title's
+ * structure, rather than only showing that a glyph can be drawn in microtext:
+ *   - the form is made of something the title relates to it (a repetition, a
+ *     form read inside it, the rest of the title) — never of itself alone
+ *   - something of the title stays written as writing beside the form: the
+ *     form is compared with the title, the title is not all dissolved
+ */
+function formHolds(v: PageView): string | null {
+  if (materialOf(v, v.nucleus).kind === 'self') return '粒の材料が核そのものしかない：字を字で描くだけでは題の構造を保たない'
+  const written = v.marks.some((k) => !v.nucleus.includes(k) && k.grapheme !== undefined)
+  if (!written) return '核が題のすべて：形だけが残り、書かれた題が紙面に残らない'
+  return null
+}
+
+/**
  * v2: which grammar a page takes. One way per structure, decided by what the
  * page holds; there is no contest between grammars and no fitness:
  *   1. seats the poem writes as space after a written one — a silent beat
@@ -67,24 +83,27 @@ function formed(v: PageView): string | null {
  *      a phase; any other run dwindles (attenuation)
  *   3. a nucleus that is a reading of ink or the word another depends on —
  *      its form is drawn in small marks (silhouette), where enough of them
- *      fall on it for the form to be read; the way it is drawn (fill,
- *      contour, density, residue) is the nucleus's own (silhouette.ts)
+ *      fall on it for the form to be read, where it is made of something
+ *      the title relates to it and the title stays written beside it
+ *      (formHolds); the way it is drawn (fill, contour, density, residue) is
+ *      the nucleus's own (silhouette.ts)
  *   4. a grid whose rows are the occurrences of what the title repeats — each
  *      row is read again, smaller cell by cell, and goes on (lattice)
  *   5. groups the title makes (the terms it coordinates, the occurrences it
- *      repeats) that differ in what they are made of — each grows as many
- *      branches as it has members (branch)
- *   6. two terms held apart as poles — each is ringed by the other where the
- *      relation is symmetric, the dependent circles its head where it is not
- *      (orbit)
- *   7. a page with none of these, whose title holds material of two kinds
- *      (its structure, its sound) — each gathers as a cluster in the page's
- *      white, the nearer kind nearer the writing (constellation)
- *   8. otherwise the page stays as the composition wrote it (v1)
- * A form in small marks that cannot be read falls back to 5, then 6.
- * Emanation is not selected: under review it did not yet make an event
- * distinct enough from what the page already does. Meaning (the lexicon)
- * is never selected: it is review only.
+ *      repeats) that differ in what they are made of, and whose branches are
+ *      writing, not a count of islands — each grows as many branches as it
+ *      has members (branch)
+ *   6. two terms held apart as poles, where the rings reach into the white
+ *      between them — each is ringed by the other where the relation is
+ *      symmetric, the dependent circles its head where it is not (orbit)
+ *   7. otherwise the page stays as the composition wrote it (v1): a grammar
+ *      that does not fire is a result, not a gap
+ * A form in small marks that cannot be read, or does not hold, falls back to
+ * 5, then 6.
+ * Not selected (review only): emanation — it did not make an event distinct
+ * enough from what the page already does; constellation — chosen only where
+ * nothing else was, it added clusters to a page that was already whole;
+ * meaning (the lexicon).
  */
 function select(v: PageView): { g: MarkGrammar | null; why: string; fallback?: MarkGrammar | null } {
   // a title the composition found weak gathers small in a corner: it is left quiet
@@ -98,15 +117,15 @@ function select(v: PageView): { g: MarkGrammar | null; why: string; fallback?: M
     return v.spatial.id === 'field'
       ? { g: phase, why: '題そのものの場：反復が一周の位相をもつ' }
       : { g: attenuation, why: '一つの字の長い並び：並んだ順に小さくなる' }
-  const tree = branchesDiffer(v) && branch.offer(v) ? branch : null
+  const tree = branchesDiffer(v) && branchesWrite(v) && branch.offer(v) ? branch : null
+  const rings = orbit.offer(v) ? orbit : null
   const why = formed(v)
-  if (why) return { g: silhouette, why, fallback: tree ?? (orbit.offer(v) ? orbit : null) }
+  const holds = why ? formHolds(v) : null
+  if (why && !holds) return { g: silhouette, why, fallback: tree ?? rings }
   if (occurrenceGrid(v)) return { g: lattice, why: '格子の行が反復の出現：行ごとに縮みながら続く' }
   if (tree) return { g: branch, why: '題のまとまりが、それぞれ異なる数の構成要素でできている' }
-  if (orbit.offer(v)) return { g: orbit, why: '二つの項が極として引き離されている' }
-  // the lexicon never takes part in the selection: constellation is chosen from what the title itself holds
-  if (!v.semantic && constellation.offer(v)) return { g: constellation, why: '他の振る舞いの根拠がなく、題が構造と音の二種類の材料を持つ：それぞれが紙面の白に群をなす' }
-  return { g: null, why: '粒・残響・位相・格子・分岐・軌道・星座の根拠がない：構成が書いたまま' }
+  if (rings) return { g: orbit, why: '二つの項が極として引き離されている' }
+  return { g: null, why: holds ?? '粒・残響・位相・格子・分岐・軌道の根拠がない：構成が書いたまま' }
 }
 
 function applied(g: MarkGrammar, grounds: string[], offer: GrammarOffer, marks: Mark[]): GrammarApplied {
