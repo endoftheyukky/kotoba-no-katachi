@@ -82,21 +82,29 @@ shared use the name. A custom domain later: add it to the Pages project, set
 ## Sharing
 
 共有 opens a small row under the actions: X · その他 · コピー. Each shares
-the same two lines — the name, then the canonical address of the poem on the
-paper (built from `url`, with `reading` when there is one):
+the same three lines — the name, the title of the poem on the paper in
+「」 (its words only: a reading is not shown here), and the poem's canonical
+address (built from `url`, keeping `reading` when there is one):
 
 ```
 ことばのかたち
+「森」
 https://kotoba-no-katachi.pages.dev/?title=%E6%A3%AE
 ```
 
-- X: `https://x.com/intent/post?text=<the two lines, encoded>` in a new tab
+```
+ことばのかたち
+「子供の城」
+https://kotoba-no-katachi.pages.dev/?title=%E5%AD%90%E4%BE%9B%E3%81%AE%E5%9F%8E&reading=%E3%81%93%E3%81%A9%E3%82%82%E3%81%AE%E3%81%97%E3%82%8D
+```
+
+- X: `https://x.com/intent/post?text=<the three lines, encoded>` in a new tab
   (the X app on a phone). The address goes inside `text`, not as `url`, so
-  the name and the line break are kept.
-- その他: `navigator.share({ title: 'ことばのかたち', text: <the two lines> })`,
+  the name, the title and the line breaks are kept.
+- その他: `navigator.share({ title: 'ことばのかたち', text: <the three lines> })`,
   with no separate `url`, so the address cannot appear twice. Hidden where
   the browser has no Web Share.
-- コピー: the two lines to the clipboard, then コピーしました for a moment.
+- コピー: the three lines to the clipboard, then コピーしました for a moment.
 
 ## Manual check on a phone (before publishing)
 
@@ -112,11 +120,11 @@ address or `vite preview` on the local network:
 - [ ] 保存: the PNG is saved (or offered to Photos / Files); it is the paper
       alone, 2048 × 2048, with no title or address on it
 - [ ] the name ことばのかたち is small at the top and does not crowd the paper
-- [ ] 共有 → X: the X app (or x.com) opens its post screen with the two
-      lines written in
+- [ ] 共有 → X: the X app (or x.com) opens its post screen with the three
+      lines written in (the name, 「title」, the address)
 - [ ] 共有 → その他: the share sheet opens; in Messages / LINE / Mail the
-      name and the address arrive once each
-- [ ] 共有 → コピー: pasting gives the two lines; the shared address opens
+      name, the title and the address arrive once each
+- [ ] 共有 → コピー: pasting gives the three lines; the shared address opens
       the same poem on another device
 - [ ] a shared address (`/?title=…`, with and without `&reading=…`) shows
       the poem first; 別のことばで試す opens the line (and after any poem,

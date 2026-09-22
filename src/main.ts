@@ -96,9 +96,12 @@ function sharedURL(input: TitleInput): string {
   return new URL(addressOf(input), __SITE__.url ? `${__SITE__.url}/` : location.href).href
 }
 
-/** what is shared, by every way of sharing: the name, then the poem's address, on two lines */
+/**
+ * what is shared, by every way of sharing, on three lines: the name, the
+ * poem's title (the words alone; a reading stays in the address), its address
+ */
 function sharedText(input: TitleInput): string {
-  return `${__SITE__.title}\n${sharedURL(input)}`
+  return `${__SITE__.title}\n「${input.text}」\n${sharedURL(input)}`
 }
 
 const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }
@@ -107,7 +110,7 @@ const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }
 function shareRow(open: boolean, refocus = false): void {
   if (open && !current) return
   if (open && current) {
-    // X is asked to write the two lines itself: a link card alone would drop the name
+    // X is asked to write the three lines itself: a link card alone would drop the name and the title
     shareX.href = `https://x.com/intent/post?text=${encodeURIComponent(sharedText(current.input))}`
     shareOther.hidden = typeof nav.share !== 'function'
     say('')
@@ -260,7 +263,7 @@ save.addEventListener('click', () => {
 })
 
 // 共有 opens (or closes) the row: X · その他 · コピー. Every one of them shares
-// the same two lines — the name and the address of the poem on the paper.
+// the same three lines — the name, the title and the address of the poem on the paper.
 share.addEventListener('click', () => shareRow(shareMenu.hidden !== false))
 
 // X: its own post screen in a new tab (the link does the opening), the text written in
@@ -268,7 +271,7 @@ shareX.addEventListener('click', () => {
   window.setTimeout(() => shareRow(false, true))
 })
 
-// その他: the system's share sheet. The two lines go as the text, and the
+// その他: the system's share sheet. The three lines go as the text, and the
 // address is not given again separately, so it cannot appear twice.
 shareOther.addEventListener('click', async () => {
   if (!current || typeof nav.share !== 'function') return
