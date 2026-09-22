@@ -72,12 +72,14 @@ const bare = params.get('bare') === '1'
  * in `+grammar` (v2): `#1+field` is the chosen page written as a density field.
  * A grammar may name one of its ways (`#1+silhouette/contour`), and `+sem`
  * lets the grammars that place several materials take one from the lexicon
- * (`#1+constellation+sem`). Both are review only.
+ * (`#1+constellation+sem`). Both are review only. `+v3` (v3 experiment)
+ * moves the drawn page in the continuous form space (poem/form):
+ * `study.html?compare=%231%2Bauto|%231%2Bauto%2Bv3` is v2c beside v3.
  */
 function forceOf(spec: string, fits: readonly Realization[]): Force | null {
   const [base, ...more] = spec.split('+')
   const SEM = ['sym', 'aozora', 'chive', 'hybrid'] as const
-  const g = more.find((x) => x !== 'sem' && !(SEM as readonly string[]).includes(x))
+  const g = more.find((x) => x !== 'sem' && x !== 'v3' && !(SEM as readonly string[]).includes(x))
   const [gid, named] = (g ?? '').split('/')
   const source = more.find((x) => (SEM as readonly string[]).includes(x))
   const grammar = {
@@ -86,6 +88,7 @@ function forceOf(spec: string, fits: readonly Realization[]): Force | null {
     ...(more.includes('sem') ? { semantic: true } : {}),
     // v2d experiment: `+hybrid`, `+aozora`, `+chive`, `+sym`
     ...(source ? { semanticSource: (source === 'sym' ? 'symbolic' : source) as 'symbolic' | 'aozora' | 'chive' | 'hybrid' } : {}),
+    ...(more.includes('v3') ? { form: 'v3' as const } : {}),
   }
   if (base === 'auto' || base === '') return { ...grammar }
   const rank = /^#(\d+)$/.exec(base)

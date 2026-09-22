@@ -591,6 +591,8 @@ export interface Composition {
   /** how the marks behave inside the composition (v2); 'uniform' is v1 */
   grammar: GrammarApplied
   draft: Draft
+  /** v3 experiment, review only: how the page was moved in the form space (poem/form) */
+  form?: import('./form').FormApplied
 }
 
 export interface GrammarApplied {

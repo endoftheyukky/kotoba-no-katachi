@@ -32,6 +32,8 @@ import { proliferation } from './operations/proliferation'
 import { transformation } from './operations/transformation'
 import { poeticPotential, visualPotential } from './potential'
 import { withFaces } from './face'
+import { formSpace } from './form'
+import { RATIO_FLOOR } from './form/morph'
 import { writeWith } from './grammar'
 import { basisOf, scopeOf } from './scope'
 import { decideScale } from './scale'
@@ -161,6 +163,13 @@ export interface Force {
   variant?: string
   /** v2d experiment, review only: touch the page with meaning from this source (loadNeighbours() first for the vector sources) */
   semanticSource?: 'symbolic' | 'aozora' | 'chive' | 'hybrid'
+  /**
+   * v3 experiment, review only: after the page is drawn, deform it in the
+   * continuous form space toward what the title's properties ask
+   * (poem/form). `formGain` scales the pressures (1 by default).
+   */
+  form?: 'v3'
+  formGain?: number
 }
 
 export function compose(a: Analysis, force: Force = {}): Composition {
@@ -352,6 +361,29 @@ export function compose(a: Analysis, force: Force = {}): Composition {
     fits,
     rejected,
     grammar: behaved.applied,
-    draft: { marks: withFaces(a, material, behaved.marks) },
+    ...shaped(a, force, seed, primary.op === 'proliferation', tokens, withFaces(a, material, behaved.marks), () => {
+      // v3: the composition that holds this title almost as well as the chosen one, if any
+      const r = fits.find((f) => f !== spatial && f.id !== spatial.id && f.fitness >= RATIO_FLOOR * spatial.fitness)
+      if (!r) return null
+      const s = SPACES.find((x) => x.id === r.id)!
+      const marks = withFaces(a, material, s.realize(a, material, new Rng(seed).fork(r.id), decideScale(a, material, r.id), r).marks)
+      return { marks, label: `${r.id}/${r.mode}`, ratio: r.fitness / spatial.fitness }
+    }),
   }
+}
+
+/** v3, review only: the drawn page moved in the form space — or the page itself, untouched */
+function shaped(
+  a: Analysis,
+  force: Force,
+  seed: number,
+  repetition: boolean,
+  tokens: Unit[][],
+  marks: Composition['draft']['marks'],
+  alternative: () => { marks: Composition['draft']['marks']; label: string; ratio: number } | null,
+) {
+  if (force.form !== 'v3') return { draft: { marks } }
+  const absent = tokens.flat().filter((u) => u.absent).map((u) => u.grapheme)
+  const f = formSpace(a, marks, { repetition, absent }, new Rng(seed).fork('form'), force.formGain ?? 1, alternative())
+  return { draft: { marks: f.marks }, form: f.applied }
 }
