@@ -268,16 +268,9 @@ dialog::backdrop {
   background: rgba(232, 230, 225, 0.88);
 }
 
-dialog h1 {
-  outline: none;
-  margin: 0 0 14px;
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: 0.24em;
-}
-
 dialog p {
   margin: 0 0 12px;
+  outline: none;
 }
 
 dialog .aside {

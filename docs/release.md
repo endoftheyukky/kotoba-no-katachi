@@ -38,6 +38,18 @@ npx vite preview       # serves dist/ on :4173 to check it (.claude/launch.json:
   woff2 files, each fetched only when a page needs its characters). About
   16 MB in all, almost all of it fonts.
 
+## Where it is published
+
+- Cloudflare Pages, project `one-reading` (direct upload), production branch
+  label `release`: https://one-reading.pages.dev/ . The name is only the
+  address; the page shows no title.
+- `wrangler.toml` holds the project name and the output directory.
+- Deploy (after `npm ci && npm run build`, logged in with `npx wrangler@4 login`):
+
+```
+npx wrangler@4 pages deploy dist --project-name one-reading --branch release --commit-hash $(git rev-parse HEAD)
+```
+
 ## Hosting
 
 - Any static host. No server code, no functions, no environment at run time.
@@ -57,8 +69,9 @@ and `og:image` / `twitter:image` stay relative, which some link previews
 (X among them) do not resolve. Set it there, or build with
 `SITE_URL=https://… npm run build`.
 
-State now: title, description, favicon (`/favicon.svg`), static OGP image
-and Twitter card are in place; canonical and `og:url` wait for the address.
+State now: `url` is `https://one-reading.pages.dev`, so canonical, `og:url`,
+`og:image` and `twitter:image` are absolute. A custom domain later: add it to
+the Pages project, set `url` to it, rebuild and deploy.
 
 ## Manual check on a phone (before publishing)
 

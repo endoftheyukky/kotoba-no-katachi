@@ -1,0 +1,5 @@
+# Cloudflare Pages: the published site (static, direct upload from dist/).
+# The project name is only the address (one-reading.pages.dev); the page shows no name.
+name = "one-reading"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-09-22"
