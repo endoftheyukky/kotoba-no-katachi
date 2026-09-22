@@ -5,8 +5,9 @@ v2c: no grammar, semantic layer or tuning is added here. The semantic
 experiment (`v2d-semantic-experiment`, `fa48586`) and the notes for v3
 (`docs/v3-notes.md` on branch `v2`) are not part of this branch.
 
-The published page is `index.html` + `src/main.ts` + `src/style.css`: a sheet
-of paper, one line under it, and About. The development sheets
+The published page is `index.html` + `src/main.ts` + `src/style.css`: the
+name ことばのかたち said small above a sheet of paper, one line under it, and
+About. The development sheets
 (`study.html`, `review.html`, `experiments.html`) stay in the repository and
 are served by `npm run dev`; they are not built for publication.
 
@@ -42,9 +43,10 @@ npx vite preview       # serves dist/ on :4173 to check it (.claude/launch.json:
 
 - Cloudflare Pages, project `kotoba-no-katachi` (direct upload), production
   branch label `release`: https://kotoba-no-katachi.pages.dev/ . The public
-  name ことばのかたち is used in the metadata and in what is shared, never on
-  the page itself. (An earlier project, `one-reading`, served the same build
-  at https://one-reading.pages.dev/ before the name was chosen.)
+  name ことばのかたち is used in the metadata, in what is shared, and small at
+  the top of the page (ことば / の / かたち on three lines, fixed). (An earlier
+  project, `one-reading`, served the same build at
+  https://one-reading.pages.dev/ before the name was chosen.)
 - `wrangler.toml` holds the project name and the output directory.
 - Deploy (after `npm ci && npm run build`, logged in with `npx wrangler@4 login`):
 
@@ -74,9 +76,27 @@ and `og:image` / `twitter:image` stay relative, which some link previews
 State now: `url` is `https://kotoba-no-katachi.pages.dev` and `title` is
 ことばのかたち, so canonical, `og:url`, `og:image` and `twitter:image` are
 absolute, and the browser title, `og:title`, `twitter:title` and what is
-shared use the name. Shared: title and text ことばのかたち, and the poem's
-canonical address (the clipboard fallback copies the two lines). A custom domain later: add it to
-the Pages project, set `url` to it, rebuild and deploy.
+shared use the name. A custom domain later: add it to the Pages project, set
+`url` to it, rebuild and deploy.
+
+## Sharing
+
+共有 opens a small row under the actions: X · その他 · コピー. Each shares
+the same two lines — the name, then the canonical address of the poem on the
+paper (built from `url`, with `reading` when there is one):
+
+```
+ことばのかたち
+https://kotoba-no-katachi.pages.dev/?title=%E6%A3%AE
+```
+
+- X: `https://x.com/intent/post?text=<the two lines, encoded>` in a new tab
+  (the X app on a phone). The address goes inside `text`, not as `url`, so
+  the name and the line break are kept.
+- その他: `navigator.share({ title: 'ことばのかたち', text: <the two lines> })`,
+  with no separate `url`, so the address cannot appear twice. Hidden where
+  the browser has no Web Share.
+- コピー: the two lines to the clipboard, then コピーしました for a moment.
 
 ## Manual check on a phone (before publishing)
 
@@ -91,11 +111,17 @@ address or `vite preview` on the local network:
 - [ ] the line does not zoom the page when focused
 - [ ] 保存: the PNG is saved (or offered to Photos / Files); it is the paper
       alone, 2048 × 2048, with no title or address on it
-- [ ] 共有: the native share sheet opens with the address; the shared
-      address opens the same poem on another device
+- [ ] the name ことばのかたち is small at the top and does not crowd the paper
+- [ ] 共有 → X: the X app (or x.com) opens its post screen with the two
+      lines written in
+- [ ] 共有 → その他: the share sheet opens; in Messages / LINE / Mail the
+      name and the address arrive once each
+- [ ] 共有 → コピー: pasting gives the two lines; the shared address opens
+      the same poem on another device
 - [ ] a shared address (`/?title=…`, with and without `&reading=…`) shows
       the poem first; 別のことばで試す opens the line (and after any poem,
       however it was made)
 - [ ] Back / Forward (the browser's own gestures) move between poems
-- [ ] About opens at its first line and closes
+- [ ] About opens at its first line; it closes with × (still in reach after
+      scrolling), a tap outside it, and Escape on a keyboard
 - [ ] an unsupported character (an emoji) is refused with a quiet line

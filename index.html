@@ -8,6 +8,14 @@
   </head>
   <body data-mode="write" data-state="idle">
     <main id="work">
+      <!-- the name, small, above the paper: always ことばのかたち, in three words (see style.css) -->
+      <h1 id="name">
+        <span class="hidden">ことばのかたち</span>
+        <span aria-hidden="true">ことば</span>
+        <span aria-hidden="true">の</span>
+        <span aria-hidden="true">かたち</span>
+      </h1>
+
       <!-- the paper: the work, and nothing else -->
       <div id="stage" role="img" aria-label="白い紙面"></div>
 
@@ -37,7 +45,13 @@
 
         <p id="actions">
           <button type="button" id="save">保存</button>
-          <button type="button" id="share">共有</button>
+          <button type="button" id="share" aria-expanded="false" aria-controls="share-menu">共有</button>
+          <!-- where to share: after 共有 in reading order, shown on its own row under the actions -->
+          <span id="share-menu" role="group" aria-label="共有" hidden>
+            <a id="share-x" href="https://x.com/intent/post" target="_blank" rel="noopener" aria-label="Xで共有">X</a>
+            <button type="button" id="share-other">その他</button>
+            <button type="button" id="share-copy">コピー</button>
+          </span>
           <button type="button" id="try">別のことばで試す</button>
         </p>
 
@@ -49,6 +63,10 @@
 
     <!-- About: the only text about the work, kept here in one place -->
     <dialog id="about" aria-label="About">
+      <!-- stays at the top while the text scrolls under it -->
+      <form method="dialog" id="about-bar">
+        <button type="submit" id="about-close" aria-label="閉じる">×</button>
+      </form>
       <p tabindex="-1" autofocus>
         この作品は、入力された言葉を、音、文字の形、反復、欠落、語や文字のまとまりと関係といった複数の構造として読み取り、一枚の詩へ変換します。
       </p>
@@ -66,7 +84,6 @@
         <dt>制作</dt>
         <dd>Yuki Sunaga</dd>
       </dl>
-      <form method="dialog"><button type="submit">閉じる</button></form>
     </dialog>
 
     <script type="module" src="/src/main.ts"></script>

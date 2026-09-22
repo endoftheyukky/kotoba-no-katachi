@@ -1,5 +1,6 @@
 /**
- * The shell: a sheet of paper, one line to write on, and nothing else.
+ * The shell: the name said small, a sheet of paper, one line to write on,
+ * and nothing else.
  *
  *   /                                   blank paper and the line
  *   /?title=見えない                     the poem first; 別のことばで試す opens the line
@@ -29,6 +30,10 @@ const caption = document.getElementById('caption')!
 const examples = document.getElementById('examples')!
 const save = document.getElementById('save') as HTMLButtonElement
 const share = document.getElementById('share') as HTMLButtonElement
+const shareMenu = document.getElementById('share-menu')!
+const shareX = document.getElementById('share-x') as HTMLAnchorElement
+const shareOther = document.getElementById('share-other') as HTMLButtonElement
+const shareCopy = document.getElementById('share-copy') as HTMLButtonElement
 const tryOwn = document.getElementById('try') as HTMLButtonElement
 const note = document.getElementById('note')!
 const about = document.getElementById('about') as HTMLDialogElement
@@ -86,9 +91,48 @@ function addressOf(input: TitleInput | null): string {
 
 const same = (a: TitleInput | null, b: TitleInput | null) => !!a && !!b && a.text === b.text && (a.reading ?? '') === (b.reading ?? '')
 
+/** the poem's canonical address: the site's own, wherever the page was opened from */
+function sharedURL(input: TitleInput): string {
+  return new URL(addressOf(input), __SITE__.url ? `${__SITE__.url}/` : location.href).href
+}
+
+/** what is shared, by every way of sharing: the name, then the poem's address, on two lines */
+function sharedText(input: TitleInput): string {
+  return `${__SITE__.title}\n${sharedURL(input)}`
+}
+
+const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }
+
+/** the row of places to share to, under 共有; it closes when a place is chosen or the poem changes */
+function shareRow(open: boolean, refocus = false): void {
+  if (open && !current) return
+  if (open && current) {
+    // X is asked to write the two lines itself: a link card alone would drop the name
+    shareX.href = `https://x.com/intent/post?text=${encodeURIComponent(sharedText(current.input))}`
+    shareOther.hidden = typeof nav.share !== 'function'
+    say('')
+  }
+  shareMenu.hidden = !open
+  // the row stands where the note is said
+  note.hidden = open
+  share.setAttribute('aria-expanded', String(open))
+  if (!open && refocus) share.focus()
+}
+
+async function copy(text: string, url: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text)
+    say('コピーしました', true)
+  } catch {
+    // no clipboard: the address, to be copied by hand
+    say(url)
+  }
+}
+
 function blank(): void {
   ticket++
   current = null
+  shareRow(false)
   stage.replaceChildren()
   stage.setAttribute('aria-label', '白い紙面')
   caption.textContent = ''
@@ -100,6 +144,8 @@ async function show(input: TitleInput, history: 'push' | 'replace' | 'none'): Pr
   const mine = ++ticket
   const was = body.dataset.state
   body.dataset.state = 'working'
+  // the row belonged to the poem that was on the paper
+  shareRow(false)
   say('')
   try {
     const analysis = await analyze(input)
@@ -213,32 +259,56 @@ save.addEventListener('click', () => {
   downloadPNG(renderCanvas(current.composition.draft, current.analysis.glyphs), name)
 })
 
-share.addEventListener('click', async () => {
-  if (!current) return
-  // the poem's canonical address: the site's own, wherever the page was opened from
-  const url = new URL(addressOf(current.input), __SITE__.url ? `${__SITE__.url}/` : location.href).href
-  const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }
-  if (typeof nav.share === 'function') {
-    try {
-      // the name as text too: some places a link is shared to ignore the title
-      await nav.share({ title: __SITE__.title, text: __SITE__.title, url })
-      return
-    } catch (e) {
-      // the person closed the sheet: nothing to say
-      if ((e as DOMException)?.name === 'AbortError') return
-    }
-  }
+// 共有 opens (or closes) the row: X · その他 · コピー. Every one of them shares
+// the same two lines — the name and the address of the poem on the paper.
+share.addEventListener('click', () => shareRow(shareMenu.hidden !== false))
+
+// X: its own post screen in a new tab (the link does the opening), the text written in
+shareX.addEventListener('click', () => {
+  window.setTimeout(() => shareRow(false, true))
+})
+
+// その他: the system's share sheet. The two lines go as the text, and the
+// address is not given again separately, so it cannot appear twice.
+shareOther.addEventListener('click', async () => {
+  if (!current || typeof nav.share !== 'function') return
+  const text = sharedText(current.input)
+  const url = sharedURL(current.input)
+  const sent = nav.share({ title: __SITE__.title, text })
+  shareRow(false, true)
   try {
-    await navigator.clipboard.writeText(`${__SITE__.title}\n${url}`)
-    say('リンクをコピーしました', true)
-  } catch {
-    say(url)
+    await sent
+  } catch (e) {
+    // the person closed the sheet: nothing to say
+    if ((e as DOMException)?.name === 'AbortError') return
+    await copy(text, url)
   }
+})
+
+shareCopy.addEventListener('click', () => {
+  if (!current) return
+  const text = sharedText(current.input)
+  const url = sharedURL(current.input)
+  shareRow(false, true)
+  void copy(text, url)
+})
+
+// the row closes with Escape, or with a touch anywhere else
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || shareMenu.hidden || about.open) return
+  e.preventDefault()
+  shareRow(false, shareMenu.contains(document.activeElement) || document.activeElement === share)
+})
+document.addEventListener('pointerdown', (e) => {
+  if (shareMenu.hidden) return
+  const t = e.target as Node
+  if (!share.contains(t) && !shareMenu.contains(t)) shareRow(false)
 })
 
 // 別のことばで試す: the line opens again on this page. The address and the
 // history stay as they are until new words are written (then a new entry).
 tryOwn.addEventListener('click', () => {
+  shareRow(false)
   mode('write')
   field.value = ''
   field.removeAttribute('aria-invalid')
@@ -246,11 +316,21 @@ tryOwn.addEventListener('click', () => {
   field.focus()
 })
 
-aboutOpen.addEventListener('click', () => about.showModal())
-about.addEventListener('click', (e) => {
-  // a click on the backdrop closes it
-  if (e.target === about) about.close()
+// About closes with ×, Escape (the dialog's own), or a click outside it; the
+// focus goes back to About.
+aboutOpen.addEventListener('click', () => {
+  about.showModal()
+  // opens at its first line, however far it was read last time
+  about.scrollTop = 0
 })
+about.addEventListener('click', (e) => {
+  // a click on the backdrop reaches the dialog itself, outside its box
+  if (e.target !== about) return
+  const r = about.getBoundingClientRect()
+  const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom
+  if (!inside) about.close()
+})
+about.addEventListener('close', () => aboutOpen.focus({ preventScroll: true }))
 
 // Back and Forward: the poem at that address, drawn again the same
 window.addEventListener('popstate', () => {
