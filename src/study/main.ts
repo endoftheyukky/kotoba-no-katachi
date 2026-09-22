@@ -26,6 +26,7 @@
 import './study.css'
 import '../glyph/font-face'
 import type { Relation } from '../language/analysis'
+import { loadNeighbours } from '../language/semantic'
 import { analyze, compose, type Force, MODIFIER_SALIENCE, OPERATIONS, SPACES } from '../poem/compose'
 import { measureAll, verdict } from '../poem/measure'
 import type { Analysis, Composition, Decision, GrammarId, Proposal, Realization, SpatialId } from '../poem/types'
@@ -75,12 +76,16 @@ const bare = params.get('bare') === '1'
  */
 function forceOf(spec: string, fits: readonly Realization[]): Force | null {
   const [base, ...more] = spec.split('+')
-  const g = more.find((x) => x !== 'sem')
+  const SEM = ['sym', 'aozora', 'chive', 'hybrid'] as const
+  const g = more.find((x) => x !== 'sem' && !(SEM as readonly string[]).includes(x))
   const [gid, named] = (g ?? '').split('/')
+  const source = more.find((x) => (SEM as readonly string[]).includes(x))
   const grammar = {
     ...(gid ? { grammar: gid as GrammarId | 'auto' } : {}),
     ...(named ? { variant: named } : {}),
     ...(more.includes('sem') ? { semantic: true } : {}),
+    // v2d experiment: `+hybrid`, `+aozora`, `+chive`, `+sym`
+    ...(source ? { semanticSource: (source === 'sym' ? 'symbolic' : source) as 'symbolic' | 'aozora' | 'chive' | 'hybrid' } : {}),
   }
   if (base === 'auto' || base === '') return { ...grammar }
   const rank = /^#(\d+)$/.exec(base)
@@ -391,6 +396,8 @@ function record(t: StudyTitle, a: Analysis, c: Composition, cover: number): HTML
  * the page marked 採用 is the one the system would have made on its own.
  */
 async function comparison(list: HTMLElement): Promise<void> {
+  // the v2d experiment reads neighbour tables: load them before any title is analysed
+  if (compare!.some((s) => /\+(sym|aozora|chive|hybrid)/.test(s))) await loadNeighbours()
   for (const t of titles) {
     const input = normalizeTitle({ text: t.text, reading: t.reading, variant })
     if (typeof input === 'string') continue

@@ -20,6 +20,7 @@ import { materialOf } from './material'
 import { viewOf, type Asked, type PageView } from './page'
 import { orbit } from './orbit'
 import { phase } from './phase'
+import { touch } from './semantic'
 import { silhouette } from './silhouette'
 
 export type { Asked } from './page'
@@ -141,6 +142,28 @@ function applied(g: MarkGrammar, grounds: string[], offer: GrammarOffer, marks: 
  * small marks, too little to read — the page again stays as it was.
  */
 export function writeWith(
+  id: GrammarId | 'auto' | undefined,
+  a: Analysis,
+  m: Material,
+  spatial: Realization,
+  placed: Placed,
+  rng: Rng,
+  asked: Asked = {},
+): { marks: Mark[]; applied: GrammarApplied } {
+  const written = writeGrammar(id, a, m, spatial, placed, rng, asked)
+  if (!asked.semanticSource) return written
+  // v2d experiment, review only: meaning enters only a place the grammar already made
+  const { marks, used } = touch(viewOf(a, m, spatial, placed, asked), written.marks, asked.semanticSource)
+  if (!used.length) return written
+  const derived: Record<string, number> = {}
+  for (const k of marks) if (k.derived) derived[`${k.derived.kind}:${k.char}`] = (derived[`${k.derived.kind}:${k.char}`] ?? 0) + 1
+  return {
+    marks,
+    applied: { ...written.applied, grounds: [...written.applied.grounds, ...used.map((c) => `意味（${c.source}・${c.band}）：${c.statement}`)], derived },
+  }
+}
+
+function writeGrammar(
   id: GrammarId | 'auto' | undefined,
   a: Analysis,
   m: Material,

@@ -36,6 +36,8 @@ export interface PageView {
 export interface Asked {
   semantic?: boolean
   variant?: string
+  /** v2d experiment, review only: touch the page with meaning from this source (grammar/semantic.ts) */
+  semanticSource?: 'symbolic' | 'aozora' | 'chive' | 'hybrid'
 }
 
 const median = (v: number[]) => [...v].sort((x, y) => x - y)[Math.floor(v.length / 2)] ?? 0

@@ -5,6 +5,7 @@
  * sheet shows is what a reader would save. Each page sits on a grey ground,
  * with its title and the way it was held written small underneath.
  */
+import { loadNeighbours } from '../language/semantic'
 import { analyze, compose, SPACES, type Force } from '../poem/compose'
 import { renderCanvas } from '../render/png'
 import { normalizeTitle } from '../title'
@@ -30,6 +31,8 @@ export async function contactMatrix(
   columns: { label: string; force: Force }[],
   cell = 240,
 ): Promise<HTMLCanvasElement> {
+  // the v2d experiment reads neighbour tables: load them before any title is analysed
+  if (columns.some((c) => c.force.semanticSource)) await loadNeighbours()
   const pad = Math.round(cell * 0.08)
   const head = Math.round(cell * 0.14)
   const side = Math.round(cell * 0.55)

@@ -433,6 +433,50 @@ shapes, every page listed as strong (王の国, 夜の位置, 海のあと, 見�
 `docs/contact/dev34-v2c.png`, `docs/contact/holdout-v2c.png`,
 `docs/contact/v2c-before-after.png`.
 
+## v2d — semantic experiment (not adopted)
+
+Question: can nearness in a space of meaning be a material of the visual
+grammar — not a related word set beside the title?
+
+**Sources.** symbolic (seed-lexicon v0) and two distributional tables,
+distilled once and bundled (`src/language/semantic/data/`, NOTICE.md; build
+scripts in `tools/semantic/`): **aozora** — character co-occurrence in 10,246
+modern Aozora Bunko works (PPMI → SVD 300, fixed seed); **chive** — the
+word2vec vectors of single-kanji words of chiVe v1.3 mc90. Candidates only
+among the 3,000 most frequent kanji; never a character of the title or one
+read as a part of it; heads only the characters that are whole words of the
+title. Bands by rank (1–2 near, 3–8 distinct, 9–24 mid; counter: near one
+head, absent from the others' neighbourhoods). Deterministic (68/68), no
+network at composition.
+
+**Placement.** Only into a place the page's grammar already has, at most two
+marks: a near candidate becomes the grain at the centre of a grain texture;
+a mid candidate one mark of the outermost orbit ring; a counter candidate one
+smallest mark at the centre of the widest white. The hybrid choice avoids the
+lexicon's explanatory relations (made-of, part, unit, organ), prefers what
+both vector sources agree on, then rank. Comparison:
+`docs/contact/v2d-semantic-compare.png` (v2c / symbolic / aozora / chiVe /
+chosen, 17 titles; every column free of loss, order break, overlap, grain on
+ink or grain).
+
+**Result: not adopted; the published generator stays v2c.**
+- One character of meaning inside a texture of the title's own characters
+  reads as a misprint, not as structure: 宵 among the grains of 夜 (夜の位置).
+  Two marks cannot make it structural, and more would make meaning the
+  subject.
+- Character neighbours become words where they touch the title's
+  characters: a grain of 降 at the head of a row of 雨 reads 降雨. Character
+  co-occurrence (aozora) is dominated by compound partners (驟雨, 薔薇, 昨夜);
+  word vectors (chive) are semantic but generic, and noise for a character
+  that is only part of a word (見, 咲, 位, 置).
+- A counterpoint alone in the white reads as a stray mark or a gloss (雪 by
+  中, 巨 by 太).
+- Many titles have no head at all (見えない, 春はあけぼの, 朝日): meaning could
+  never be a general property of the pages.
+
+The tables and the pass stay as a review tool (`Force.semanticSource`,
+`study.html?compare=%231%2Bauto%2Bhybrid`); nothing reaches the public page.
+
 ## VOID
 
 `void.ts` is kept and is not a preferred choice. Its idea — a region that is

@@ -23,6 +23,7 @@ import { readInventory, readRelations, relate, RELATION_THRESHOLD, type GlyphRel
 import { GlyphLibrary } from '../glyph/source'
 import { analyzeLanguage } from '../language/analysis'
 import { derivableChars } from '../language/lexicon'
+import { neighbours, neighboursLoaded } from '../language/semantic'
 import type { Segmenter } from '../language/segment'
 import { titleSeed, type TitleInput } from '../title'
 import { absence } from './operations/absence'
@@ -109,7 +110,9 @@ export async function analyze(input: TitleInput, segmenter?: Segmenter): Promise
   const bases = [...new Set(language.phonology.flatMap((f) => (f.kind === 'voicing' ? [f.base] : [])))]
   // v2: what derived marks can be written in beyond the title's own characters —
   // the vowels a reading reduces to, and what the lexicon relates to the title
-  const derivable = derivableChars(own).filter((c) => covers('sans', c))
+  // (v2d, review only) and, where the neighbour tables were loaded, the title's neighbours
+  const nearby = neighboursLoaded() ? own.flatMap((c) => [...neighbours('aozora', c), ...neighbours('chive', c)].map((n) => n.char)) : []
+  const derivable = [...new Set([...derivableChars(own), ...nearby])].filter((c) => covers('sans', c))
   await glyphs.prepare([...new Set([...own, ...COMPONENTS, ...STROKES, ...bases, ...derivable])])
   // the title written as writing, in the second face (poem/face.ts); derived
   // marks are writing too, whatever they are made of
@@ -156,6 +159,8 @@ export interface Force {
   semantic?: boolean
   /** v2, review only: draw a grammar's named way instead of the one its rule chooses (silhouette: fill, contour, density, residue) */
   variant?: string
+  /** v2d experiment, review only: touch the page with meaning from this source (loadNeighbours() first for the vector sources) */
+  semanticSource?: 'symbolic' | 'aozora' | 'chive' | 'hybrid'
 }
 
 export function compose(a: Analysis, force: Force = {}): Composition {
@@ -329,6 +334,7 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   const behaved = writeWith(force.grammar, a, material, drawn, placed, new Rng(seed).fork(`grammar:${force.grammar ?? 'uniform'}`), {
     semantic: force.semantic,
     variant: force.variant,
+    semanticSource: force.semanticSource,
   })
 
   return {
