@@ -133,6 +133,28 @@ is explained, and is not to be rescued.
 even where the rule would not, `axis/poles` brings the two poles back. Neither
 touches fitness or selection.
 
+## AXIS — the rest of the title beside the poles, never on them
+
+(Ported to `v2` from `242c642`, which was made on the older `510431c`.)
+The row that keeps the rest of the title was set beside the first pole and
+clamped only to the page's margin, so where the side away from the far pole
+had no room the margin took it back onto the pole. On the current code this
+still happened, in a different place than on `510431c`: with the two-pole
+branch forced, 大きな犬 v5 (き・な on 犬・大) and 王と玉 v5 (the small 王 on
+玉); 白い 犬 no longer did. Now, in the two-pole branch: the row is never
+drawn on what the figure draws; away from the far pole first, the other side
+of the same pole only while the reading runs along the axis; where neither
+side holds it, the axis is drawn in the other outer third (the seed's
+choice gives way; the poles' sizes and places along the axis do not move,
+no random number is drawn anew). One change to the original: the figure is
+tested on what each mark draws — the kept regions of a mark that keeps some,
+nothing for one that keeps nothing — not on its whole glyph. The whole-glyph
+box flagged pages whose row is clear (しずかに, ぽつぽつ, なぜ？, 春はあけぼの:
+a voicing mark kept alone at macro size, or kept not at all) and would have
+moved them. Over dev, holdout and probe, variants 0–7, selected / axis /
+two-pole (2325 pages): exactly four change, 大きな犬 v5 and 王と玉 v5 under the
+two forced ways; every selected page and v1 at variant 0 are identical.
+
 ## AXIS / containment — measured sizes
 
 Where the title writes both characters of a containment (川または州, 日と白),
@@ -351,6 +373,10 @@ after it); the other end of each is read too (whole, was, use), and those
 and opposites are recorded but never taken. Material is taken nearest
 relation first, one per head per pass, the page's nucleus first, at most
 three, never a character the title writes or the structure already gives.
+That order — inside (made-of, part, unit), then beside at the same moment
+(with, organ), then before or after (source, becomes, yields) — is adopted as
+the default of seed-lexicon v0; it is not fitted to any list of expected
+characters.
 No generated text, no model; the same title always gets the same few. It
 enters only the grammars that place several materials (constellation,
 emanation, branch), only as auxiliary marks, only when a review asks for it

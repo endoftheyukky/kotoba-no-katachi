@@ -39,6 +39,50 @@ function residueRatio(a: Analysis, inner: string, outer: string, share: number):
   return clamp(Math.sqrt((share * d(outer)) / Math.max(0.01, d(inner))), 0.2, 1)
 }
 
+/** where the figure writes a character of the title */
+type Placed = { grapheme: number; x: number; y: number; size: number }
+
+/** the poles as drawn, and where each character of the title went */
+type Figure = { marks: Mark[]; placedAt: Placed[] }
+
+type Box = [x0: number, y0: number, x1: number, y1: number]
+
+/**
+ * The box of the ink a mark draws on the page: the glyph's measured ink box,
+ * not its em square (a turned mark takes its longer side both ways); for a
+ * mark that keeps only some regions of its glyph, the box of those regions;
+ * a mark that keeps nothing draws nothing. What a subtraction removes is
+ * still counted — the box never says less than the ink.
+ */
+function drawnBox(a: Analysis, k: Mark): Box | null {
+  const s = k.size / EM
+  if (k.keep) {
+    if (!k.keep.length) return null
+    const t = ((k.rotate ?? 0) * Math.PI) / 180
+    const pts = k.keep
+      .flatMap((r) => [
+        [r.x, r.y],
+        [r.x + r.w, r.y],
+        [r.x, r.y + r.h],
+        [r.x + r.w, r.y + r.h],
+      ])
+      .map(([u, w]) => {
+        const x0 = (u + (k.shift?.x ?? 0)) * s
+        const y0 = (w + (k.shift?.y ?? 0)) * s
+        return [k.x + x0 * Math.cos(t) - y0 * Math.sin(t), k.y + x0 * Math.sin(t) + y0 * Math.cos(t)]
+      })
+    return [Math.min(...pts.map((q) => q[0])), Math.min(...pts.map((q) => q[1])), Math.max(...pts.map((q) => q[0])), Math.max(...pts.map((q) => q[1]))]
+  }
+  const half = a.glyphs.get(k.char).metrics.half
+  const w = (k.rotate ? Math.max(half.w, half.h) : half.w) * s
+  const h = (k.rotate ? Math.max(half.w, half.h) : half.h) * s
+  const x = k.x + (k.shift?.x ?? 0) * s
+  const y = k.y + (k.shift?.y ?? 0) * s
+  return [x - w, y - h, x + w, y + h]
+}
+
+const meets = (p: Box, q: Box) => p[0] < q[2] && q[0] < p[2] && p[1] < q[3] && q[1] < p[3]
+
 /** a pole without the erased characters at its ends (inside, they hold their place) */
 function trim(units: Unit[]): Unit[] {
   let lo = 0
@@ -184,6 +228,8 @@ export const axis: SpatialComposition = {
     '距離・大小の比・揃え方・白の寄り・軸の向き・横ずれは、題の特徴から決まる（axisParams.ts）。一篇で中立から動くのは、最も強い二つだけ',
     '題の一部だけが対象のとき、置かれなかった字は消えない：題の書字方向に、書かれた順のまま、一定の間隔で並ぶ（poem/context.ts）。対象が離れた席から引き出されているときは、その間隔が席の位置を保つ',
     '文脈は主要素より明確に小さく、しかし読める大きさを下回らない。対象は紙面の外へ出てよいが、文脈は出ない',
+    '文脈の行は図形の上に書かない（図形が実際に描くインクの箱で判定：一部だけを残す字はその残す部分、何も残さない字は何も描かない）：遠い極から離れる側に場所がなければ、同じ極の反対側へ。ただし読みと軸が同じ向きのときだけ——読みが軸を横切るとき、反対側は二極の間の白、つまり関係そのものであり、文脈を入れない',
+    'どちらの側にも行が立てないときは、軸を紙面の反対の外側に引く。軸がどちらの外側を走るかは種の選ぶ造形であり、題の残りが図形に重ならず読み順のまま読めることが先に立つ。極の大きさと軸に沿った位置は変えない',
     '対象が題の一字だけのときは、二極にしない：題を一本の行として先に置き、その字は自分の席に留まったまま変質し、そこから生じたもの（読まれた形・引いた残り）だけが席の外へ伸びる。題は図の注釈ではなく、変形される前からある詩の本体である',
     '継ぎ目（joint）：語幹と活用語尾の関係は、二極に引き離す代わりに、題を一本の行として一度だけ書き、言語が切るところで切ることができる。一席一字、どの字も同じ大きさ。開くのは境だけ——継ぎ目は半席、書かれた空白は一席、消された席は空席のまま。大きさは席の数から解かれ、帯から選ばない（joint.ts）',
     '継ぎ目を行にするのは、その行が二極の保てないものを保つときだけ：継ぎ目の片側が二席以上ある、消された席がある、題が空白を書いている、同じ読みの列に題の残りがある。一字と語尾だけの語では、行は二極より多くを言わず、しかも小さく言うので、二極のままにする。二つの書き方に別々の適合度は与えない——同じ一つの関係である',
@@ -249,10 +295,10 @@ export const axis: SpatialComposition = {
     let vertical = shape.vertical
     const at = (t: number, cross: number): Vec => (vertical ? { x: cross, y: t } : { x: t, y: cross })
 
-    // 造形: which line across the page the axis runs on
+    // 造形: which line across the page the axis runs on. The seed chooses it,
+    // and gives way only where the rest of the title would have nowhere to
+    // stand (below); nothing else about the figure depends on it.
     const line = offCentre(rng)
-    const lineA = clamp(line + shape.offsetA, 0.08 * PAGE, 0.92 * PAGE)
-    const lineB = clamp(line + shape.offsetB + shape.alignment, 0.08 * PAGE, 0.92 * PAGE)
 
     // the white inside the figure: what the language's distance asks for
     const gap = (1 - occ.fill) * occ.reach * PAGE
@@ -263,24 +309,19 @@ export const axis: SpatialComposition = {
     const extentA = unitsA.length
     const extentB = unitsB.length
 
-    const marks: Mark[] = []
-    // where the figure writes each character of the title, for the seats
-    const placedAt: { grapheme: number; x: number; y: number; size: number }[] = []
     const reading = directions(a)
-    const put = (us: Unit[], first: Vec, size: number) =>
-      us.forEach((u, j) => {
-        if (!isWritten(u)) return
-        placedAt.push({
-          grapheme: u.grapheme,
-          x: first.x + reading.along.x * j * size,
-          y: first.y + reading.along.y * j * size,
-          size,
-        })
-      })
+
+    // the sizes of the poles and their places along the axis, decided once
     let fitted: Fitted
+    let sa: number
+    /** pole B, or for containment the residue */
+    let sb: number
     let startAt: number
     let endAt: number
     let inkA: number
+    /** containment: the residue's box, and its extent along the axis */
+    let box = { x: -EM / 2, y: -EM / 2, w: EM, h: EM }
+    let along = 1
 
     if (p.kind === 'containment') {
       // Two terms taken out of one character: the part the reading found, and
@@ -292,16 +333,17 @@ export const axis: SpatialComposition = {
       // where the remainder has the body to hold it.
       const outer = p.b[0]
       const r = m.primary.focus.kind === 'pair' ? m.primary.focus.relation : null
-      const box = r?.residue.box ?? { x: -EM / 2, y: -EM / 2, w: EM, h: EM }
+      box = r?.residue.box ?? box
       const k = residueRatio(a, p.a[0]?.char ?? outer.char, outer.char, r?.residue.share ?? 1)
       // the residue's own form sets the axis: the pair runs across its long
       // side, so that a strip is seen as a strip and not cut lengthwise
       vertical = box.w >= box.h
-      const along = (vertical ? box.h : box.w) / EM
+      along = (vertical ? box.h : box.w) / EM
       const across = (vertical ? box.w : box.h) / EM
       const span = occ.reach * PAGE
       const S = Math.min((span - gap) / (k + along), (0.9 * PAGE) / Math.max(k, across)) * rng.range(0.97, 1)
-      const sa = k * S
+      sa = k * S
+      sb = S
       const length = sa + gap + along * S
       const centre = clamp(shape.whitePull * PAGE, length / 2, PAGE - length / 2)
       startAt = centre - length / 2
@@ -327,14 +369,6 @@ export const axis: SpatialComposition = {
           },
         ],
       }
-      const centreA = at(startAt + sa / 2, lineA)
-      const halfA = ((unitsA.length - 1) * sa) / 2
-      marks.push(...centredLine(a, unitsA, centreA, sa))
-      put(unitsA, { x: centreA.x - reading.along.x * halfA, y: centreA.y - reading.along.y * halfA }, sa)
-      const g = placeRegion(box, S, at(endAt - (along * S) / 2, lineB))
-      marks.push({ char: outer.char, ...(outer.grapheme >= 0 ? { grapheme: outer.grapheme } : {}), x: g.x, y: g.y, size: S, minus: outer.minus, keep: outer.minus?.keep })
-      // what is left of a character is still that character's place in the title
-      if (isWritten(outer)) placedAt.push({ grapheme: outer.grapheme, x: g.x, y: g.y, size: S })
     } else {
       // both poles are written: the sound decides their ratio, the page decides
       // how large that ratio can be drawn
@@ -344,49 +378,93 @@ export const axis: SpatialComposition = {
         occ,
         PAGE,
       )
-      const sa = jitter(rng, fitted.sizes[0])
-      const sb = jitter(rng, fitted.sizes[1])
+      sa = jitter(rng, fitted.sizes[0])
+      sb = jitter(rng, fitted.sizes[1])
       const length = extentA * sa + gap + extentB * sb
       const over = Math.max(0, (length - PAGE) / 2)
       const centre = clamp(shape.whitePull * PAGE, length / 2 - over, PAGE - length / 2 + over)
       startAt = centre - length / 2
       endAt = centre + length / 2
       inkA = extentA * sa
-      // pole A begins where the figure begins; pole B ends where it ends
-      const firstA = at(startAt + sa / 2, lineA)
-      const firstB = at(endAt - extentB * sb + sb / 2, lineB)
-      marks.push(...lineMarks(a, unitsA, firstA, sa))
-      marks.push(...lineMarks(a, unitsB, firstB, sb))
-      put(unitsA, firstA, sa)
-      put(unitsB, firstB, sb)
     }
 
-    // what lies between the poles, in the white they hold open
-    const mid = at(startAt + inkA + gap / 2, (lineA + lineB) / 2)
-    // Only what the title does not write itself stands between the poles: the
-    // difference of two similar forms, or a component read inside a character.
-    // Characters of the title the poles do not carry are not squeezed in here
-    // — they keep their own place in the reading (below).
-    const difference = p.middle.filter((u) => u.grapheme === -1)
-    const body = (fitted.sizes[0] + fitted.sizes[1]) / 2
-    if (difference.length) {
-      // the difference of two similar forms is written at the size of the forms
-      // it separates: the same stroke, left alone. A component read inside a
-      // character is written smaller, as the third term of the reading.
-      const u = difference[0]
-      const s =
-        p.kind === 'containment'
-          ? Math.min(midOf('normal', PAGE), gap * 1.5)
-          : Math.min(body, gap * 1.6)
-      marks.push({ char: u.char, x: mid.x, y: mid.y, size: s, minus: u.minus, keep: u.minus?.keep })
+    // the figure, drawn on one line across the page
+    const draw = (line: number): Figure => {
+      const lineA = clamp(line + shape.offsetA, 0.08 * PAGE, 0.92 * PAGE)
+      const lineB = clamp(line + shape.offsetB + shape.alignment, 0.08 * PAGE, 0.92 * PAGE)
+      const marks: Mark[] = []
+      // where the figure writes each character of the title, for the seats
+      const placedAt: Placed[] = []
+      const put = (us: Unit[], first: Vec, size: number) =>
+        us.forEach((u, j) => {
+          if (!isWritten(u)) return
+          placedAt.push({
+            grapheme: u.grapheme,
+            x: first.x + reading.along.x * j * size,
+            y: first.y + reading.along.y * j * size,
+            size,
+          })
+        })
+
+      if (p.kind === 'containment') {
+        const outer = p.b[0]
+        const centreA = at(startAt + sa / 2, lineA)
+        const halfA = ((unitsA.length - 1) * sa) / 2
+        marks.push(...centredLine(a, unitsA, centreA, sa))
+        put(unitsA, { x: centreA.x - reading.along.x * halfA, y: centreA.y - reading.along.y * halfA }, sa)
+        const g = placeRegion(box, sb, at(endAt - (along * sb) / 2, lineB))
+        marks.push({ char: outer.char, ...(outer.grapheme >= 0 ? { grapheme: outer.grapheme } : {}), x: g.x, y: g.y, size: sb, minus: outer.minus, keep: outer.minus?.keep })
+        // what is left of a character is still that character's place in the title
+        if (isWritten(outer)) placedAt.push({ grapheme: outer.grapheme, x: g.x, y: g.y, size: sb })
+      } else {
+        // pole A begins where the figure begins; pole B ends where it ends
+        const firstA = at(startAt + sa / 2, lineA)
+        const firstB = at(endAt - extentB * sb + sb / 2, lineB)
+        marks.push(...lineMarks(a, unitsA, firstA, sa))
+        marks.push(...lineMarks(a, unitsB, firstB, sb))
+        put(unitsA, firstA, sa)
+        put(unitsB, firstB, sb)
+      }
+
+      // what lies between the poles, in the white they hold open
+      const mid = at(startAt + inkA + gap / 2, (lineA + lineB) / 2)
+      // Only what the title does not write itself stands between the poles: the
+      // difference of two similar forms, or a component read inside a character.
+      // Characters of the title the poles do not carry are not squeezed in here
+      // — they keep their own place in the reading (below).
+      const difference = p.middle.filter((u) => u.grapheme === -1)
+      const body = (fitted.sizes[0] + fitted.sizes[1]) / 2
+      if (difference.length) {
+        // the difference of two similar forms is written at the size of the forms
+        // it separates: the same stroke, left alone. A component read inside a
+        // character is written smaller, as the third term of the reading.
+        const u = difference[0]
+        const s =
+          p.kind === 'containment'
+            ? Math.min(midOf('normal', PAGE), gap * 1.5)
+            : Math.min(body, gap * 1.6)
+        marks.push({ char: u.char, x: mid.x, y: mid.y, size: s, minus: u.minus, keep: u.minus?.keep })
+      }
+      return { marks, placedAt }
     }
 
-    // the rest of the title, in the order it was written
-    const plan = placedAt.length
-      ? planContext(a, m, new Set(placedAt.map((k) => k.grapheme)), Math.min(...placedAt.map((k) => k.size)), PAGE)
-      : null
-    let context: Decision[] = []
-    if (plan) {
+    // The rest of the title, in the order it was written, on a row beside the
+    // figure — and never on it.
+    //   input   the characters the poles do not carry, each with its seat
+    //   rule    the row stands beside the first pole, on the side away from the
+    //           far pole. The page's margin alone would take a row that has no
+    //           room there back onto the pole; instead the other side of the
+    //           same pole is tried, but only while the reading runs along the
+    //           axis — across it, that side is the white between the poles,
+    //           which is the relation and holds no context
+    //   output  the same seats and size; only the side of the figure changes
+    //   sound   none
+    const row = (figure: Figure) => {
+      const { placedAt } = figure
+      const plan = placedAt.length
+        ? planContext(a, m, new Set(placedAt.map((k) => k.grapheme)), Math.min(...placedAt.map((k) => k.size)), PAGE)
+        : null
+      if (!plan) return null
       const alongOf = (k: { x: number; y: number }) => (reading.vertical ? k.y : k.x)
       const crossOf = (k: { x: number; y: number }) => (reading.vertical ? k.x : k.y)
       const seatOf = new Map(plan.seats.map((k) => [k.grapheme, k.index]))
@@ -402,17 +480,28 @@ export const axis: SpatialComposition = {
         : crossOf(first) < PAGE / 2
           ? 1
           : -1
-      const rowCross = clamp(
-        crossOf(first) + side * (first.size / 2 + plan.size),
-        0.04 * PAGE + plan.size / 2,
-        0.96 * PAGE - plan.size / 2,
-      )
-      for (const { unit, seat } of plan.units) {
-        const t = line.origin + seat.index * line.pitch
-        const where = reading.vertical ? { x: rowCross, y: t } : { x: t, y: rowCross }
-        marks.push(...unitMarks(a, unit, where, plan.size).map((k) => ({ ...k, context: true })))
+      const lay = (side: number): Mark[] => {
+        const rowCross = clamp(
+          crossOf(first) + side * (first.size / 2 + plan.size),
+          0.04 * PAGE + plan.size / 2,
+          0.96 * PAGE - plan.size / 2,
+        )
+        return plan.units.flatMap(({ unit, seat }) => {
+          const t = line.origin + seat.index * line.pitch
+          const where = reading.vertical ? { x: rowCross, y: t } : { x: t, y: rowCross }
+          return unitMarks(a, unit, where, plan.size).map((k) => ({ ...k, context: true }))
+        })
       }
-      context = [
+      // what the figure draws, as boxes: a mark that keeps nothing draws nothing
+      const figureInk = figure.marks.map((f) => drawnBox(a, f)).filter((b): b is Box => !!b)
+      const clearOf = (row: Mark[]) =>
+        row.every((k) => {
+          const b = drawnBox(a, k)
+          return !b || !figureInk.some((f) => meets(b, f))
+        })
+      const tried = (reading.vertical === vertical ? [side, -side] : [side]).map((s) => ({ s, marks: lay(s) }))
+      const found = tried.find((t) => clearOf(t.marks))
+      const decisions: Decision[] = [
         ...plan.decisions,
         {
           name: 'seat pitch',
@@ -432,7 +521,52 @@ export const axis: SpatialComposition = {
               : '読みの線が軸を横切る：配列と構造が二つの向きに分かれる',
         },
       ]
+      if (found && found.s !== side)
+        decisions.push({
+          name: 'row side',
+          ground: 'plastic',
+          value: '同じ極の反対側',
+          note: '遠い極から離れる側には行の場所がない（紙面の端が行を極の上へ戻す）：読みと軸が同じ向きなので、反対側は二極の間の白ではない',
+        })
+      return { marks: (found ?? tried[0]).marks, decisions, clear: !!found }
     }
-    return { marks, parameters: shape.parameters, contract: { occupancy: occ, fitted, context } }
+
+    let figure = draw(line)
+    let rest = row(figure)
+    let moved = false
+    if (rest && !rest.clear) {
+      // Neither side of the figure holds the row: the figure has taken the end
+      // of the reading and the page across it. Which outer third the axis runs
+      // in is the seed's choice (造形); that the rest of the title can be read,
+      // clear of the figure and in its order, is the title's, and comes first.
+      // The axis moves to the other outer third, and nothing else about it.
+      const other = draw(PAGE - line)
+      const again = row(other)
+      if (again?.clear) {
+        figure = other
+        rest = again
+        moved = true
+      }
+    }
+    const context: Decision[] = rest ? [...rest.decisions] : []
+    if (moved)
+      context.push({
+        name: 'axis line',
+        ground: 'plastic',
+        value: `${(line / PAGE).toFixed(2)} → ${((PAGE - line) / PAGE).toFixed(2)}`,
+        note: '種の選んだ外側では、文脈の行が図形の外に立てない（題の続きが読みの中に場所を持たない）：軸を紙面の反対の外側に引く。大きさと軸に沿った位置は変えない',
+      })
+    else if (rest && !rest.clear)
+      context.push({
+        name: 'row',
+        ground: 'plastic',
+        value: '図形に重なる',
+        note: '軸をどちらの外側に引いても、文脈の行が図形の外に立てない',
+      })
+    return {
+      marks: [...figure.marks, ...(rest?.marks ?? [])],
+      parameters: shape.parameters,
+      contract: { occupancy: occ, fitted, context },
+    }
   },
 }
