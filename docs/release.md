@@ -1,9 +1,14 @@
 # Public release (v2c)
 
+Branch `release/v2c`, from `v2c-rc1` (`fc2af5a`). The generator is frozen at
+v2c: no grammar, semantic layer or tuning is added here. The semantic
+experiment (`v2d-semantic-experiment`, `fa48586`) and the notes for v3
+(`docs/v3-notes.md` on branch `v2`) are not part of this branch.
+
 The published page is `index.html` + `src/main.ts` + `src/style.css`: a sheet
-of paper, one line under it, and About. The study sheets (`study.html`,
-`review.html`, `experiments.html`) are built alongside and are not linked
-from it.
+of paper, one line under it, and About. The development sheets
+(`study.html`, `review.html`, `experiments.html`) stay in the repository and
+are served by `npm run dev`; they are not built for publication.
 
 ## Addresses
 
@@ -19,31 +24,59 @@ The same title and reading always give the same page; nothing on the page
 redraws or varies it. Every poem written is pushed to the browser history.
 A reading can be given on the line as 「子供の城（こどものしろ）」.
 
-## Build and preview
+## Build
 
 ```
+npm ci
 npm run build          # tsc --noEmit && vite build → dist/
-npx vite preview       # serves dist/ on :4173 (.claude/launch.json: concrete-poetry-preview)
+npx vite preview       # serves dist/ on :4173 to check it (.claude/launch.json: concrete-poetry-preview)
 ```
 
-`dist/` is static: any static host serves it. No server code, no functions,
-no environment variables are needed to run it. It is about 17 MB, almost all
-of it the fonts' unicode-range subsets (≈500 small files, each fetched only
-when a page needs its characters).
+- Node `^20.19.0 || >=22.12.0` (Vite 8).
+- Output: `dist/` — `index.html`, `favicon.svg`, `ogp.png`, `assets/` (one
+  script, one stylesheet, and the fonts' unicode-range subsets: ≈500 small
+  woff2 files, each fetched only when a page needs its characters). About
+  16 MB in all, almost all of it fonts.
+
+## Hosting
+
+- Any static host. No server code, no functions, no environment at run time.
+- One page: every address is `/` with a query string (`?title=…&reading=…`).
+  No SPA rewrite and no 404 fallback are needed; the host only has to serve
+  `index.html` at `/` and keep the query string.
+- `.woff2` must be served as `font/woff2` (every mainstream static host does).
+  Long-lived caching of `assets/` is safe: the file names carry hashes.
 
 ## Configuration
 
 `site.config.json` holds everything the page says about itself: title,
 description, the link image (`public/ogp.png`, static, 1200 × 630), theme
-colour, and `url` — the site's absolute address. While `url` is empty the
-canonical and `og:url` tags are left out and `og:image` stays relative. Set
-it there, or pass `SITE_URL=https://… npm run build`.
+colour, and `url` — the site's absolute address (`https://…`, no trailing
+slash). While `url` is empty the canonical and `og:url` tags are left out
+and `og:image` / `twitter:image` stay relative, which some link previews
+(X among them) do not resolve. Set it there, or build with
+`SITE_URL=https://… npm run build`.
 
-## Before going live
+State now: title, description, favicon (`/favicon.svg`), static OGP image
+and Twitter card are in place; canonical and `og:url` wait for the address.
 
-- choose the host and domain, then set `url` (absolute og:image is needed by
-  some link previews)
-- the fonts are served from `@fontsource` subsets in `dist/assets` (SIL OFL
-  1.1, credited in About)
-- nothing else blocks: no dynamic OGP (one static image for every title), no
-  analytics, no cookies
+## Manual check on a phone (before publishing)
+
+On iPhone Safari (and, if possible, Android Chrome), against the deployed
+address or `vite preview` on the local network:
+
+- [ ] `/`: the paper and the line are both visible without scrolling
+- [ ] Japanese IME: while converting, Enter only confirms the conversion; a
+      second Enter writes the poem
+- [ ] after the poem is written the keyboard closes and the poem is not
+      hidden behind it; the page does not jump
+- [ ] the line does not zoom the page when focused
+- [ ] 保存: the PNG is saved (or offered to Photos / Files); it is the paper
+      alone, 2048 × 2048, with no title or address on it
+- [ ] 共有: the native share sheet opens with the address; the shared
+      address opens the same poem on another device
+- [ ] a shared address (`/?title=…`, with and without `&reading=…`) shows
+      the poem first; 自分のことばで試す opens the line
+- [ ] Back / Forward (the browser's own gestures) move between poems
+- [ ] About opens at its first line and closes
+- [ ] an unsupported character (an emoji) is refused with a quiet line
