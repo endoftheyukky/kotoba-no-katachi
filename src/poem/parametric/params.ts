@@ -12,6 +12,7 @@ import type { Rng } from '../../core/random'
 import type { Analysis, Material, Unit } from '../types'
 import { allUnits } from '../spatial/common'
 import type { LatticeParams } from './lattice'
+import type { MaterialParams, MaterialSources } from './material'
 import type { TraceParams } from './trace'
 
 const clip = (v: number, lo = 0, hi = 1) => (Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo)
@@ -201,4 +202,91 @@ export function latticeParams(a: Analysis, m: Material): LatticeGrounds {
   const spacing = 1 + 0.35 * (1 - repeatShare)
   const weights = units.map((u) => beatsOf(a, u))
   return { params: { rows, regularity, shear, decay, curl, spacing, weights }, grounds }
+}
+
+
+export interface MaterialGrounds {
+  params: MaterialParams
+  /** which character each source is written with, where the title offers one */
+  chars: MaterialSources & { chars: Record<keyof MaterialSources, string | null> }
+  grounds: string[]
+}
+
+/**
+ * Where a title stands in the material's space: how much small material the
+ * page carries, how fine it is, and where it stands — on the nucleus's own ink
+ * (a form drawn in small marks), on a ring around it (satellites), or over the
+ * page (dust). None of these is a kind of page: they are three weights, and
+ * most titles have some of each.
+ */
+export function materialParams(a: Analysis, m: Material, figureNucleus: string | null): MaterialGrounds {
+  const grounds: string[] = []
+  const units = allUnits(m)
+  const chars = a.graphemes.filter((g) => g.char.trim())
+  const n = Math.max(1, chars.length)
+
+  // what the title offers as material, and how much of it there is
+  const counts = new Map<string, number>()
+  for (const g of chars) counts.set(g.char, (counts.get(g.char) ?? 0) + 1)
+  const repeated = [...counts.entries()].filter(([, c]) => c > 1).sort((x, y) => y[1] - x[1])[0] ?? null
+  const repeatStrength = repeated ? clip((repeated[1] - 1) / 3 + 0.3) : 0
+  const nucleus = figureNucleus ?? chars[0]?.char ?? ''
+  const relation = a.glyphRelations.filter((r) => r.kind === 'containment' && r.outer === nucleus).sort((x, y) => y.score - x.score)[0] ?? null
+  const innerStrength = relation ? clip(relation.score) : 0
+  const rest = chars.filter((g) => g.char !== nucleus).map((g) => g.char)
+  const restStrength = clip(rest.length / Math.max(1, n))
+  const erased = units.filter((u) => u.absent).length
+  const erasure = clip(erased / Math.max(1, units.length) + (a.relations.some((r) => r.kind === 'negation') ? 0.3 : 0))
+
+  // how much material at all: what the title has to give
+  // Where it stands. Each of the three needs its own evidence: with none of
+  // them the page is the figure alone (a floor under any of them would put the
+  // same halo on every page, which is a family again).
+  const coordination = a.relations.some((r) => r.kind === 'coordination') ? 1 : 0
+  const dependency = a.relations.some((r) => r.kind === 'dependency') ? 0.6 : 0
+  const counters = a.interiors.get(nucleus)?.counters.length ?? 0
+  const onForm = clip(innerStrength + 0.25 * clip(counters / 2))
+  const onRing = clip(Math.max(coordination, dependency) * (0.35 + 0.5 * repeatStrength))
+  const onPage = clip(0.7 * erasure + 0.25 * clip(repeatStrength - innerStrength))
+  const offeredMaterial = 0.55 * repeatStrength + 0.4 * innerStrength + 0.3 * erasure + 0.15 * restStrength
+  const where = onForm + onRing + onPage
+  // below what would read as a texture at all, or with nowhere grounded to
+  // stand, a page is the figure alone
+  const density = offeredMaterial < 0.18 || where < 0.15 ? 0 : clip(offeredMaterial)
+  grounds.push(
+    `material ${density.toFixed(2)} ＝ 反復 ${repeatStrength.toFixed(2)}／字の中に読まれた形 ${innerStrength.toFixed(2)}／消された席 ${erasure.toFixed(2)}／題の残り ${restStrength.toFixed(2)}`,
+  )
+
+  grounds.push(`立つ場所：字のインク ${onForm.toFixed(2)}／環 ${onRing.toFixed(2)}／紙面 ${onPage.toFixed(2)}`)
+
+  // how fine: the more the title offers, the finer the grain
+  const fineness = clip(0.3 + 0.5 * repeatStrength + 0.3 * erasure)
+  const special = a.morae.filter((mo) => mo.kind === 'N' || mo.kind === 'Q' || mo.kind === 'R' || mo.devoiced).length
+  const regularity = clip(1 - 0.5 * (a.morae.length ? special / a.morae.length : 0))
+  const cut = clip(relation && relation.origin !== 'inventory' ? relation.containment : 0)
+  const radius = clip(0.16 + 0.12 * (onRing > 0 ? 1 : 0), 0.1, 0.4)
+
+  // as in v2c: the title's repetition first, then a form read inside the
+  // character, then the rest of the title — its own character only where
+  // nothing else is offered
+  const offered = repeatStrength + innerStrength + 0.5 * restStrength
+  const sources: MaterialSources = {
+    repeat: repeatStrength,
+    inner: innerStrength,
+    rest: 0.5 * restStrength,
+    self: offered < 0.2 ? 0.3 : 0,
+  }
+  return {
+    params: { density, fineness, onForm, onRing, onPage, radius, cut, regularity, sources },
+    chars: {
+      ...sources,
+      chars: {
+        repeat: repeated?.[0] ?? null,
+        inner: relation?.inner ?? null,
+        rest: rest[0] ?? null,
+        self: nucleus || null,
+      },
+    },
+    grounds,
+  }
 }

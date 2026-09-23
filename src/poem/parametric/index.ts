@@ -8,8 +8,9 @@
  */
 import type { Rng } from '../../core/random'
 import type { Analysis, Mark, Material } from '../types'
-import { latticeParams, traceParams } from './params'
+import { latticeParams, materialParams, traceParams } from './params'
 import { latticeMarks, type LatticeParams } from './lattice'
+import { figureOf, materialMarks, type MaterialParams } from './material'
 import { traceGeometry, traceMarks, type TraceParams } from './trace'
 
 export type ParametricKind = 'trace' | 'lattice' | 'auto'
@@ -17,6 +18,10 @@ export type ParametricKind = 'trace' | 'lattice' | 'auto'
 export interface ParametricApplied {
   kind: 'trace' | 'lattice'
   params: TraceParams | LatticeParams
+  /** what the page is made of, and where it stands (poem/parametric/material.ts) */
+  material: MaterialParams
+  /** how many small marks the material field put on the page */
+  grains: number
   grounds: string[]
   /** where each written unit went (review: the study sheet) */
   put: { grapheme: number; x: number; y: number; size: number; rotate: number }[]
@@ -35,21 +40,50 @@ export function parametricPage(
   kind: ParametricKind,
   rng: Rng,
   override: Partial<TraceParams> & Partial<LatticeParams> = {},
+  material: Partial<MaterialParams> | null = null,
+  /** the faces the page will be written in, applied to the figure before the material is placed */
+  faces: (marks: Mark[]) => Mark[] = (marks) => marks,
 ): { marks: Mark[]; applied: ParametricApplied } {
   const units = m.tokens.flat()
   const lattice = latticeParams(a, m)
   const chosen = kind === 'auto' ? (lattice.params.rows >= 2 ? 'lattice' : 'trace') : kind
-  if (chosen === 'lattice') {
-    const p = { ...lattice.params, ...(override as Partial<LatticeParams>) }
-    const { marks, put } = latticeMarks(a, units, p)
-    return { marks, applied: { kind: 'lattice', params: p, grounds: lattice.grounds, put, curve: { at: [], k: 0, em: 0 } } }
+  // the figure: the title's own characters, on a curve or in a lattice
+  const drawn =
+    chosen === 'lattice'
+      ? (() => {
+          const p = { ...lattice.params, ...(override as Partial<LatticeParams>) }
+          const { marks, put } = latticeMarks(a, units, p)
+          return { kind: 'lattice' as const, params: p as TraceParams | LatticeParams, grounds: lattice.grounds, marks, put, curve: { at: [] as { x: number; y: number }[], k: 0, em: 0 } }
+        })()
+      : (() => {
+          const t = traceParams(a, m, rng)
+          const p = { ...t.params, ...(override as Partial<TraceParams>) }
+          const { marks, put } = traceMarks(a, units, p)
+          const g = traceGeometry(a, units, p)
+          return { kind: 'trace' as const, params: p as TraceParams | LatticeParams, grounds: t.grounds, marks, put, curve: { at: g?.path.at ?? [], k: g?.k ?? 0, em: g?.em ?? 0 } }
+        })()
+
+  // the material: small marks over it, on its ink, on a ring, or over the page.
+  // The figure is put in its faces first: which face a character is written in
+  // decides its ink, and the material must not stand on ink that will be there.
+  const figure = figureOf(faces(drawn.marks))
+  const mat = materialParams(a, m, figure.nucleus?.char ?? null)
+  const mp = { ...mat.params, ...(material ?? {}) }
+  const made = materialMarks(a, figure, mp, mat.chars)
+  return {
+    marks: [...made.figure, ...made.marks],
+    applied: {
+      kind: drawn.kind,
+      params: drawn.params,
+      material: mp,
+      grains: made.grains,
+      grounds: [...drawn.grounds, ...mat.grounds],
+      put: drawn.put,
+      curve: drawn.curve,
+    },
   }
-  const { params, grounds } = traceParams(a, m, rng)
-  const p = { ...params, ...(override as Partial<TraceParams>) }
-  const { marks, put } = traceMarks(a, units, p)
-  const g = traceGeometry(a, units, p)
-  return { marks, applied: { kind: 'trace', params: p, grounds, put, curve: { at: g?.path.at ?? [], k: g?.k ?? 0, em: g?.em ?? 0 } } }
 }
 
 export type { TraceParams } from './trace'
 export type { LatticeParams } from './lattice'
+export type { MaterialParams } from './material'

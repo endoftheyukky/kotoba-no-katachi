@@ -531,6 +531,8 @@ export type GrammarId =
   | 'branch'
   | 'constellation'
   | 'lattice'
+  /** v4 experiment, review only: the parametric material field (poem/parametric/material.ts) */
+  | 'material'
 
 /** where a mark the title does not itself write came from */
 export interface Provenance {
