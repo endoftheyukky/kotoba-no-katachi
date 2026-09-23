@@ -452,6 +452,24 @@ dialog dd {
   margin: 0;
 }
 
+/* ソース: a link as quiet as the rest of the colophon, known by its underline */
+dialog dd a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+dialog dd a:hover,
+dialog dd a:focus-visible {
+  color: var(--ink);
+}
+
+dialog dd a:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
+}
+
 /* what is recorded: the last words of About */
 dialog .record {
   margin: 16px 0 0;
