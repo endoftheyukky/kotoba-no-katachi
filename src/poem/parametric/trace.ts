@@ -25,6 +25,7 @@
 import { PAGE } from '../../render/stage'
 import type { Analysis, Mark, Unit, Vec } from '../types'
 import { directions, isWritten, unitMarks } from '../spatial/common'
+import { CENTRED, fit, type PaperParams } from './paper'
 
 export interface TraceParams {
   /** total turning, in turns: 0 a straight line, 0.5 a half turn, 1 a closed ring */
@@ -47,12 +48,31 @@ export interface TraceParams {
   breaks: number[]
   /** at a coordination the trace divides: from this unit, this many ways, this wide (turns) */
   branch: { at: number; groups: number[][]; spread: number } | null
+  /**
+   * How many times the title is written, each time a row of its own. 1 is a
+   * single trace; 2.5 writes it twice and half again; at many rows with no
+   * turning the figure is v1's grid, and with turning it is a warped lattice.
+   * There is no threshold between the two: a lattice of one row is a trace.
+   */
+  rows: number
+  /** how far apart the rows stand, in steps of the reading's own */
+  spacing: number
+  /** how far each row is moved along the writing against the one before it */
+  shear: number
+  /** how much smaller each row is than the one before it */
+  decay: number
+  /** where the figure stands on the page, and how much of it it takes */
+  paper: PaperParams
 }
 
-/** the longest a trace may reach across the page, and the least a mark may be */
+/**
+ * The longest a trace may reach across the page, and the smallest and largest a
+ * character may be. The range is v2c's own (poem/scale.ts): micro 3.5 %, macro
+ * up to 110 % — a character larger than the page, which the edge then cuts.
+ */
 const REACH = 0.86
 const MIN_SIZE = 0.035
-const MAX_SIZE = 0.3
+const MAX_SIZE = 1.15
 
 export interface Traced {
   marks: Mark[]
@@ -100,7 +120,21 @@ function walk(steps: Step[], p: TraceParams, base: number): { at: Vec[]; heading
   return { at, heading }
 }
 
-/** the trace's geometry: where each unit falls, how large, before anything is drawn */
+/** one placed unit: which unit, where, turned how far, how large */
+export interface Placed {
+  unit: Unit
+  at: Vec
+  heading: number
+  /** its size against the figure's em */
+  size: number
+  /** which writing of the title it belongs to */
+  row: number
+}
+
+/**
+ * The figure's geometry: the title walked once, written as many times as
+ * `rows` says, and put on the page where `paper` says. Nothing is drawn yet.
+ */
 export function traceGeometry(a: Analysis, units: Unit[], p: TraceParams) {
   const { vertical } = directions(a)
   const base = vertical ? Math.PI / 2 : 0
@@ -110,56 +144,150 @@ export function traceGeometry(a: Analysis, units: Unit[], p: TraceParams) {
   let path = p.branch ? branched(steps, p, base) : walk(steps, p, base)
   path = swell(path, p)
 
-  // fit: the longer side of the figure reaches REACH of the page
-  const xs = path.at.map((q) => q.x)
-  const ys = path.at.map((q) => q.y)
-  const box = { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) }
-  const extent = Math.max(box.x1 - box.x0, box.y1 - box.y0) || 1
-  // a step of 1 unit must still hold a readable glyph: the size follows the spacing
-  const nearest = Math.min(...steps.map((s) => s.weight), 1)
-  const k = (REACH * PAGE) / (extent + nearest)
-  let em = Math.min(MAX_SIZE * PAGE, Math.max(MIN_SIZE * PAGE, nearest * k * 0.86))
-  const cx = (box.x0 + box.x1) / 2
-  const cy = (box.y0 + box.y1) / 2
-
-  // Where the curve turns back on itself, marks that are far apart along the
-  // reading come near on the page. No two characters are written over each
-  // other: the size follows the closest pair, whichever pair that is.
-  const written = steps.map((s, i) => ({ i, s })).filter(({ s }) => isWritten(s.unit))
-  let room = 1
-  for (let u = 0; u < written.length; u++)
-    for (let v = u + 1; v < written.length; v++) {
-      const at1 = path.at[written[u].i]
-      const at2 = path.at[written[v].i]
-      const d = Math.hypot(at1.x - at2.x, at1.y - at2.y) * k
-      // a turned glyph needs its diagonal
-      // a turned glyph claims its diagonal
-      const want = 0.5 * (written[u].s.size + written[v].s.size) * (p.tangency > 0.2 ? 1.45 : 0.92)
-      if (want > 0) room = Math.min(room, d / (want * em))
+  // The title written again: each row moved across the writing by `spacing`,
+  // along it by `shear`, and smaller by `decay`. The last row may be partial —
+  // `rows` is 2.5 when the title is written twice and half again — which is
+  // how a repetition that does not come out even is held.
+  const step = steps.reduce((t, x) => t + x.weight, 0) / Math.max(1, steps.length)
+  const along = { x: Math.cos(base), y: Math.sin(base) }
+  const across = { x: -Math.sin(base), y: Math.cos(base) }
+  // How far apart the rows stand. A row that turns sweeps across the writing,
+  // and two rows may not cross: the gap is the greater of what `spacing` asks
+  // for and what the row's own turning takes, with room for a character.
+  const sweptAcross = path.at.map((q) => q.x * across.x + q.y * across.y)
+  const sweep = Math.max(...sweptAcross) - Math.min(...sweptAcross)
+  const nearestStep = Math.min(...steps.map((x) => x.weight), 1)
+  const gap = Math.max(p.spacing * step, sweep + nearestStep * 0.95)
+  const lay = (rows: number): Placed[] => {
+    const whole = Math.ceil(rows - 1e-6)
+    const out: Placed[] = []
+    for (let r = 0; r < whole; r++) {
+      const part = Math.min(1, rows - r)
+      const count = r === whole - 1 && part < 1 ? Math.max(1, Math.ceil(part * steps.length)) : steps.length
+      // a row dwindles, but never past being read: below two fifths the glyphs
+      // would be smaller than the page allows and the row would fold into itself
+      const shrink = Math.max(0.4, (1 - p.decay) ** r)
+      const move = {
+        x: (across.x * gap + along.x * p.shear * step) * r,
+        y: (across.y * gap + along.y * p.shear * step) * r,
+      }
+      for (let i = 0; i < count; i++)
+        out.push({
+          unit: steps[i].unit,
+          at: { x: path.at[i].x * shrink + move.x, y: path.at[i].y * shrink + move.y },
+          heading: path.heading[i],
+          size: steps[i].size * shrink,
+          row: r,
+        })
     }
-  em = Math.max(MIN_SIZE * PAGE, em * Math.min(1, room))
+    return out
+  }
 
-  return { steps, path, k, em, cx, cy }
+  // fit: the figure takes as much of the page as `occupancy` says, and stands
+  // where `offset` and `toward` put it
+  const paper = p.paper ?? CENTRED
+  const nearest = nearestStep
+  const measure = (placed: Placed[], shrink: number) => {
+    const xs = placed.map((q) => q.at.x)
+    const ys = placed.map((q) => q.at.y)
+    const box = { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) }
+    const fitted = fit({ ...paper, scale: paper.scale * shrink }, box, nearest)
+    const k = fitted.k
+    // the largest character is what the page's limit applies to: a mark stands
+    // at `em` times its own relative size, and no character is written larger
+    // than the page's macro
+    const largest = Math.max(...placed.map((q) => q.size), 1)
+    const first = Math.min((MAX_SIZE * PAGE) / largest, nearest * k * 0.86)
+    // Where the curve turns back on itself, or where one row comes near the
+    // next, marks far apart along the reading come near on the page. No two
+    // characters are written over each other: the size follows the closest pair.
+    const written = placed.filter((q) => isWritten(q.unit))
+    let room = 1
+    for (let u = 0; u < written.length; u++)
+      for (let v = u + 1; v < written.length; v++) {
+        const d = Math.hypot(written[u].at.x - written[v].at.x, written[u].at.y - written[v].at.y) * k
+        // a turned glyph claims its diagonal
+        const want = 0.5 * (written[u].size + written[v].size) * (p.tangency > 0.2 ? 1.45 : 0.92)
+        if (want > 0) room = Math.min(room, d / (want * first))
+      }
+    return {
+      placed,
+      written,
+      box,
+      k,
+      centre: fitted.centre,
+      em: first * Math.min(1, room),
+      cx: (box.x0 + box.x1) / 2,
+      cy: (box.y0 + box.y1) / 2,
+    }
+  }
+
+  // Where the figure stands, once every character is on the page. A character
+  // may be cut by the edge, but more than half of it stays: its middle keeps a
+  // quarter of its size clear. Where no place satisfies every character the
+  // figure is too large for the page, and it is drawn smaller until one does.
+  const stand = (laid: ReturnType<typeof measure>) => {
+    const em = Math.max(MIN_SIZE * PAGE, laid.em)
+    const centre = { ...laid.centre }
+    const at = (q: Placed, axis: 'x' | 'y') =>
+      axis === 'x' ? centre.x + (q.at.x - laid.cx) * laid.k : centre.y + (q.at.y - laid.cy) * laid.k
+    const keep = 0.26
+    let ok = true
+    for (const axis of ['x', 'y'] as const) {
+      if (!laid.written.length) break
+      let low = -Infinity
+      let high = Infinity
+      for (const q of laid.written) {
+        const size = Math.max(MIN_SIZE * PAGE, em * q.size)
+        const pos = at(q, axis)
+        low = Math.max(low, keep * size - pos)
+        high = Math.min(high, PAGE - keep * size - pos)
+      }
+      if (low > high) ok = false
+      centre[axis] += low <= high ? Math.min(Math.max(0, low), high) : (low + high) / 2
+    }
+    return { centre, ok }
+  }
+
+  // The title is written as many times as the page can hold and still be read:
+  // where the rows would drive the characters below the smallest the page
+  // allows, the last writing of the title is given up.
+  let rows = Math.max(1, p.rows)
+  let laid = measure(lay(rows), 1)
+  while (laid.em < MIN_SIZE * PAGE && rows > 1) {
+    rows = Math.max(1, rows - 0.5)
+    laid = measure(lay(rows), 1)
+  }
+  let shrink = 1
+  let stood = stand(laid)
+  while (!stood.ok && shrink > 0.25) {
+    shrink *= 0.85
+    laid = measure(lay(rows), shrink)
+    stood = stand(laid)
+  }
+  const { placed, k, cx, cy } = laid
+  const em = Math.max(MIN_SIZE * PAGE, laid.em)
+  const centre = stood.centre
+
+  return { steps, path, placed, k, em, cx, cy, centre, base }
 }
 
-/** the trace's marks, fitted onto the page */
-export function traceMarks(a: Analysis, units: Unit[], p: TraceParams, centre: Vec = { x: PAGE / 2, y: PAGE / 2 }): Traced {
+/** the figure's marks, on the page */
+export function traceMarks(a: Analysis, units: Unit[], p: TraceParams, at?: Vec): Traced {
   const g = traceGeometry(a, units, p)
   if (!g) return { marks: [], put: [] }
-  const { steps, path, k, em, cx, cy } = g
-  const { vertical } = directions(a)
-  const base = vertical ? Math.PI / 2 : 0
+  const { placed, k, em, cx, cy, base } = g
+  const centre = at ?? g.centre
   const marks: Mark[] = []
   const put: Traced['put'] = []
-  for (const [i, s] of steps.entries()) {
-    const at = { x: centre.x + (path.at[i].x - cx) * k, y: centre.y + (path.at[i].y - cy) * k }
-    const size = Math.max(MIN_SIZE * PAGE, em * s.size)
-    const rotate = ((path.heading[i] - base) * 180 * p.tangency) / Math.PI
-    if (isWritten(s.unit)) {
-      const made = unitMarks(a, s.unit, at, size).map((m) => (rotate ? { ...m, rotate: (m.rotate ?? 0) + rotate } : m))
-      marks.push(...made)
-      put.push({ grapheme: s.unit.grapheme, x: at.x, y: at.y, size, rotate })
-    }
+  for (const q of placed) {
+    const point = { x: centre.x + (q.at.x - cx) * k, y: centre.y + (q.at.y - cy) * k }
+    const size = Math.max(MIN_SIZE * PAGE, em * q.size)
+    const rotate = ((q.heading - base) * 180 * p.tangency) / Math.PI
+    if (!isWritten(q.unit)) continue
+    const made = unitMarks(a, q.unit, point, size).map((m) => (rotate ? { ...m, rotate: (m.rotate ?? 0) + rotate } : m))
+    marks.push(...made)
+    put.push({ grapheme: q.unit.grapheme, x: point.x, y: point.y, size, rotate })
   }
   return { marks, put }
 }

@@ -29,7 +29,7 @@ export default async function ({ evaluate, load }) {
       ctx.drawImage(R.renderCanvas(after.draft, a.glyphs, cell), x + cell + gap, y)
       ctx.fillStyle = '#222'; ctx.font = '13px "Noto Sans JP", sans-serif'
       ctx.fillText(t.text + (t.reading ? '（' + t.reading + '）' : ''), x, y + cell + 14)
-      const P = after.parametric; const M = P && P.material; const ops = P ? (P.kind === 'trace' ? 'trace clo ' + P.params.closure.toFixed(2) : 'lattice ' + P.params.rows + 'r reg ' + P.params.regularity.toFixed(2)) + (M && M.density > 0.02 ? ' · mat ' + M.density.toFixed(2) + ' form/ring/page ' + [M.onForm, M.onRing, M.onPage].map((w) => (w / (M.onForm + M.onRing + M.onPage)).toFixed(1)).join('/') + ' ×' + P.grains : ' · no material') : ''
+      const P = after.parametric; const M = P && P.material; const ops = P ? ('clo ' + P.params.closure.toFixed(2) + ' rows ' + P.params.rows.toFixed(1) + ' scale ' + P.paper.scale.toFixed(2) + ' off ' + P.paper.offset.toFixed(2) + ' hier ' + P.paper.hierarchy.toFixed(1)) + (M && M.density > 0.02 ? ' · mat ' + M.density.toFixed(2) + ' form/ring/page ' + [M.onForm, M.onRing, M.onPage].map((w) => (w / (M.onForm + M.onRing + M.onPage)).toFixed(1)).join('/') + ' ×' + P.grains : ' · no material') : ''
       ctx.fillStyle = '#666'; ctx.font = '10px ui-monospace, Consolas, monospace'
       ctx.fillText((before.spatial.id + '/' + before.spatial.mode + '+' + before.grammar.id).slice(0, 34) + '  ' + (ops || '— (stays)'), x, y + cell + 27)
     }

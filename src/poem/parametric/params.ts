@@ -13,8 +13,8 @@ import { structuralParts } from '../operations/decomposition'
 import type { Rng } from '../../core/random'
 import type { Analysis, Material, Unit } from '../types'
 import { allUnits } from '../spatial/common'
-import type { LatticeParams } from './lattice'
 import type { MaterialParams, MaterialSources } from './material'
+import type { PaperParams } from './paper'
 import type { TraceParams } from './trace'
 
 const clip = (v: number, lo = 0, hi = 1) => (Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo)
@@ -40,11 +40,34 @@ function beatsOf(a: Analysis, u: Unit): number {
   return clip(morae.reduce((s, m) => s + m.weight, 0) / Math.max(1, morae.length), 0.6, 2.2)
 }
 
+/** the graphemes the poem's own subject stands on */
+function focusGraphemes(a: Analysis, m: Material): Set<number> {
+  const f = m.primary.focus
+  const out = new Set<number>()
+  if (f.kind === 'repetition') for (const g of f.occurrences.flat()) out.add(g)
+  else if (f.kind === 'parts' || f.kind === 'counter') out.add(f.grapheme)
+  else if (f.kind === 'pair')
+    // the character the relation is read in, where the title writes it
+    for (const g of a.graphemes) if (g.char === f.relation.outer) out.add(g.index)
+  return out
+}
+
 export function traceParams(a: Analysis, m: Material, rng: Rng): TraceGrounds {
   const units = allUnits(m)
   const grounds: string[] = []
   const chars = a.graphemes.filter((g) => g.char.trim())
   const n = Math.max(1, chars.length)
+
+  // What the reading yields, and what an operation has produced: v2c decides
+  // its scale by these two (poem/scale.ts), and so does the page here.
+  const potential = clip(m.primary.poeticPotential ?? 0.5)
+  const focus = m.primary.focus
+  const operation =
+    focus.kind === 'pair' && focus.relation.kind === 'containment'
+      ? clip(focus.relation.score)
+      : focus.kind === 'parts'
+        ? clip(0.55 + 0.45 * (focus.echo?.similarity ?? 0))
+        : 0
 
   // --- how far the curve turns ------------------------------------------------
   // Closure is not a switch between a line and a ring: it measures how far the
@@ -117,7 +140,7 @@ export function traceParams(a: Analysis, m: Material, rng: Rng): TraceGrounds {
   const contrast = clip(
     Math.sqrt(inks.reduce((s, d) => s + (d - mean) ** 2, 0) / Math.max(1, inks.length)) / (mean || 1) / 0.45,
   )
-  const sizes = units.map((u, i) => {
+  const sizes: number[] = units.map((u, i) => {
     const byInk = clip((inks[i] / (mean || 1)) ** (0.5 * contrast), 0.8, 1.25)
     // a character written again and again dwindles along its run (attenuation, continuously)
     const run = units.slice(0, i).filter((v, j) => v.char === u.char && j >= i - 3).length
@@ -150,62 +173,84 @@ export function traceParams(a: Analysis, m: Material, rng: Rng): TraceGrounds {
   // plastic, as in v1: which way the curve turns
   const side: 1 | -1 = rng.next() < 0.5 ? 1 : -1
 
-  return { params: { closure, corners, opening, eccentricity, tangency, side, weights, sizes, breaks, branch }, grounds }
-}
+  // --- how many times the title is written ---------------------------------------
+  // The title written again is a row of its own, and there is no threshold
+  // between one row and two: a lattice of one row is a trace that does not turn.
+  // `rows` is not rounded — 2.4 writes the title twice and the first 40 % of it
+  // again, which is how a repetition that does not come out even is held.
+  const strength = repeatShare * (0.4 + 0.6 * loops)
+  const rows = clip(1 + 7 * strength, 1, 8)
+  if (rows > 1.05) grounds.push(`反復が題の ${repeatShare.toFixed(2)} を ${occurrences} 回覆う：題は ${rows.toFixed(1)} 回書かれる`)
+  const spacing = 1 + 0.35 * (1 - repeatShare)
+  const shear = clip(1 / Math.max(1, units.length) + 0.6 * turnDensity, 0, 1.2)
+  const runs = units.map((u, i) => (i > 0 && units[i - 1].char === u.char ? 1 : 0)).reduce((t: number, v) => t + v, 0)
+  const erased = units.filter((u) => u.absent).length
+  const decay = clip(0.3 * (runs / Math.max(1, units.length)) + 0.2 * (erased / Math.max(1, units.length)), 0, 0.4)
+  if (decay > 0.02) grounds.push(`同じ字の連なりと消された席：行ごとに ${(100 * decay).toFixed(0)}% ずつ小さくなる`)
 
-export interface LatticeGrounds {
-  params: LatticeParams
-  grounds: string[]
+  // --- the page ------------------------------------------------------------------
+  const paper = paperParams(a, m, { potential, operation, side, units, sizes, grounds })
+  // what the page is about is written larger than the rest of it
+  if (paper.hierarchy > 1.02) {
+    const subject = focusGraphemes(a, m)
+    const up = Math.sqrt(paper.hierarchy)
+    for (const [i, u] of units.entries()) sizes[i] = sizes[i] * (subject.has(u.grapheme) ? up : 1 / up)
+    grounds.push(`主題は他より ${paper.hierarchy.toFixed(1)} 倍の大きさで書かれる`)
+  }
+
+  return { params: { closure, corners, opening, eccentricity, tangency, side, weights, sizes, breaks, branch, rows, spacing, shear, decay, paper }, grounds }
 }
 
 /**
- * Where a title stands in the lattice's parameter space. The same readings as
- * the trace's, in two dimensions: how much of the title repeats decides how
- * many rows there are, its beats and its ink decide how even the cells are,
- * its word boundaries how far each row steps, its runs how fast the rows
- * dwindle, and how far its reading returns how much the rows bend.
+ * Where the figure stands on the page and how much of it it takes.
+ *
+ * v2c decides this once per poem as a scale regime (poem/scale.ts): a title
+ * whose relations are weak is written small and aside (micro, 3.5–7 % of the
+ * page); what an operation produced — a residue, the parts of a glyph — may be
+ * written larger than the page and cut by it (macro, 55–110 %); everything else
+ * stands between (normal, 10–30 %). The same two readings are taken here, but
+ * as numbers rather than as four regimes, so that a title can stand anywhere
+ * between them:
+ *
+ *   how much the reading yields   → how large the writing is, and so how much
+ *                                   of the page it takes
+ *   what an operation produced    → whether it may pass the page's edge, and
+ *                                   how much larger its subject stands
+ *
+ * A small figure is also a figure with room around it, and it does not stand in
+ * the middle of that room: it stands where the reading begins, so the page it
+ * leaves empty is the page the reading walks into.
  */
-export function latticeParams(a: Analysis, m: Material): LatticeGrounds {
-  const units = allUnits(m)
-  const grounds: string[] = []
-  const chars = a.graphemes.filter((g) => g.char.trim())
-  const n = Math.max(1, chars.length)
-
-  const repeats = a.relations.filter((r) => r.kind === 'reduplication' || (r.kind === 'recurrence' && r.unit === 'grapheme'))
-  const covered = new Set(repeats.flatMap((r) => (r.kind === 'reduplication' ? r.occurrences.flat() : r.kind === 'recurrence' ? r.members : [])))
-  const repeatShare = clip(covered.size / n)
-  const occurrences = Math.max(0, ...repeats.map((r) => (r.kind === 'reduplication' ? r.occurrences.length : r.kind === 'recurrence' ? r.members.length : 0)))
-  const loops = clip((occurrences - 1) / 2)
-  const strength = repeatShare * (0.4 + 0.6 * loops)
-  const rows = Math.max(1, Math.round(1 + 7 * strength))
-  grounds.push(`反復が題の ${repeatShare.toFixed(2)} を覆い ${occurrences} 回：${rows} 行になる`)
-
-  const special = a.morae.filter((mo) => mo.kind === 'N' || mo.kind === 'Q' || mo.kind === 'R' || mo.devoiced).length
-  const prosody = a.morae.length ? clip(special / a.morae.length / 0.4) : 0
-  const inks = units.map((u) => inkOf(a, u.char))
-  const mean = inks.reduce((s, d) => s + d, 0) / Math.max(1, inks.length)
-  const contrast = clip(Math.sqrt(inks.reduce((s, d) => s + (d - mean) ** 2, 0) / Math.max(1, inks.length)) / (mean || 1) / 0.45)
-  const regularity = clip(1 - 0.5 * prosody - 0.5 * contrast)
-  if (regularity < 0.95) grounds.push(`特殊拍 ${prosody.toFixed(2)}・インクの差 ${contrast.toFixed(2)}：枡は等間隔から外れる（regularity ${regularity.toFixed(2)}）`)
-
-  const tokens = Math.max(1, a.tokens.filter((t) => t.end > t.start).length)
-  const turnDensity = clip((tokens - 1) / Math.max(1, n - 1))
-  const shear = clip(1 / Math.max(1, units.length) + 0.6 * turnDensity, 0, 1.2)
-
-  const runs = units.map((u, i) => (i > 0 && units[i - 1].char === u.char ? 1 : 0)).reduce((s: number, v) => s + v, 0)
-  const erased = units.filter((u) => u.absent).length
-  const decay = clip(0.3 * (runs / Math.max(1, units.length)) + 0.2 * (erased / Math.max(1, units.length)), 0, 0.4)
-
-  const first = chars[0]
-  const last = chars[chars.length - 1]
-  const mirror = a.relations.some((r) => r.kind === 'mirror') ? 1 : 0
-  const endEcho = chars.length < 2 ? 0 : mirror ? 1 : first.char === last.char ? 0.9 : first.script === last.script ? 0.2 : 0
-  const curl = clip(0.3 * (0.55 * repeatShare * (0.45 + 0.55 * loops) + 0.4 * endEcho), 0, 0.3)
-  const spacing = 1 + 0.35 * (1 - repeatShare)
-  const weights = units.map((u) => beatsOf(a, u))
-  return { params: { rows, regularity, shear, decay, curl, spacing, weights }, grounds }
+function paperParams(
+  a: Analysis,
+  m: Material,
+  ctx: { potential: number; operation: number; side: 1 | -1; units: Unit[]; sizes: number[]; grounds: string[] },
+): PaperParams {
+  const { potential, operation, side, units, grounds } = ctx
+  const vertical = a.direction === 'vertical'
+  // the size one character asks for, as a share of the page: micro → macro
+  const scale = clip(0.04 + 0.22 * potential + 0.9 * operation, 0.035, 1.15)
+  // how much of the page that is likely to take, for the standing back below
+  const occupancy = clip((scale * Math.max(1, units.length)) / 0.86, 0.05, 1.3)
+  // the smaller the figure, the further from the middle it may stand; a figure
+  // larger than the page cannot be centred at all — the page cuts it where the
+  // reading runs out
+  const offset = Math.max(clip(1.05 - occupancy), clip((occupancy - 1) * 3))
+  // Which way: against the writing, so that the page opens ahead of the reading,
+  // and to the side the curve turns toward.
+  const along = vertical ? { x: 0, y: 1 } : { x: 1, y: 0 }
+  const across = vertical ? { x: -1, y: 0 } : { x: 0, y: 1 }
+  const toward = Math.atan2(-along.y + across.y * side * 0.8, -along.x + across.x * side * 0.8)
+  // what the page is about stands larger than the rest of the title
+  const hierarchy = clip(1 + 3.2 * operation + 1.4 * clip((potential - 0.5) / 0.5), 1, 5)
+  grounds.push(
+    `紙面：字は紙の ${(100 * scale).toFixed(1)}%（読みの実り ${potential.toFixed(2)}／操作の結果 ${operation.toFixed(2)}）、` +
+      `図は紙の ${(100 * occupancy).toFixed(0)}% を占め、中心から ${offset.toFixed(2)} 離れて立つ` +
+      (occupancy >= 1 ? '（紙に切られる）' : ''),
+  )
+  void m
+  return { scale, offset, toward, hierarchy }
 }
-
 
 export interface MaterialGrounds {
   params: MaterialParams

@@ -177,7 +177,7 @@ export interface Force {
    * `params` overrides single parameters, for sweeps in the study sheet.
    */
   parametric?: ParametricKind
-  params?: Partial<TraceParams> & Partial<import('./parametric').LatticeParams>
+  params?: Partial<TraceParams>
   /** v4 experiment, review only: override the material field's parameters */
   material?: Partial<import('./parametric').MaterialParams>
 }
