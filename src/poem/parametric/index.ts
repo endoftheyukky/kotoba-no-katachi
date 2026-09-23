@@ -18,6 +18,7 @@
 import type { Rng } from '../../core/random'
 import type { Analysis, Mark, Material } from '../types'
 import { materialParams, traceParams } from './params'
+import { dominant, readMotifs, type Motifs } from './motif'
 import { figureOf, materialMarks, type MaterialParams } from './material'
 import { traceGeometry, traceMarks, type TraceParams } from './trace'
 import type { PaperParams } from './paper'
@@ -36,6 +37,10 @@ export interface ParametricApplied {
   grains: number
   /** what each placement asked for before the page sifted it (review) */
   placed: { form: number; ring: number; dust: number }
+  /** the structures the title has, which lean on every layer at once */
+  motifs: Motifs
+  /** the one it has most of (review only, never drawn) */
+  motif: string
   grounds: string[]
   /** where each written unit went (review: the study sheet) */
   put: { grapheme: number; x: number; y: number; size: number; rotate: number }[]
@@ -57,9 +62,13 @@ export function parametricPage(
   material: Partial<MaterialParams> | null = null,
   /** the faces the page will be written in, applied to the figure before the material is placed */
   faces: (marks: Mark[]) => Mark[] = (marks) => marks,
+  /** how far the title's structures draw the page toward their chords */
+  rhyme?: number,
 ): { marks: Mark[]; applied: ParametricApplied } {
   const units = m.tokens.flat()
-  const t = traceParams(a, m, rng)
+  // what the title's structures press on every layer at once
+  const motifs = readMotifs(a, m)
+  const t = traceParams(a, m, rng, motifs, rhyme)
   const forced = kind === 'trace' ? { rows: 1 } : kind === 'lattice' ? { rows: Math.max(2, t.params.rows) } : {}
   const p: TraceParams = { ...t.params, ...forced, ...override }
   const { marks: drawn, put } = traceMarks(a, units, p)
@@ -70,7 +79,7 @@ export function parametricPage(
   // The figure is put in its faces first: which face a character is written in
   // decides its ink, and the material must not stand on ink that will be there.
   const figure = figureOf(faces(drawn))
-  const mat = materialParams(a, m, figure.nucleus?.char ?? null, figure.nucleus?.grapheme)
+  const mat = materialParams(a, m, figure.nucleus?.char ?? null, figure.nucleus?.grapheme, motifs, rhyme)
   const mp = { ...mat.params, ...(material ?? {}) }
   // the frame the material is placed in: where the reading itself went
   const made = materialMarks(a, figure, mp, mat.chars, put)
@@ -83,6 +92,8 @@ export function parametricPage(
       material: mp,
       grains: made.grains,
       placed: made.placed,
+      motifs,
+      motif: dominant(motifs),
       grounds: [...t.grounds, ...mat.grounds],
       put,
       curve: { at: g?.path.at ?? [], k: g?.k ?? 0, em: g?.em ?? 0 },

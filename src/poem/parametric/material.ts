@@ -183,7 +183,10 @@ export function materialMarks(
   // silhouettes span two thirds of the page, and their grains are small
   // characters at 3–4% of it, not dots). As it grows it also draws toward the
   // middle, where there is room for it.
-  const span = PAGE * (0.45 + 0.3 * Math.min(1, Math.max(0, (takes - 0.45) / 0.55)))
+  // the form takes as much of the page as the material has taken of it, but
+  // never less than the character it stands for asked for: a page written small
+  // keeps its register, and its grains are small characters at that register too
+  const span = Math.max(n.size * 1.12, PAGE * (0.32 + 0.38 * Math.min(1, Math.max(0, (takes - 0.45) / 0.55))))
   const grow = Math.min(4, Math.max(1, span / Math.max(1, n.size)))
   const toward = Math.min(1, (grow - 1) / 1.5)
   const swollen: Mark = {
@@ -206,7 +209,7 @@ export function materialMarks(
   const ring = wRing + (others > 0.02 ? (toOthers * wRing) / others : 0)
   const dust = wPage + (others > 0.02 ? (toOthers * wPage) / others : 0)
   const onLoop = ring > 0.02 ? onRing(frame, n, p, ring, chars) : []
-  const inAir = dust > 0.02 ? onPage(frame, written, p, dust, order, n.char) : []
+  const inAir = dust > 0.02 ? onPage(frame, written, p, dust, order, n.char, n.size) : []
   const marks = [...(stands ? form : []), ...onLoop, ...inAir]
 
   // where the grains stand for the character, the character is not written
@@ -285,7 +288,7 @@ function onForm(a: Analysis, n: Mark, p: MaterialParams, w: number, order: { cha
   // too few places is simply not drawn as a form (see `stands`).
   const step = n.size / (11 + 13 * p.fineness)
   // a grain is a small character, never a dot: v2c writes them at 3–4% of the page
-  const size = Math.max(step * (0.62 + 0.25 * (1 - p.fineness)), 0.024 * PAGE)
+  const size = Math.max(step * (0.62 + 0.25 * (1 - p.fineness)), 0.014 * PAGE)
   // The residue takes the inner glyph out of the form. Where the form read
   // inside the character is as large as the character itself there is nothing
   // left to sample, and a page whose material is all residue is not a page with
@@ -342,7 +345,11 @@ function inkCells(a: Analysis, n: Mark, step: number): number {
  * large enough to be read.
  */
 function onRing(frame: Frame, n: Mark, p: MaterialParams, w: number, chars: Chars): Mark[] {
-  const size = PAGE * (0.03 + 0.022 * (1 - p.fineness))
+  // A satellite is a small character beside a written one, so its size follows
+  // the page's own writing: a page written large carries larger material, a page
+  // written small carries finer. (Before this the material had one register for
+  // every page, and its marks were all the same size.)
+  const size = Math.min(0.09 * PAGE, Math.max(0.02 * PAGE, n.size * (0.2 + 0.16 * (1 - p.fineness))))
   const radius = Math.max(p.radius * PAGE, n.size * 0.7)
   const char = chars.chars.repeat ?? chars.chars.rest ?? chars.chars.inner ?? n.char
   const out: Mark[] = []
@@ -369,9 +376,10 @@ function onRing(frame: Frame, n: Mark, p: MaterialParams, w: number, chars: Char
  * part of the curve — where a trace turns back on itself the bands would
  * otherwise cross — so it is dropped.
  */
-function onPage(frame: Frame, written: Mark[], p: MaterialParams, w: number, order: { char: string; share: number }[], fallback: string): Mark[] {
-  const step = (0.075 - 0.05 * p.fineness) * PAGE
-  const size = step * (0.6 + 0.25 * (1 - p.fineness))
+function onPage(frame: Frame, written: Mark[], p: MaterialParams, w: number, order: { char: string; share: number }[], fallback: string, nucleus: number): Mark[] {
+  // dust, at the page's own register: its grain follows the figure's writing
+  const size = Math.min(0.07 * PAGE, Math.max(0.016 * PAGE, nucleus * (0.15 + 0.14 * (1 - p.fineness))))
+  const step = Math.max((0.075 - 0.05 * p.fineness) * PAGE, size * 1.3)
   const reach = PAGE * (0.09 + 0.62 * p.spread)
   const across = Math.ceil(reach / step)
   const coverage = 0.15 + 0.5 * p.density

@@ -10,7 +10,7 @@ neighbourhood around an anchor is small (pages moved 18 % of the gap to another
 family). So the anchors themselves are rebuilt as parametric generators, with
 the continua the families used to be separate points of.
 
-A page is now four things, none of them a kind of page:
+A page is now five things, none of them a kind of page:
 
 | | what it settles | where |
 | --- | --- | --- |
@@ -18,6 +18,7 @@ A page is now four things, none of them a kind of page:
 | **the page** | how large the writing is, where it stands, whether the edge cuts it | `parametric/paper.ts` |
 | **the material** | what the page is made of besides its own characters | `parametric/material.ts` |
 | **the frame** | the reading's own path, in which the material is placed | `parametric/frame.ts` |
+| **the motif** | which structures the title has, drawing all of the above toward a shared chord — what makes two pages rhyme | `parametric/motif.ts` |
 
 ## 1. The figure — line → arc → ring → rows
 
@@ -139,7 +140,53 @@ Three rules came out of looking at what that produced, each measured:
 
 Sweep: `docs/contact/v4-material-sweep.png`.
 
-## 5. What the pages are
+## 5. The motif — what makes two pages rhyme
+
+Dissolving the families left the pages standing too evenly apart: every title
+landed in its own place, because every parameter was read from the title on its
+own, and twenty small independent readings leave no two pages near each other. A
+series with no neighbourhoods is as lifeless as a series of templates — nothing
+rhymes.
+
+A **motif** is not a template and not a family. It is a structure a title *has*,
+read as a strength between 0 and 1, and it draws every layer at once
+(`parametric/motif.ts`):
+
+| motif | read from | the chord it strikes |
+| --- | --- | --- |
+| `repetition` | a unit said again, and how often | the title is written several times, the reading comes back, the characters are smaller and nearer the middle, and there is material to give |
+| `pairing` | a coordination, a dependency | the curve swells and opens, the subject stands larger, the material goes round the reading |
+| `nesting` | a form read inside a character, or the parts it falls into | the character is written large, and its own ink becomes the page's material |
+| `absence` | erased seats, a negation | the writing is small and aside, its material scattered over the page |
+| `articulation` | how many words the title falls into | the figure turns at its breaks and steps as it goes |
+| `echo` | the same mora or vowel at both ends, a mirror, held or whispered beats | the curve closes and turns its characters with it, and the material is fine |
+
+**A chord is a place to lean toward, not a direction to lean in.** The first
+attempt added a shared push to each parameter, and it changed nothing: a
+translation moves pages together without bringing them closer. What rhymes is
+the drawing-toward — a parameter is moved a share of the way from what the
+title's own readings asked for to the chord's own value, and that share is how
+much of that structure the title has (`RHYME`, one number, 0 is v5). Two titles
+with the same structure therefore come nearer each other in the parameters that
+structure touches, while everything else they are read by keeps them apart.
+
+Nothing here is a new reading: every motif is made of readings the parameters
+already used. This layer only says which of them belong together.
+
+**It also settles four things that were patches waiting to happen.** `corners`
+had four values because it came from one coarse reading; now four chords pull on
+it and it takes 43. The material's density was capped by what one formula could
+offer; now the chords of repetition and nesting ask for more, and 29 pages are
+bare where 40 were. A grain was always the same size; now the material's
+register follows the page's own — a page written large carries larger material
+(20 / 23 / 37 against v2c's 26 / 35 / 45, where v5 had 24 / 24 / 27).
+
+Sheet: `docs/contact/v6-rhyme.png` — the set laid out by the structure each title
+has. The five `absence` pages are all small, quiet and aside, and no two are
+alike; the eight `repetition` pages all drift in rows of small characters, and no
+two are alike.
+
+## 6. What the pages are
 
 93 titles (development + holdout + probe), `parametric: 'auto'`: 0 errors, **no
 character lost, no reading-order break, no overlap, no grain on the title's ink,
@@ -150,76 +197,92 @@ The parameters spread instead of falling into a few values: `paper.scale`
 `closure` 0–1 over 27, `rows` 1–8 (13 pages write the title more than once, 10
 of them a fractional number of times), `material.density` 0–0.9 over 69.
 
-## 6. Evaluation
+## 7. Evaluation
 
-Measured in the v3 form space (`poem/form/measure.ts`). Two numbers were set for
-this phase: the families must stay dissolved, and the pages must be as unlike
-one another as v2c's were.
+Measured in the v3 form space (`poem/form/measure.ts`). Three things were asked
+of this work in turn: the families must dissolve, the pages must be as unlike
+one another as v2c's were, and the series must still have neighbourhoods.
 
-| | v2c | v4 figure only | v4 + material | v5 + the page |
-| --- | --- | --- | --- | --- |
-| 1-NN recovery of the title's v2c family | 85 % | 37 % | 30 % | **28 %** |
-| nearest-neighbour distance, p25 / median / p75 | 0.09 / **0.98** / 1.72 | 0.01 / 0.19 / 1.01 | 0.13 / 1.34 / 1.68 | 0.57 / **1.63** / 2.10 |
-| descriptors sitting at exactly 0 or 1 (mean over 14) | 54 % | 70 % | 50 % | **45 %** |
-| pages between two v2c families (d1/d2 > 0.8) | 22 % | 26 % | 51 % | **55 %** |
+| | v2c | v4 figure | v4 + material | v5 + the page | v6 + the motif |
+| --- | --- | --- | --- | --- | --- |
+| 1-NN recovery of the title's v2c family | 85 % | 37 % | 30 % | 28 % | **34 %** |
+| nearest-neighbour distance, median | **0.98** | 0.19 | 1.34 | 1.63 | **1.36** |
+| descriptors sitting at exactly 0 or 1 | 54 % | 70 % | 50 % | 45 % | **44 %** |
+| pages between two v2c families (d1/d2 > 0.8) | 22 % | 26 % | 51 % | 55 % | **57 %** |
 
-### Does it still read as one series?
+### Does the series rhyme?
 
-| | v2c | v5 |
+`tools/form/rhyme.cjs`. A page's **nearest neighbour against the mean distance**
+says whether the set has neighbourhoods at all; **agreement** says whether the
+page nearest a page is one whose title has the same structure (32 % would happen
+by chance, since the largest group of titles is that size).
+
+| | nearest ÷ mean | agreement |
 | --- | --- | --- |
-| nearest neighbour (median) | 0.98 | 1.63 |
-| mean distance between any two pages | 5.02 | 4.92 |
-| nearest neighbour ÷ mean distance | 20 % | 33 % |
-| the loneliest page (95th) ÷ mean | 54 % | 63 % |
+| v2c | 20 % | 61 % |
+| v5 (no motif) | 33 % | 52 % |
+| **v6, rhyme 0.9** | **29 %** | **58 %** |
+| v6, rhyme 1.2 | 27 % | 51 % |
 
-The cloud is the same size as v2c's (4.92 against 5.02) — the set has not spread
-out. What changed is *inside* it: in v2c a page has a near-twin at a fifth of
-the mean distance, in v5 at a third of it. v2c's series rhymes by repeating a
-composition; v5's pages stand at a similar remove from one another. The
-loneliest pages are slightly lonelier (63 % against 54 %), so a few titles now
-stand further out than any v2c page did.
+v5's pages stood at a third of the mean distance from their nearest neighbour,
+and that neighbour was as often as not a title with nothing in common. v6's
+pages have neighbours, and the neighbour is nearly always one that shares a
+structure — at v2c's own rate, without v2c's templates (family recovery 34 %
+against 85 %). Past 0.9 the chords start to overwhelm the titles' own readings
+and the agreement falls again: pages of different structures are drawn into the
+same places.
 
-**The register** — what every page shares whatever its form, measured on the
-marks rather than the descriptors:
+The sheet says the same thing plainly (`docs/contact/v6-rhyme.png`): the five
+`absence` pages are all small, quiet and aside, the eight `repetition` pages all
+drift in rows of small characters — and within each group no two pages are
+alike.
 
-| | v2c | v5 |
+### The register
+
+What every page shares whatever its form, measured on the marks:
+
+| | v2c | v6 |
 | --- | --- | --- |
-| the largest character (share of the page) | 0.06 / 0.18 / 0.23 | 0.08 / 0.15 / 0.19 |
-| marks on the page | 3 / 6 / 44 | 3 / 14 / 30 |
-| ink laid down | 0.03 / 0.10 / 0.18 | 0.05 / 0.07 / 0.12 |
-| the page the figure uses | 0.13 / 0.28 / 0.60 | 0.12 / 0.33 / 0.67 |
-| largest ÷ smallest written character | 1.00 / 1.00 / 1.88 | 1.00 / 1.12 / 1.56 |
-| the figure's nearest edge | 0.00 / 0.04 / 0.07 | **−0.01** / 0.04 / 0.12 |
-| small marks: their size | 26 / 35 / 45 | 24 / 24 / 27 |
+| the largest character (share of the page) | 0.06 / 0.18 / 0.23 | 0.09 / 0.13 / 0.18 |
+| marks on the page | 3 / 6 / 44 | 3 / 14 / 35 |
+| ink laid down | 0.03 / 0.10 / 0.18 | 0.04 / 0.06 / 0.12 |
+| the page the figure uses | 0.13 / 0.28 / 0.60 | 0.16 / 0.37 / 0.68 |
+| largest ÷ smallest written character | 1.00 / 1.00 / 1.88 | 1.00 / 1.11 / 1.69 |
+| the figure's nearest edge | 0.00 / 0.04 / 0.07 | −0.00 / 0.03 / 0.12 |
+| small marks: their size | 26 / 35 / 45 | 20 / 25 / 36 |
+| pages carrying small marks | 51 of 81 | 64 of 81 |
 
-The page the figure uses now matches v2c's own spread (0.12–0.67 against
-0.13–0.60), the negative nearest edge means figures are cut by the page again,
-and the scale hierarchy is back (v2c still reaches further, 1.88 against 1.56).
-What v5 does not reach is v2c's densest pages (44 marks) and its heaviest ink.
+The cloud is a little smaller than v2c's (mean distance between two pages 4.70
+against 5.02) and its pages are no lonelier (the 95th percentile at 57 % of the
+mean against v2c's 54 %).
 
-## 7. What is still weak
+Every page is sound: no character lost, no reading-order break, no overlap, no
+grain on the title's ink, no grain on a grain (93 of 93), deterministic
+(byte-identical across runs), and `compose()` without the force is byte-for-byte
+v2c.
 
-- **the material's register is narrow**: its small marks are 24–27 where v2c's
-  are 26–45. A grain is always about the same size;
-- **the densest pages are missing**: v2c writes 44 marks on a page, v5 30. The
-  title written over and over until it covers the page is a place `rows` reaches
-  only where the repetition is strong;
-- **`corners` takes four values**, the last parameter that still behaves like a
-  switch;
-- **40 of 93 pages carry no material**, most because the title offers none (v2c
-  leaves about as many plain), a few because a form could not be read and there
-  was nowhere else grounded for it to go;
-- **a page can be too even**: with the pages spread at a third of the mean
-  distance from one another, nothing rhymes. Whether a series wants some pages
-  to echo each other is a question for the work, not for the measure.
+## 8. What is still weak
 
-## 8. Next
+- **`articulation` holds 29 of 81 titles** — it fires on any title of more than
+  one word, so its chord is the loosest of the six. The groups are uneven
+  (`pairing` names one title);
+- **the scattered small copy is becoming a look of its own**: with the material
+  freer, a good many pages now carry the title's own character strewn around the
+  figure. Within a motif it reads as a rhyme; across the whole set it is the one
+  thing that could harden into a family again, and it is worth watching;
+- **v2c still writes a heavier page**: its largest characters and its ink go
+  further (0.10 against 0.07 at the median);
+- **the material's register is wider than it was but not v2c's** (20–36 against
+  26–45);
+- **29 of 93 pages carry no material**, most because the title offers none.
+
+## 9. Next
 
 - **the semantic layer** (v2d, still open): distances in the meaning space as
   further pressures on these same parameters — dispersion, closure, the
   material's sources, the page's own scale — never as characters on the page.
 
-## 9. Review
+## 10. Review
 
 `study.html?compare=%231%2Bauto|%231%2Bauto%2Bp4` (v2c beside v4; `+trace` holds
 the figure to one row, `+lattice` asks for at least two). Sheets in

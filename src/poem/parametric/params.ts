@@ -14,6 +14,8 @@ import type { Rng } from '../../core/random'
 import type { Analysis, Material, Unit } from '../types'
 import { allUnits } from '../spatial/common'
 import type { MaterialParams, MaterialSources } from './material'
+import type { Motifs } from './motif'
+import { drawn } from './motif'
 import type { PaperParams } from './paper'
 import type { TraceParams } from './trace'
 
@@ -52,7 +54,13 @@ function focusGraphemes(a: Analysis, m: Material): Set<number> {
   return out
 }
 
-export function traceParams(a: Analysis, m: Material, rng: Rng): TraceGrounds {
+export function traceParams(a: Analysis, m: Material, rng: Rng, motifs?: Motifs, rhyme?: number): TraceGrounds {
+  // What the title's own structures draw every layer toward at once
+  // (parametric/motif.ts). A parameter is moved part of the way from what the
+  // title's own readings asked for to the chord's value, as far as the title
+  // has that structure — so pages that share a structure come near each other
+  // without becoming the same page.
+  const lean = (key: string, value: number) => drawn(key, value, motifs, rhyme)
   const units = allUnits(m)
   const grounds: string[] = []
   const chars = a.graphemes.filter((g) => g.char.trim())
@@ -95,14 +103,14 @@ export function traceParams(a: Analysis, m: Material, rng: Rng): TraceGrounds {
   const inflection = a.relations.some((r) => r.kind === 'inflection')
   const turnDensity = clip((tokens - 1) / Math.max(1, n - 1))
 
-  const closure = clip(0.55 * repeatShare * (0.45 + 0.55 * loops) + 0.4 * endEcho + 0.3 * headFinality + 0.25 * turnDensity)
+  const closure = lean('closure', clip(0.55 * repeatShare * (0.45 + 0.55 * loops) + 0.4 * endEcho + 0.3 * headFinality + 0.25 * turnDensity))
   grounds.push(
     `closure ${closure.toFixed(2)} ＝ 反復の覆い ${repeatShare.toFixed(2)}（${occurrences} 回）／終わりが始まりに echo ${endEcho.toFixed(2)}／係り先の遠さ ${headFinality.toFixed(2)}／語の切れ目の密度 ${turnDensity.toFixed(2)}`,
   )
 
   // --- where the turning is spent ----------------------------------------------
   // a title with many word boundaries spends its turning there; one word bends smoothly
-  const corners = clip(turnDensity / 0.5)
+  const corners = lean('corners', clip(turnDensity / 0.5))
   if (corners > 0.05) grounds.push(`折れは語の境に置かれる（corners ${corners.toFixed(2)}）`)
 
   // --- the two terms, and how they differ ---------------------------------------
@@ -120,17 +128,17 @@ export function traceParams(a: Analysis, m: Material, rng: Rng): TraceGrounds {
         return c ? [c.left, c.right] : null
       })()
   const asymmetry = pair ? clip(Math.abs(Math.log(tokenWeight(pair[0]) / (tokenWeight(pair[1]) || 1e-6))) / Math.log(4)) : 0
-  const eccentricity = 0.4 * asymmetry
+  const eccentricity = lean('eccentricity', clip(0.4 * asymmetry))
   if (eccentricity > 0.03) grounds.push(`二項の重さの差（${asymmetry.toFixed(2)}）：重い方へ曲線がふくらむ（eccentricity ${eccentricity.toFixed(2)}）`)
 
   // a directed relation leaves the curve open toward the side it depends on,
   // the more so the further the curve has closed and the more the terms differ
   const directed = dependency ? 1 : inflection ? 0.6 : 0
-  const opening = clip(directed * clip((closure - 0.35) / 0.5) * (0.12 + 0.3 * asymmetry), 0, 0.4)
+  const opening = directed ? lean('opening', clip(directed * clip((closure - 0.35) / 0.5) * (0.12 + 0.3 * asymmetry), 0, 0.4)) : 0
   if (opening) grounds.push(`向きのある関係：環は依存する側へ開く（opening ${opening.toFixed(2)}）`)
 
   // --- how far the marks turn with the curve ------------------------------------
-  const tangency = clip(1.4 * closure - 0.2)
+  const tangency = lean('tangency', clip(1.4 * closure - 0.2))
   if (tangency > 0.03) grounds.push(`曲がる線は字を連れて回る（tangency ${tangency.toFixed(2)}）`)
 
   // --- each step: its beats, its weight of ink ----------------------------------
@@ -179,17 +187,17 @@ export function traceParams(a: Analysis, m: Material, rng: Rng): TraceGrounds {
   // `rows` is not rounded — 2.4 writes the title twice and the first 40 % of it
   // again, which is how a repetition that does not come out even is held.
   const strength = repeatShare * (0.4 + 0.6 * loops)
-  const rows = clip(1 + 7 * strength, 1, 8)
+  const rows = clip(lean('rows', 1 + 7 * strength), 1, 8)
   if (rows > 1.05) grounds.push(`反復が題の ${repeatShare.toFixed(2)} を ${occurrences} 回覆う：題は ${rows.toFixed(1)} 回書かれる`)
   const spacing = 1 + 0.35 * (1 - repeatShare)
-  const shear = clip(1 / Math.max(1, units.length) + 0.6 * turnDensity, 0, 1.2)
+  const shear = clip(lean('shear', clip(1 / Math.max(1, units.length) + 0.6 * turnDensity, 0, 1.2)), 0, 1.2)
   const runs = units.map((u, i) => (i > 0 && units[i - 1].char === u.char ? 1 : 0)).reduce((t: number, v) => t + v, 0)
   const erased = units.filter((u) => u.absent).length
-  const decay = clip(0.3 * (runs / Math.max(1, units.length)) + 0.2 * (erased / Math.max(1, units.length)), 0, 0.4)
+  const decay = clip(lean('decay', clip(0.3 * (runs / Math.max(1, units.length)) + 0.2 * (erased / Math.max(1, units.length)), 0, 0.4)), 0, 0.4)
   if (decay > 0.02) grounds.push(`同じ字の連なりと消された席：行ごとに ${(100 * decay).toFixed(0)}% ずつ小さくなる`)
 
   // --- the page ------------------------------------------------------------------
-  const paper = paperParams(a, m, { potential, operation, side, units, sizes, grounds })
+  const paper = paperParams(a, m, { potential, operation, side, units, sizes, grounds, lean })
   // what the page is about is written larger than the rest of it
   if (paper.hierarchy > 1.02) {
     const subject = focusGraphemes(a, m)
@@ -224,25 +232,25 @@ export function traceParams(a: Analysis, m: Material, rng: Rng): TraceGrounds {
 function paperParams(
   a: Analysis,
   m: Material,
-  ctx: { potential: number; operation: number; side: 1 | -1; units: Unit[]; sizes: number[]; grounds: string[] },
+  ctx: { potential: number; operation: number; side: 1 | -1; units: Unit[]; sizes: number[]; grounds: string[]; lean: (key: string, value: number) => number },
 ): PaperParams {
-  const { potential, operation, side, units, grounds } = ctx
+  const { potential, operation, side, units, grounds, lean } = ctx
   const vertical = a.direction === 'vertical'
   // the size one character asks for, as a share of the page: micro → macro
-  const scale = clip(0.04 + 0.22 * potential + 0.9 * operation, 0.035, 1.15)
+  const scale = clip(lean('scale', clip(0.04 + 0.22 * potential + 0.9 * operation, 0.035, 1.15)), 0.035, 1.15)
   // how much of the page that is likely to take, for the standing back below
   const occupancy = clip((scale * Math.max(1, units.length)) / 0.86, 0.05, 1.3)
   // the smaller the figure, the further from the middle it may stand; a figure
   // larger than the page cannot be centred at all — the page cuts it where the
   // reading runs out
-  const offset = Math.max(clip(1.05 - occupancy), clip((occupancy - 1) * 3))
+  const offset = clip(lean('offset', Math.max(clip(1.05 - occupancy), clip((occupancy - 1) * 3))))
   // Which way: against the writing, so that the page opens ahead of the reading,
   // and to the side the curve turns toward.
   const along = vertical ? { x: 0, y: 1 } : { x: 1, y: 0 }
   const across = vertical ? { x: -1, y: 0 } : { x: 0, y: 1 }
   const toward = Math.atan2(-along.y + across.y * side * 0.8, -along.x + across.x * side * 0.8)
   // what the page is about stands larger than the rest of the title
-  const hierarchy = clip(1 + 3.2 * operation + 1.4 * clip((potential - 0.5) / 0.5), 1, 5)
+  const hierarchy = clip(lean('hierarchy', clip(1 + 3.2 * operation + 1.4 * clip((potential - 0.5) / 0.5), 1, 5)), 1, 5)
   grounds.push(
     `紙面：字は紙の ${(100 * scale).toFixed(1)}%（読みの実り ${potential.toFixed(2)}／操作の結果 ${operation.toFixed(2)}）、` +
       `図は紙の ${(100 * occupancy).toFixed(0)}% を占め、中心から ${offset.toFixed(2)} 離れて立つ` +
@@ -298,7 +306,15 @@ function partInside(a: Analysis, grapheme: number | undefined): { char: string; 
   }
 }
 
-export function materialParams(a: Analysis, m: Material, figureNucleus: string | null, nucleusGrapheme?: number): MaterialGrounds {
+export function materialParams(
+  a: Analysis,
+  m: Material,
+  figureNucleus: string | null,
+  nucleusGrapheme?: number,
+  motifs?: Motifs,
+  rhyme?: number,
+): MaterialGrounds {
+  const lean = (key: string, value: number) => drawn(key, value, motifs, rhyme)
   const grounds: string[] = []
   const units = allUnits(m)
   const chars = a.graphemes.filter((g) => g.char.trim())
@@ -329,14 +345,17 @@ export function materialParams(a: Analysis, m: Material, figureNucleus: string |
   const coordination = a.relations.some((r) => r.kind === 'coordination') ? 1 : 0
   const dependency = a.relations.some((r) => r.kind === 'dependency') ? 0.6 : 0
   const counters = a.interiors.get(nucleus)?.counters.length ?? 0
-  const onForm = clip(innerStrength + 0.25 * clip(counters / 2))
-  const onRing = clip(Math.max(coordination, dependency) * (0.35 + 0.5 * repeatStrength))
-  const onPage = clip(0.7 * erasure + 0.25 * clip(repeatStrength - innerStrength))
+  // Where the material stands leans with the title's structures, but a place
+  // with no evidence of its own is never opened by a lean alone: the pressure
+  // is a share of what is already there.
+  const onForm = lean('onForm', clip(innerStrength + 0.25 * clip(counters / 2)))
+  const onRing = lean('onRing', clip(Math.max(coordination, dependency) * (0.35 + 0.5 * repeatStrength)))
+  const onPage = lean('onPage', clip(0.7 * erasure + 0.25 * clip(repeatStrength - innerStrength)))
   const offeredMaterial = 0.55 * repeatStrength + 0.4 * innerStrength + 0.3 * erasure + 0.15 * restStrength
   const where = onForm + onRing + onPage
   // below what would read as a texture at all, or with nowhere grounded to
   // stand, a page is the figure alone
-  const density = offeredMaterial < 0.18 || where < 0.15 ? 0 : clip(offeredMaterial)
+  const density = offeredMaterial < 0.18 || where < 0.15 ? 0 : lean('density', clip(offeredMaterial))
   grounds.push(
     `material ${density.toFixed(2)} ＝ 反復 ${repeatStrength.toFixed(2)}／字の中に読まれた形 ${innerStrength.toFixed(2)}／消された席 ${erasure.toFixed(2)}／題の残り ${restStrength.toFixed(2)}`,
   )
@@ -347,17 +366,17 @@ export function materialParams(a: Analysis, m: Material, figureNucleus: string |
   // the letterform the material gathers on, the finer it has to be met, or the
   // form drawn in grains is not that form.
   const strokes = clip((inkOf(a, nucleus) - 0.12) / 0.16)
-  const fineness = clip(0.3 + 0.4 * repeatStrength + 0.25 * erasure + 0.3 * strokes)
+  const fineness = lean('fineness', clip(0.3 + 0.4 * repeatStrength + 0.25 * erasure + 0.3 * strokes))
   const special = a.morae.filter((mo) => mo.kind === 'N' || mo.kind === 'Q' || mo.kind === 'R' || mo.devoiced).length
   const regularity = clip(1 - 0.5 * (a.morae.length ? special / a.morae.length : 0))
-  const cut = clip(relation && relation.origin !== 'inventory' ? relation.containment : 0)
+  const cut = relation && relation.origin !== 'inventory' ? lean('cut', clip(relation.containment)) : 0
   // How far from the reading the material stands. The ring keeps the distance
   // the title's own material asks for — the more there is of it, the wider it
   // orbits; the dust strays as far as the title is loose from what is written:
   // an erasure scatters it over the page, a repetition keeps it near the words
   // it came from.
   const radius = clip(0.12 + 0.14 * repeatStrength + 0.06 * restStrength, 0.1, 0.32)
-  const spread = clip(0.8 * erasure + 0.35 * restStrength - 0.2 * repeatStrength)
+  const spread = lean('spread', clip(0.8 * erasure + 0.35 * restStrength - 0.2 * repeatStrength))
   if (onPage > 0.02) grounds.push(`塵は読みから ${spread.toFixed(2)} の幅に散る（消された席 ${erasure.toFixed(2)}／題の残り ${restStrength.toFixed(2)}）`)
 
   // as in v2c: the title's repetition first, then a form read inside the

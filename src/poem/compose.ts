@@ -180,6 +180,12 @@ export interface Force {
   params?: Partial<TraceParams>
   /** v4 experiment, review only: override the material field's parameters */
   material?: Partial<import('./parametric').MaterialParams>
+  /**
+   * v6 experiment, review only: how far a page is drawn toward the chords of
+   * the structures its title has (poem/parametric/motif.ts). 0 is v5 — every
+   * parameter read on its own.
+   */
+  rhyme?: number
 }
 
 export function compose(a: Analysis, force: Force = {}): Composition {
@@ -352,7 +358,7 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   // this is the composition's own marks, exactly as v1 wrote them.
   // v4, review only: the page drawn from continuous parameters instead
   const drawn4 = force.parametric
-    ? parametricPage(a, material, force.parametric, new Rng(seed).fork('parametric'), force.params, force.material ?? null, (ms) => withFaces(a, material, ms))
+    ? parametricPage(a, material, force.parametric, new Rng(seed).fork('parametric'), force.params, force.material ?? null, (ms) => withFaces(a, material, ms), force.rhyme)
     : null!
   const behaved = writeWith(force.grammar, a, material, drawn, placed, new Rng(seed).fork(`grammar:${force.grammar ?? 'uniform'}`), {
     semantic: force.semantic,
