@@ -86,7 +86,7 @@ export function parametricPage(
   // The figure is put in its faces first: which face a character is written in
   // decides its ink, and the material must not stand on ink that will be there.
   const figure = figureOf(faces(drawn))
-  const mat = materialParams(a, m, figure.nucleus?.char ?? null, figure.nucleus?.grapheme, motifs, rhyme)
+  const mat = materialParams(a, m, figure.nucleus?.char ?? null, figure.nucleus?.grapheme, motifs, rhyme, meaning)
   // RULE (economy): the material competes with the acts. Where an act leads the
   // page more strongly than the material would, the material recedes as the
   // weaker acts do — its share of the leader's strength, squared. A page whose

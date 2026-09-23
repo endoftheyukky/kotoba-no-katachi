@@ -267,7 +267,9 @@ export function readActs(ctx: ActsContext): Acts {
   // RULE: fading and falling wear the characters as the reading goes on — its
   // first character whole, its last the most worn — by whole components (see
   // wornKeep). What the poem itself erased (absence) does the same.
-  if (e.erode > 0.03) {
+  // A title of one character is that character: any of it worn away and it
+  // may read as another word (愛 as 受). It is not worn at all.
+  if (e.erode > 0.03 && written.filter(Boolean).length > 1) {
     units.forEach((u, i) => {
       if (!written[i]) return
       const t = n > 1 ? i / (n - 1) : 1

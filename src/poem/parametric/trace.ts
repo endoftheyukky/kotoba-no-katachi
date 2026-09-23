@@ -124,6 +124,19 @@ function walk(steps: Step[], p: TraceParams, base: number): { at: Vec[]; heading
   return { at, heading }
 }
 
+/**
+ * How far from the page's edge a character's middle must stay, as a share of
+ * its size. A large character may be cut by the edge — up to half of it off the
+ * page, v2c's macro — and the cut reads as intended. A small character cut by
+ * the edge reads as a mistake (a word in a corner losing its top), and may
+ * change into another character (愛 cut at the top reads as 受): it stays wholly
+ * on the page, with a little room. Continuous in size.
+ */
+export function edgeKeep(size: number): number {
+  const t = Math.min(1, Math.max(0, (size / PAGE - 0.12) / (0.4 - 0.12)))
+  return 0.62 + (0.26 - 0.62) * t
+}
+
 /** one placed unit: which unit, where, turned how far, how large */
 export interface Placed {
   unit: Unit
@@ -294,7 +307,6 @@ export function traceGeometry(a: Analysis, units: Unit[], p: TraceParams) {
     const centre = { ...laid.centre }
     const at = (q: Placed, axis: 'x' | 'y') =>
       axis === 'x' ? centre.x + (q.at.x - laid.cx) * laid.k : centre.y + (q.at.y - laid.cy) * laid.k
-    const keep = 0.26
     let ok = true
     for (const axis of ['x', 'y'] as const) {
       if (!laid.written.length) break
@@ -303,6 +315,7 @@ export function traceGeometry(a: Analysis, units: Unit[], p: TraceParams) {
       for (const q of laid.written) {
         const size = Math.max(MIN_SIZE * PAGE, em * q.size)
         const pos = at(q, axis)
+        const keep = edgeKeep(size)
         low = Math.max(low, keep * size - pos)
         high = Math.min(high, PAGE - keep * size - pos)
       }
@@ -323,16 +336,20 @@ export function traceGeometry(a: Analysis, units: Unit[], p: TraceParams) {
   }
   let shrink = 1
   let stood = stand(laid)
-  while (!stood.ok && shrink > 0.25) {
+  // drawn smaller only down to the smallest the page allows: below that the
+  // characters would be written back up to it and could cover each other
+  while (!stood.ok && shrink > 0.06) {
+    const next = measure(lay(rows), shrink * 0.85)
+    if (next.em < MIN_SIZE * PAGE) break
     shrink *= 0.85
-    laid = measure(lay(rows), shrink)
+    laid = next
     stood = stand(laid)
   }
   const { placed, k, cx, cy } = laid
   const em = Math.max(MIN_SIZE * PAGE, laid.em)
   const centre = stood.centre
 
-  return { steps, path, placed, k, em, cx, cy, centre, base, inset: 0.26 }
+  return { steps, path, placed, k, em, cx, cy, centre, base }
 }
 
 /** the figure's marks, on the page */
@@ -352,7 +369,7 @@ export function traceMarks(a: Analysis, units: Unit[], p: TraceParams, at?: Vec)
     // withdrew, then for the page's corners — the first place that holds it
     // without covering anything. Deterministic; the act never breaks a rule.
     if (q.free) {
-      const room = g.inset * size
+      const room = edgeKeep(size) * size
       const hold = (v: Vec) => ({ x: Math.min(PAGE - room, Math.max(room, v.x)), y: Math.min(PAGE - room, Math.max(room, v.y)) })
       const others = placed
         .filter((o) => o !== q && !o.free && isWritten(o.unit))
@@ -372,6 +389,12 @@ export function traceMarks(a: Analysis, units: Unit[], p: TraceParams, at?: Vec)
     }
     const rotate = ((q.heading - base) * 180 * p.tangency) / Math.PI + (q.lean ?? 0)
     if (!isWritten(q.unit)) continue
+    // the rule every character keeps, held here by construction as a last
+    // resort: more than half of it on the page
+    if (!q.free) {
+      const room = edgeKeep(size) * size
+      point = { x: Math.min(PAGE - room, Math.max(room, point.x)), y: Math.min(PAGE - room, Math.max(room, point.y)) }
+    }
     // the halves of a cut character part along the seam's normal
     const at = q.part ? { x: point.x + q.part.x * size, y: point.y + q.part.y * size } : point
     const plain = unitMarks(a, q.unit, at, size)

@@ -276,7 +276,14 @@ function paperParams(
   const press = clip(1 - 0.15 * sem.still - 0.12 * sem.alone - 0.1 * sem.fading - 0.12 * sem.open + 0.4 * sem.heavy + 0.45 * sem.closed + 0.25 * sem.stirred, 0.72, 1.5)
   // the press acts on the ordinary register only; what an operation produced
   // (v2c's macro — a residue, the parts of a glyph) is as large as it is
-  const scale = clip(lean('scale', clip((0.04 + 0.22 * potential) * press + 0.9 * operation, 0.035, 1.15)), 0.035, 1.15)
+  // v2c's macro is what an operation produced, and only that: in a title of one
+  // character the character is the result, so the page writes it large; in a
+  // longer title the result is one character among others, and it is that one
+  // that stands large (hierarchy, below) while the rest keep their size —
+  // v2c's mixed regime, "the part large, the title small".
+  const written = units.filter((u) => !u.absent && u.char.trim()).length
+  const result = written <= 1 ? 0.9 * operation : 0.25 * operation
+  const scale = clip(lean('scale', clip((0.04 + 0.22 * potential) * press + result, 0.035, 1.15)), 0.035, 1.15)
   // how much of the page that is likely to take, for the standing back below
   const occupancy = clip((scale * Math.max(1, units.length)) / 0.86, 0.05, 1.3)
   // the smaller the figure, the further from the middle it may stand; a figure
@@ -360,8 +367,13 @@ export function materialParams(
   nucleusGrapheme?: number,
   motifs?: Motifs,
   rhyme?: number,
+  meaning?: Meaning | null,
 ): MaterialGrounds {
   const lean = (key: string, value: number) => drawn(key, value, motifs, rhyme)
+  // RULE (meaning): a word of many offers its own characters as small copies —
+  // a multitude written small; a word of fading or stirring offers what is left
+  // of it, scattered. Never another word: the copies are the title's own.
+  const sem = poles(meaning)
   const grounds: string[] = []
   const units = allUnits(m)
   const chars = a.graphemes.filter((g) => g.char.trim())
@@ -409,8 +421,8 @@ export function materialParams(
   // grid on every page whose character held a box (日, 目, 口).
   const onForm = lean('onForm', clip(innerStrength))
   const onRing = lean('onRing', clip(Math.max(coordination, dependency) * (0.35 + 0.5 * repeatStrength)))
-  const onPage = lean('onPage', clip(0.7 * erasure + 0.25 * clip(repeatStrength - innerStrength)))
-  const offeredMaterial = 0.55 * repeatStrength + 0.4 * innerStrength + 0.3 * erasure + 0.15 * restStrength
+  const onPage = lean('onPage', clip(0.7 * erasure + 0.25 * clip(repeatStrength - innerStrength) + 0.6 * sem.many + 0.45 * sem.fading + 0.3 * sem.stirred))
+  const offeredMaterial = 0.55 * repeatStrength + 0.4 * innerStrength + 0.3 * erasure + 0.15 * restStrength + 0.45 * sem.many + 0.35 * sem.fading + 0.2 * sem.stirred
   const where = onForm + onRing + onPage
   // below what would read as a texture at all, or with nowhere grounded to
   // stand, a page is the figure alone
