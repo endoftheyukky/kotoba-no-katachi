@@ -1,8 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- a sheet, and a column of three seats, the last left empty -->
+  <!-- a sheet of paper with こ set high on it, as the first character of
+       ことばのかたち stands on its own v3 page (the site card). こ is the outline
+       of the glyph in Noto Sans JP 500 (SIL OFL 1.1), written as a path, so the
+       icon needs no font. tools/icons/make.mjs draws the PNG sizes from this file. -->
   <rect width="32" height="32" fill="#fff"/>
-  <rect x="0.5" y="0.5" width="31" height="31" fill="none" stroke="#000"/>
-  <rect x="18" y="5" width="5" height="5"/>
-  <rect x="18" y="13" width="5" height="5"/>
-  <rect x="18.5" y="21.5" width="4" height="4" fill="none" stroke="#000"/>
+  <rect id="edge" x="0.5" y="0.5" width="31" height="31" fill="none" stroke="#cfccc5"/>
+  <path fill="#1b1b19" transform="translate(-0.171 22.161) scale(0.02544 -0.02544)" d="M227 713Q282 706 350.5 703.0Q419 700 495 700Q544 700 594.0 702.0Q644 704 690.5 707.5Q737 711 774 714V610Q740 607 692.5 604.0Q645 601 594.0 599.5Q543 598 496 598Q419 598 353.0 601.5Q287 605 227 609ZM287 301Q278 273 273.0 246.0Q268 219 268 193Q268 140 322.5 106.0Q377 72 491 72Q560 72 623.5 77.0Q687 82 742.0 91.0Q797 100 837 112L838 2Q799 -8 745.5 -16.0Q692 -24 628.5 -28.5Q565 -33 495 -33Q388 -33 314.0 -9.5Q240 14 202.0 59.0Q164 104 164 169Q164 210 171.0 245.5Q178 281 184 310Z"/>
 </svg>
