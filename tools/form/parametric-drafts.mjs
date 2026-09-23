@@ -7,7 +7,7 @@ export default async function ({ evaluate, load }) {
     const T = await import('/src/study/titles.ts'); const H = await import('/src/study/holdout.ts'); const P = await import('/src/study/probes.ts')
     const D = await import('/src/study/difficult.ts')
     const SEM = await import('/src/language/semantic/axes.ts')
-    const table = ${process.env.MEANING ? 'SEM.parseTable("proto", await (await fetch("/semantic-proto/axes.tsv")).text())' : 'null'}
+    const table = ${process.env.MEANING ? '(await import("/src/language/semantic/load.ts"))' : 'null'}
     const extra = ${process.env.TITLES_JSON ?? '[]'}
     const titles = [...T.STUDY_TITLES.map((t) => ({ ...t, set: 'dev' })), ...H.HOLDOUT_TITLES.map((t) => ({ ...t, set: 'holdout' })), ...P.PROBE_TITLES.map((t) => ({ ...t, set: 'probe' })),
       ...D.DIFFICULT_WORDS.map((t) => ({ ...t, set: 'difficult' })), ...D.EDGE_TITLES.map((t) => ({ ...t, set: 'edge' })), ...extra.map((t) => ({ ...t, set: 'users' }))]
@@ -18,7 +18,7 @@ export default async function ({ evaluate, load }) {
       if (typeof input === 'string') continue
       try {
         const a = await C.analyze(input)
-        const c = C.compose(a, { parametric: 'auto', rhyme: ${process.env.RHYME ?? 'undefined'}, meaning: table ? SEM.meaningOf(t.text, table) : null })
+        const c = C.compose(a, { parametric: 'auto', rhyme: ${process.env.RHYME ?? 'undefined'}, meaning: table ? await table.readMeaning(t.text) : null })
         const sound = I.soundness(a, c.draft.marks, { repetition: c.primary.op === "proliferation", absent: c.absent, alongCurve: (c.parametric.params.closure ?? 0) >= 0.35 || (c.parametric.params.rows ?? 1) > 1.05, left: c.parametric.withdrawn })
         const p = c.parametric.params
         out.push({ text: t.text, reading: t.reading ?? '', set: t.set, variant: 0, space: 'trace', mode: 'v4', grammar: 'uniform', gvariant: '',

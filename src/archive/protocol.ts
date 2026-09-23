@@ -7,8 +7,13 @@
 export const SOURCES = ['manual', 'example'] as const
 export type Source = (typeof SOURCES)[number]
 
-/** which generator wrote the page: v2c is the published one, v1 the frozen first (?v=1) */
-export const GENERATORS = ['v2c', 'v1'] as const
+/**
+ * which generator wrote the page (poem/generators.ts): v3 writes new words since
+ * its release (?v=3), v2c every address without a version, v1 the frozen first
+ * (?v=1). A snapshot is kept with the name of the generator that drew it and is
+ * never redrawn by another.
+ */
+export const GENERATORS = ['v2c', 'v1', 'v3'] as const
 export type Generator = (typeof GENERATORS)[number]
 
 export interface GenerationEvent {

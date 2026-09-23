@@ -7,7 +7,7 @@ export default async function ({ evaluate, load }) {
   const data = await evaluate(`(async () => { try {
     const C = await import('/src/poem/compose.ts'); const N = await import('/src/title.ts'); const R = await import('/src/render/png.ts')
     const SEM = await import('/src/language/semantic/axes.ts')
-    const table = ${process.env.MEANING ? 'SEM.parseTable("proto", await (await fetch("/semantic-proto/axes.tsv")).text())' : 'null'}
+    const table = ${process.env.MEANING ? '(await import("/src/language/semantic/load.ts"))' : 'null'}
     const titles = ${process.env.TITLES}
     const force = ${process.env.FORCE ?? '{"parametric":"auto"}'}
     const cell = ${process.env.CELL ?? 360}, pad = 12, text = 150, perRow = ${process.env.PER_ROW ?? 3}
@@ -19,7 +19,7 @@ export default async function ({ evaluate, load }) {
     ctx.fillStyle = '#e4e4e4'; ctx.fillRect(0, 0, sheet.width, sheet.height)
     for (const [i, t] of titles.entries()) {
       const a = await C.analyze(N.normalizeTitle({ text: t.text, reading: t.reading }))
-      const meaning = table ? SEM.meaningOf(t.text, table) : null
+      const meaning = table ? await table.readMeaning(t.text) : null
       const c = C.compose(a, meaning ? { ...force, meaning } : force)
       const x = pad + (i % perRow) * (cell + pad)
       const y = pad + Math.floor(i / perRow) * (cell + text + pad)

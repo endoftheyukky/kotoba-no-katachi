@@ -5,7 +5,9 @@
  *   /                                   blank paper and the line
  *   /?title=見えない                     the poem first; 別のことばで試す opens the line
  *   /?title=子供の城&reading=こどものしろ  with its reading
- *   &v=1       the generator as it was frozen at v1 (v2 is the default)
+ *   &v=3       the generator new words are written in (poem/generators.ts)
+ *   &v=1       the generator as it was frozen at v1; an address with no
+ *              version is v2c, as every poem shared before v3 was
  *   &debug=1   why the page is as it is, in the console (never on the page)
  *
  * The same words always give the same poem: there is nothing here to redraw,
@@ -22,9 +24,10 @@ import './glyph/font-face'
 import type { Source } from './archive/protocol'
 import { record } from './archive/record'
 import { uncovered } from './glyph/coverage'
-import { analyze, compose, OPERATIONS, SPACES } from './poem/compose'
+import { analyze, OPERATIONS, SPACES } from './poem/compose'
+import { archiveName, CURRENT, versionOf, write, type Version } from './poem/generators'
 import type { Analysis, Composition } from './poem/types'
-import { downloadPNG, renderCanvas } from './render/png'
+import { downloadBlob, pngOf, renderCanvas } from './render/png'
 import { renderSVG } from './render/svg'
 import { MAX_TITLE, normalizeTitle, type TitleInput } from './title'
 
@@ -47,10 +50,21 @@ const aboutOpen = document.getElementById('about-open') as HTMLButtonElement
 
 const params = new URLSearchParams(location.search)
 const debug = params.has('debug')
-/** which generator writes the page: v2 (mark grammars) unless v1 is asked for */
-const version = params.get('v') === '1' ? 1 : 2
+/**
+ * The generator new words are written in: v1 on the frozen first site (?v=1),
+ * otherwise the one published now. A poem's own address says which generator
+ * drew it, and that one draws it again (poem/generators.ts).
+ */
+const writing: Version = params.get('v') === '1' ? 1 : CURRENT
 
-let current: { input: TitleInput; analysis: Analysis; composition: Composition } | null = null
+let current: {
+  input: TitleInput
+  version: Version
+  analysis: Analysis
+  composition: Composition
+  /** the paper as an image, made once the poem is drawn, so that 保存 can hand it over at once */
+  png: Promise<Blob>
+} | null = null
 /** only the latest request may draw: a slow page must not replace a newer one */
 let ticket = 0
 let quiet: number | undefined
@@ -86,38 +100,42 @@ function read(text: string, reading: string): TitleInput | string {
   return input
 }
 
-/** the address of a poem: its words and reading, and nothing that could vary it */
-function addressOf(input: TitleInput | null): string {
-  if (!input) return version === 1 ? '?v=1' : location.pathname
+/**
+ * The address of a poem: its words, its reading, and the generator that drew
+ * it — nothing that could vary it. v2c keeps the address it always had (no
+ * version), so that every poem shared before v3 opens as it was shared.
+ */
+function addressOf(input: TitleInput | null, v: Version = writing): string {
+  if (!input) return writing === 1 ? '?v=1' : location.pathname
   const q = new URLSearchParams({ title: input.text })
   if (input.reading) q.set('reading', input.reading)
-  if (version === 1) q.set('v', '1')
+  if (v !== 2) q.set('v', String(v))
   return `?${q}`
 }
 
 const same = (a: TitleInput | null, b: TitleInput | null) => !!a && !!b && a.text === b.text && (a.reading ?? '') === (b.reading ?? '')
 
 /** the poem's canonical address: the site's own, wherever the page was opened from */
-function sharedURL(input: TitleInput): string {
-  return new URL(addressOf(input), __SITE__.url ? `${__SITE__.url}/` : location.href).href
+function sharedURL(input: TitleInput, v: Version): string {
+  return new URL(addressOf(input, v), __SITE__.url ? `${__SITE__.url}/` : location.href).href
 }
 
 /**
  * what is shared, by every way of sharing, on three lines: the name, the
  * poem's title (the words alone; a reading stays in the address), its address
  */
-function sharedText(input: TitleInput): string {
-  return `${__SITE__.title}\n「${input.text}」\n${sharedURL(input)}`
+function sharedText(input: TitleInput, v: Version): string {
+  return `${__SITE__.title}\n「${input.text}」\n${sharedURL(input, v)}`
 }
 
-const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }
+const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void>; canShare?: (d: ShareData) => boolean }
 
 /** the row of places to share to, under 共有; it closes when a place is chosen or the poem changes */
 function shareRow(open: boolean, refocus = false): void {
   if (open && !current) return
   if (open && current) {
     // X is asked to write the three lines itself: a link card alone would drop the name and the title
-    shareX.href = `https://x.com/intent/post?text=${encodeURIComponent(sharedText(current.input))}`
+    shareX.href = `https://x.com/intent/post?text=${encodeURIComponent(sharedText(current.input, current.version))}`
     shareOther.hidden = typeof nav.share !== 'function'
     say('')
   }
@@ -146,7 +164,23 @@ function blank(): void {
   stage.setAttribute('aria-label', '白い紙面')
   caption.textContent = ''
   body.dataset.state = 'idle'
+  delete body.dataset.waiting
   document.title = __SITE__.title
+}
+
+/**
+ * While a poem is being written, the paper is white. If it takes long enough to
+ * be noticed, a single 〓 stands on it — the geta, the mark a compositor sets in
+ * the place of a character not yet cast. Nothing moves but its faint breathing.
+ */
+let waiting: number | undefined
+function wait(on: boolean): void {
+  clearTimeout(waiting)
+  if (!on) {
+    delete body.dataset.waiting
+    return
+  }
+  waiting = window.setTimeout(() => (body.dataset.waiting = ''), 280)
 }
 
 /**
@@ -154,18 +188,30 @@ function blank(): void {
  * written it (typed words, or an example chosen): that poem, and only that
  * one, is recorded in the archive — after it is on the paper, never before.
  */
-async function show(input: TitleInput, history: 'push' | 'replace' | 'none', source?: Source): Promise<void> {
+async function show(input: TitleInput, history: 'push' | 'replace' | 'none', version: Version, source?: Source): Promise<void> {
   const mine = ++ticket
-  const was = body.dataset.state
-  body.dataset.state = 'working'
-  // the row belonged to the poem that was on the paper
+  // the row belonged to the poem that was on the paper; the paper itself is
+  // white until the next poem is written — a poem is never shown under words
+  // it does not belong to
   shareRow(false)
   say('')
+  current = null
+  stage.replaceChildren()
+  caption.textContent = ''
+  body.dataset.state = 'working'
+  wait(true)
   try {
     const analysis = await analyze(input)
     if (mine !== ticket) return
-    const composition = compose(analysis, version === 2 ? { grammar: 'auto' } : {})
-    current = { input, analysis, composition }
+    const composition = await write(analysis, version)
+    if (mine !== ticket) return
+    wait(false)
+    const png = new Promise<Blob>((resolve, reject) =>
+      window.setTimeout(() => pngOf(renderCanvas(composition.draft, analysis.glyphs)).then(resolve, reject), 0),
+    )
+    // an image not yet asked for is not an error
+    png.catch(() => undefined)
+    current = { input, version, analysis, composition, png }
     const drawn = renderSVG(stage, composition.draft, analysis.glyphs)
     const label = input.reading ? `${input.text}（${input.reading}）` : input.text
     stage.setAttribute('aria-label', `「${label}」の紙面`)
@@ -177,15 +223,16 @@ async function show(input: TitleInput, history: 'push' | 'replace' | 'none', sou
     // once a poem has been written, the examples have done their work
     examples.hidden = true
     document.title = `${input.text} — ${__SITE__.title}`
-    if (history === 'push') window.history.pushState(null, '', addressOf(input))
-    if (history === 'replace') window.history.replaceState(null, '', addressOf(input))
+    if (history === 'push') window.history.pushState(null, '', addressOf(input, version))
+    if (history === 'replace') window.history.replaceState(null, '', addressOf(input, version))
     if (debug) report(analysis, composition)
     if (source && history === 'push') {
-      record({ text: input.text, reading: input.reading ?? '', source, generator: version === 1 ? 'v1' : 'v2c', svg: drawn.svg })
+      record({ text: input.text, reading: input.reading ?? '', source, generator: archiveName(version), svg: drawn.svg })
     }
   } catch (e) {
     if (mine !== ticket) return
-    body.dataset.state = was === 'shown' ? 'shown' : 'idle'
+    wait(false)
+    body.dataset.state = 'idle'
     say('紙面をつくれませんでした。もう一度お試しください。')
     console.error(e)
   }
@@ -193,6 +240,13 @@ async function show(input: TitleInput, history: 'push' | 'replace' | 'none', sou
 
 /** Why the page is as it is — for study, in the console, only with ?debug. */
 function report(a: Analysis, c: Composition): void {
+  if (c.parametric) {
+    console.groupCollapsed(`題「${a.input.text}」 — v3`)
+    if (c.parametric.meaning) console.log('meaning', c.parametric.meaning.axes, 'read', c.parametric.meaning.read)
+    c.parametric.grounds.forEach((g) => console.log('根拠:', g))
+    console.groupEnd()
+    return
+  }
   const ops = [c.primary, ...c.modifiers]
   console.groupCollapsed(`題「${a.input.text}」${a.input.reading ? `（${a.input.reading}）` : ''} — ${ops.map((p) => p.op).join(' + ')} / ${c.spatial.id}`)
   console.log('tokens', a.tokens.map((t) => `${t.surface}/${t.pos}${t.reading ? `(${t.reading})` : ''}`).join(' '))
@@ -216,12 +270,13 @@ function report(a: Analysis, c: Composition): void {
   console.groupEnd()
 }
 
-/** what the address asks for: a poem, a mistake to be said quietly, or blank paper */
-function fromAddress(): TitleInput | string | null {
+/** what the address asks for: a poem and the generator that draws it, a mistake to be said quietly, or blank paper */
+function fromAddress(): { input: TitleInput; version: Version } | string | null {
   const q = new URLSearchParams(location.search)
   const title = q.get('title')
   if (!title) return null
-  return read(title, q.get('reading') ?? '')
+  const input = read(title, q.get('reading') ?? '')
+  return typeof input === 'string' ? input : { input, version: versionOf(q.get('v')) }
 }
 
 // Enter writes the poem — but an Enter that only confirms a conversion must not also send the words
@@ -251,12 +306,13 @@ form.addEventListener('submit', (e) => {
   field.removeAttribute('aria-invalid')
   // the keyboard would keep covering the poem
   field.blur()
-  // the poem already on the paper: nothing to write again, only to look at
-  if (same(input, current?.input ?? null) && body.dataset.state === 'shown') {
+  // the poem already on the paper, by the generator words are written in now:
+  // nothing to write again, only to look at
+  if (same(input, current?.input ?? null) && current?.version === writing && body.dataset.state === 'shown') {
     mode('view')
     return
   }
-  void show(input, 'push', 'manual')
+  void show(input, 'push', writing, 'manual')
 })
 
 examples.addEventListener('click', (e) => {
@@ -266,14 +322,36 @@ examples.addEventListener('click', (e) => {
   const input = read(a.textContent ?? '', '')
   if (typeof input === 'string') return
   field.value = input.text
-  void show(input, 'push', 'example')
+  void show(input, 'push', writing, 'example')
 })
 
-save.addEventListener('click', () => {
+/**
+ * 保存. On a phone the image is handed to the system's share sheet, where
+ * 「画像を保存」 puts it in Photos (a page cannot write to Photos itself; a plain
+ * download would go to Files). Elsewhere it downloads as before. The paper
+ * alone: no title, no address, no mark of the site.
+ */
+const touch = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+save.addEventListener('click', async () => {
   if (!current) return
-  // the paper alone: no title, no address, no mark of the site
   const name = current.input.text.replace(/[\\/:*?"<>|\s]+/g, '_')
-  downloadPNG(renderCanvas(current.composition.draft, current.analysis.glyphs), name)
+  let blob: Blob
+  try {
+    blob = await current.png
+  } catch {
+    blob = await pngOf(renderCanvas(current.composition.draft, current.analysis.glyphs))
+  }
+  const file = typeof File === 'function' ? new File([blob], `${name}.png`, { type: 'image/png' }) : null
+  if (touch && file && typeof nav.canShare === 'function' && nav.canShare({ files: [file] })) {
+    try {
+      await nav.share({ files: [file] })
+      return
+    } catch (e) {
+      // closed without saving: nothing to say
+      if ((e as DOMException)?.name === 'AbortError') return
+    }
+  }
+  downloadBlob(blob, name)
 })
 
 // 共有 opens (or closes) the row: X · その他 · コピー. Every one of them shares
@@ -289,8 +367,8 @@ shareX.addEventListener('click', () => {
 // address is not given again separately, so it cannot appear twice.
 shareOther.addEventListener('click', async () => {
   if (!current || typeof nav.share !== 'function') return
-  const text = sharedText(current.input)
-  const url = sharedURL(current.input)
+  const text = sharedText(current.input, current.version)
+  const url = sharedURL(current.input, current.version)
   const sent = nav.share({ title: __SITE__.title, text })
   shareRow(false, true)
   try {
@@ -304,8 +382,8 @@ shareOther.addEventListener('click', async () => {
 
 shareCopy.addEventListener('click', () => {
   if (!current) return
-  const text = sharedText(current.input)
-  const url = sharedURL(current.input)
+  const text = sharedText(current.input, current.version)
+  const url = sharedURL(current.input, current.version)
   shareRow(false, true)
   void copy(text, url)
 })
@@ -322,10 +400,11 @@ document.addEventListener('pointerdown', (e) => {
   if (!share.contains(t) && !shareMenu.contains(t)) shareRow(false)
 })
 
-// 別のことばで試す: the line opens again on this page. The address and the
-// history stay as they are until new words are written (then a new entry).
+// 別のことばで試す: the paper is white again at once and the line opens on it.
+// The address and the history stay as they are until new words are written
+// (then a new entry); Back returns to the poem that was there.
 tryOwn.addEventListener('click', () => {
-  shareRow(false)
+  blank()
   mode('write')
   field.value = ''
   field.removeAttribute('aria-invalid')
@@ -363,14 +442,15 @@ window.addEventListener('popstate', () => {
     say(input)
     return
   }
-  void show(input, 'none')
+  mode('view')
+  void show(input.input, 'none', input.version)
 })
 
 const first = fromAddress()
 if (first && typeof first !== 'string') {
   // arrived at a poem: the poem first, the line later
   mode('view')
-  void show(first, 'replace')
+  void show(first.input, 'replace', first.version)
 } else {
   mode('write')
   blank()

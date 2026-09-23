@@ -336,6 +336,7 @@ async function openDetail(id: string, push: boolean): Promise<void> {
     const shared = new URLSearchParams({ title: r.title })
     if (r.reading) shared.set('reading', r.reading)
     if (r.generator_version === 'v1') shared.set('v', '1')
+    if (r.generator_version === 'v3') shared.set('v', '3')
     const page = el('a', '', '公開ページで開く')
     page.href = `${__SITE__.url || location.origin}/?${shared}`
     page.target = '_blank'

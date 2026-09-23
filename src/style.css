@@ -104,6 +104,48 @@ body {
   box-shadow: 0 1px 2px rgba(40, 36, 28, 0.06), 0 8px 28px rgba(40, 36, 28, 0.05);
 }
 
+/*
+ * 〓 — the geta: the mark a compositor sets in the place of a character not yet
+ * cast. While a poem is being written (and only once that is long enough to be
+ * noticed) one stands, small and faint, in the middle of the white paper. It
+ * breathes; nothing else moves, and it is gone the moment the poem is there.
+ */
+#stage {
+  position: relative;
+}
+
+body[data-waiting] #stage::after {
+  content: "〓";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Noto Serif JP", serif;
+  font-size: max(11px, calc(var(--sheet) * 0.03));
+  line-height: 1;
+  color: var(--ink);
+  opacity: 0.16;
+  animation: geta 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes geta {
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.28;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-waiting] #stage::after {
+    animation: none;
+    opacity: 0.2;
+  }
+}
+
 #stage svg {
   display: block;
   width: 100%;

@@ -19,7 +19,7 @@ export default async function ({ evaluate, load }) {
     ]
     const force = ${process.env.FORCE ?? '{"grammar":"auto"}'}
     const SEM = await import('/src/language/semantic/axes.ts')
-    const table = ${process.env.MEANING ? 'SEM.parseTable("proto", await (await fetch("/semantic-proto/axes.tsv")).text())' : 'null'}
+    const table = ${process.env.MEANING ? '(await import("/src/language/semantic/load.ts"))' : 'null'}
     const perRow = ${process.env.PER_ROW ?? 8}, cell = ${process.env.CELL ?? 150}, pad = 8, cap = 16
     const rows = Math.ceil(titles.length / perRow)
     const sheet = document.createElement('canvas')
@@ -33,7 +33,7 @@ export default async function ({ evaluate, load }) {
       const input = N.normalizeTitle({ text: t.text, reading: t.reading })
       if (typeof input === 'string') continue
       const a = await C.analyze(input)
-      const c = C.compose(a, table ? { ...force, meaning: SEM.meaningOf(t.text, table) } : force)
+      const c = C.compose(a, table ? { ...force, meaning: await table.readMeaning(t.text) } : force)
       const x = pad + (i % perRow) * (cell + pad)
       const y = 30 + Math.floor(i / perRow) * (cell + cap + pad)
       ctx.drawImage(R.renderCanvas(c.draft, a.glyphs, cell), x, y)

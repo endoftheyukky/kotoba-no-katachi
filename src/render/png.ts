@@ -58,13 +58,20 @@ export function renderCanvas(draft: Draft, glyphs: GlyphLibrary, px = 2048): HTM
   return canvas
 }
 
+/** the paper as a PNG */
+export function pngOf(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) => canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('png'))), 'image/png'))
+}
+
+/** an image, downloaded under this name */
+export function downloadBlob(blob: Blob, name: string): void {
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `${name}.png`
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+}
+
 export function downloadPNG(canvas: HTMLCanvasElement, name: string): void {
-  canvas.toBlob((blob) => {
-    if (!blob) return
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `${name}.png`
-    a.click()
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
-  }, 'image/png')
+  void pngOf(canvas).then((blob) => downloadBlob(blob, name))
 }
