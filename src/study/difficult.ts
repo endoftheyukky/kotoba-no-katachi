@@ -9,9 +9,9 @@
  *
  * `words` are those ordinary words — chosen for meaning that a page could feel
  * (isolation, crowding, silence, severance, memory), never tuned against.
- * `edges` are the shapes of input the published site has actually been given or
- * could be: one kana, latin letters, numbers, punctuation, long sentences, a
- * reading in brackets.
+ * `edges` are the shapes of input a title can take: one kana, latin letters,
+ * numbers, punctuation, long sentences, a reading in brackets. They are written
+ * for this list; no title anyone has typed on the site is kept in the repository.
  */
 import type { StudyTitle as Titled } from './titles'
 
@@ -49,12 +49,12 @@ export const EDGE_TITLES: StudyTitle[] = [
   { text: '愛' },
   { text: 'ざわざわ' },
   { text: 'カタカナ語' },
-  { text: 'Thank you!' },
-  { text: 'aaaaaaa' },
+  { text: 'Good morning!' },
+  { text: 'zzzzzzz' },
   { text: '2026' },
   { text: '……' },
   { text: '！？' },
-  { text: '僕の悲しみに名前をつけるな！' },
+  { text: '私の影を踏まないでください！' },
   { text: '今日も明日も雨が降るでしょう' },
   { text: '子供の城', reading: 'こどものしろ' },
   { text: '東京', reading: 'とうきょう' },

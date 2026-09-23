@@ -1,8 +1,8 @@
 # Release candidate: v3 (`release/rc1`)
 
 The generator published as `?v=3`, and the site that writes new words with it.
-Built on the research line (v3 → v6, `docs/v3-composition-space.md`,
-`docs/v4-parametric.md`) with the published site (`release/v2c`) merged in.
+Built on the research line (v3 → v6, `docs/research/v3-composition-space.md`,
+`docs/research/v4-parametric.md`) with the published site (`release/v2c`) merged in.
 v1 and v2c are unchanged and still draw every address shared before v3.
 
 ## What the work does now
@@ -128,6 +128,11 @@ Sheets (`docs/contact/`): `v3-dev.png`, `v3-holdout.png`, `v3-difficult.png`,
 `v3-edges.png`, `v3-full-series.png` beside `v2c-full-series.png`,
 `semantic-on-off-difficult.png`, `semantic-on-off-dev.png`, `rhyme-by-act.png`.
 The real-title sheet is not in the repository (it was shown privately).
+Three of the edge titles had been taken from what visitors typed on the site;
+before the repository was made public they were replaced by written ones of
+the same shape (Good morning! · zzzzzzz · 私の影を踏まないでください！), which
+keep every invariant, and the sheets holding them were redrawn — every other
+cell is pixel-identical. The numbers above were measured with the earlier three.
 
 ## Versions and addresses
 

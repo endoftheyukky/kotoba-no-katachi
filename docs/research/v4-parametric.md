@@ -49,7 +49,7 @@ readable, and both are geometry rather than taste: rows stand at least their own
 sweep apart, and where the rows would drive the characters below the smallest
 size the page allows, the last writing of the title is given up.
 
-Sweeps: `docs/contact/v4-trace-sweep.png`, `docs/contact/v4-lattice-sweep.png`.
+Sweeps: `docs/research/contact/v4-trace-sweep.png`, `docs/research/contact/v4-lattice-sweep.png`.
 
 ## 2. The page — micro → normal → macro, middle → corner → cut
 
@@ -79,7 +79,7 @@ a quarter of its size clear of the edge. Where no place on the page satisfies
 every character, the figure is drawn smaller until one does — the page never
 loses a character in order to crop one.
 
-Sweep: `docs/contact/v5-paper-sweep.png` (micro → normal → macro → macro cut →
+Sweep: `docs/research/contact/v5-paper-sweep.png` (micro → normal → macro → macro cut →
 aside → hierarchy → each title's own).
 
 ## 3. The material — silhouette / satellite / dust as one field
@@ -138,7 +138,7 @@ Three rules came out of looking at what that produced, each measured:
    characters. The form now grows into the page as the material takes it.
 3. **no grain stands on another** where the reading doubles back.
 
-Sweep: `docs/contact/v4-material-sweep.png`.
+Sweep: `docs/research/contact/v4-material-sweep.png`.
 
 ## 5. The motif — what makes two pages rhyme
 
@@ -181,7 +181,7 @@ bare where 40 were. A grain was always the same size; now the material's
 register follows the page's own — a page written large carries larger material
 (20 / 23 / 37 against v2c's 26 / 35 / 45, where v5 had 24 / 24 / 27).
 
-Sheet: `docs/contact/v6-rhyme.png` — the set laid out by the structure each title
+Sheet: `docs/research/contact/v6-rhyme.png` — the set laid out by the structure each title
 has. The five `absence` pages are all small, quiet and aside, and no two are
 alike; the eight `repetition` pages all drift in rows of small characters, and no
 two are alike.
@@ -232,7 +232,7 @@ against 85 %). Past 0.9 the chords start to overwhelm the titles' own readings
 and the agreement falls again: pages of different structures are drawn into the
 same places.
 
-The sheet says the same thing plainly (`docs/contact/v6-rhyme.png`): the five
+The sheet says the same thing plainly (`docs/research/contact/v6-rhyme.png`): the five
 `absence` pages are all small, quiet and aside, the eight `repetition` pages all
 drift in rows of small characters — and within each group no two pages are
 alike.
@@ -286,5 +286,5 @@ v2c.
 
 `study.html?compare=%231%2Bauto|%231%2Bauto%2Bp4` (v2c beside v4; `+trace` holds
 the figure to one row, `+lattice` asks for at least two). Sheets in
-`docs/contact/v4-*` and `v5-*`; the parameters and the grounds of each page are
+`docs/research/contact/v4-*` and `v5-*`; the parameters and the grounds of each page are
 on `Composition.parametric` (never drawn).

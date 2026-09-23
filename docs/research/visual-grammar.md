@@ -232,14 +232,14 @@ Development set at the freeze (34 titles):
 
 No unexplained loss, no overlap, no reading-order break, no dead page, no
 nondeterminism. Pages by their largest mark: micro 7, small 9, normal 11,
-large 5, macro 2. Contact sheets: `docs/contact/dev34-before.png` (before the
-visual language pass) and `docs/contact/dev34-v1.png`.
+large 5, macro 2. Contact sheets: `docs/research/contact/dev34-before.png` (before the
+visual language pass) and `docs/research/contact/dev34-v1.png`.
 
 ## Holdout (v1)
 
 47 titles written down before the freeze and never used for design
 (`study/holdout.ts`), generated once after it. Contact sheet:
-`docs/contact/holdout-v1.png`.
+`docs/research/contact/holdout-v1.png`.
 
 No unexplained loss, no reading-order break, no overlap, no error, no
 nondeterminism. Two pages fall under the dead-page measure — ない and 見ない —
@@ -310,14 +310,14 @@ reading-order break, no overlap, no grain on the title's ink, no grain on a
 grain; all 81 development and holdout titles generate identically twice. Pages by their largest mark: v1 micro 7 / small 9 /
 normal 11 / large 5 / macro 2 → v2 micro 13 / small 9 / normal 11 / large 1 /
 macro 0. Holdout (47, once): the same invariants hold; 22 titles take a
-grammar. Contact sheets: `docs/contact/dev34-v2.png`, `docs/contact/holdout-v2.png`.
+grammar. Contact sheets: `docs/research/contact/dev34-v2.png`, `docs/research/contact/holdout-v2.png`.
 
 **Still weak.** Silhouettes share one texture (a square lattice of one grain
 size), so several of them read as a family; orbits are circles; a quiet page
 stays quiet; the joint line and the corner page are untouched.
 
-Checkpoint: tag `v2a` (= `ccdc3df`), sheets `docs/contact/dev34-v2a.png`,
-`docs/contact/holdout-v2a.png`.
+Checkpoint: tag `v2a` (= `ccdc3df`), sheets `docs/research/contact/dev34-v2a.png`,
+`docs/research/contact/holdout-v2a.png`.
 
 ## v2b — second generation (branch `v2`)
 
@@ -396,8 +396,8 @@ identically twice (648); v1 (`compose()` with no grammar) is unchanged to the
 mark on both sets. Grammars in use on the development set: v2a 6 kinds
 (uniform 10) → v2b 9 kinds (uniform 5: three corner pages, 白い 犬, なぜ？).
 Holdout: 28 of 47 pages take a grammar (v2a: 22). Sheets:
-`docs/contact/dev34-v2b.png`, `docs/contact/holdout-v2b.png`,
-`docs/contact/v2b-grammars-compare.png`, `docs/contact/v2b-silhouette-ways.png`.
+`docs/research/contact/dev34-v2b.png`, `docs/research/contact/holdout-v2b.png`,
+`docs/research/contact/v2b-grammars-compare.png`, `docs/research/contact/v2b-silhouette-ways.png`.
 
 **Still weak.** Emanation almost never has room: its best case (森) bleeds off
 the page. Constellation's discs are hexagonal rosettes of one grain size —
@@ -430,8 +430,8 @@ uniform 11 / 8 kinds; holdout — 28 → 22 of 47 take a grammar. Untouched:
 silhouette's four ways, field and attenuation, phase, lattice, the orbit
 shapes, every page listed as strong (王の国, 夜の位置, 海のあと, 見えない,
 雨の中の雨, 国際空港, 朝日, 3月, 人々, 木と林と森). Sheets:
-`docs/contact/dev34-v2c.png`, `docs/contact/holdout-v2c.png`,
-`docs/contact/v2c-before-after.png`.
+`docs/research/contact/dev34-v2c.png`, `docs/research/contact/holdout-v2c.png`,
+`docs/research/contact/v2c-before-after.png`.
 
 ## v2d — semantic experiment (not adopted)
 
@@ -455,7 +455,7 @@ a mid candidate one mark of the outermost orbit ring; a counter candidate one
 smallest mark at the centre of the widest white. The hybrid choice avoids the
 lexicon's explanatory relations (made-of, part, unit, organ), prefers what
 both vector sources agree on, then rank. Comparison:
-`docs/contact/v2d-semantic-compare.png` (v2c / symbolic / aozora / chiVe /
+`docs/research/contact/v2d-semantic-compare.png` (v2c / symbolic / aozora / chiVe /
 chosen, 17 titles; every column free of loss, order break, overlap, grain on
 ink or grain).
 

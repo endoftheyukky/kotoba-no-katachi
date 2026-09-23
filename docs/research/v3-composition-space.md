@@ -48,7 +48,7 @@ symmetry, containment, porosity, linearity. Definitions: `src/poem/form/profile.
   same family.
 - **Families are islands.** A page's nearest page of another family is a median
   2.42 away; its nearest page of the same family 0.98. The gaps are about 2.5×
-  the spacing inside a family (`docs/contact/v3-form-space-v2c.png`).
+  the spacing inside a family (`docs/research/contact/v3-form-space-v2c.png`).
 - **Several axes are switches, not quantities.** Share of pages sitting exactly
   at 0 or 1: rotation 93 %, containment 96 %, branching 90 %, radiality 88 %,
   closure 86 %, curvature 80 %. Each is "on" in one family and "off" in all
@@ -151,12 +151,12 @@ seed. 372/372 pages identical across two runs.
 v3d, public series: 53 of 93 pages move; median move 0.29 = 18 % of the gap to
 another family (v3b: 43 %); within-family spread 1.94 → 2.08; 11 pages move at
 least half the gap; 0 pages less sound than their anchor
-(`docs/contact/v3-form-map.png`).
+(`docs/research/contact/v3-form-map.png`).
 
 ## 4. Review
 
 - `study.html?compare=%231%2Bauto|%231%2Bauto%2Bv3` — v2c beside v3, any set.
-- `docs/contact/v3-representative.png` (v2c | v3d, 12 titles with near-ties),
+- `docs/research/contact/v3-representative.png` (v2c | v3d, 12 titles with near-ties),
   `v3-dev34-pairs.png`, `v3-holdout-pairs.png` (every title, v2c | v3d, with
   anchor and the operators taken), `v3-uniform-morph-rejected.png` (v3b).
 - `tools/form/`: dump drafts from a running dev server (`drafts.mjs` via
