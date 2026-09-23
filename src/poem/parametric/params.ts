@@ -9,6 +9,7 @@
  * a directed relation leaves that ring open toward its dependent.
  */
 import { readPart } from '../../glyph/legibility'
+import { RELATION_THRESHOLD } from '../../glyph/relation'
 import { structuralParts } from '../operations/decomposition'
 import type { Rng } from '../../core/random'
 import type { Analysis, Material, Unit } from '../types'
@@ -17,9 +18,17 @@ import type { MaterialParams, MaterialSources } from './material'
 import type { Motifs } from './motif'
 import { drawn } from './motif'
 import type { PaperParams } from './paper'
+import type { Meaning } from '../../language/semantic/axes'
+import { economy, poles, readActs, type Poles } from './acts'
 import type { TraceParams } from './trace'
 
 const clip = (v: number, lo = 0, hi = 1) => (Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo)
+/**
+ * Kanji and kana. One Latin letter lies inside another because the alphabet is
+ * built of the same few strokes (n in h, o in a) — that is typography, not the
+ * title's structure, and it is not read as a form inside a character.
+ */
+const cjk = (s: string) => [...s].every((c) => /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(c))
 
 export interface TraceGrounds {
   params: TraceParams
@@ -54,7 +63,17 @@ function focusGraphemes(a: Analysis, m: Material): Set<number> {
   return out
 }
 
-export function traceParams(a: Analysis, m: Material, rng: Rng, motifs?: Motifs, rhyme?: number): TraceGrounds {
+export function traceParams(
+  a: Analysis,
+  m: Material,
+  rng: Rng,
+  motifs?: Motifs,
+  rhyme?: number,
+  meaning?: Meaning | null,
+): TraceGrounds {
+  // what the title means, as poles 0-1 (language/semantic/axes.ts); every
+  // pole is 0 where the meaning was not read
+  const sem = poles(meaning)
   // What the title's own structures draw every layer toward at once
   // (parametric/motif.ts). A parameter is moved part of the way from what the
   // title's own readings asked for to the chord's value, as far as the title
@@ -68,7 +87,13 @@ export function traceParams(a: Analysis, m: Material, rng: Rng, motifs?: Motifs,
 
   // What the reading yields, and what an operation has produced: v2c decides
   // its scale by these two (poem/scale.ts), and so does the page here.
-  const potential = clip(m.primary.poeticPotential ?? 0.5)
+  // What the reading yields. v2c reads it from the writing alone, so a word whose
+  // writing does nothing (孤独, 記憶) was read as weak and written small aside —
+  // every such word the same speck. A word whose meaning leans clearly on some
+  // axis is not weak: its meaning is something to read, and it lifts the
+  // potential as far as it leans.
+  const leaning = meaning ? meaning.coverage * Math.max(...Object.values(meaning.axes).map((v) => Math.abs(v))) : 0
+  const potential = Math.max(clip(m.primary.poeticPotential ?? 0.5), clip(0.3 + 0.45 * leaning))
   const focus = m.primary.focus
   const operation =
     focus.kind === 'pair' && focus.relation.kind === 'containment'
@@ -187,7 +212,11 @@ export function traceParams(a: Analysis, m: Material, rng: Rng, motifs?: Motifs,
   // `rows` is not rounded — 2.4 writes the title twice and the first 40 % of it
   // again, which is how a repetition that does not come out even is held.
   const strength = repeatShare * (0.4 + 0.6 * loops)
-  const rows = clip(lean('rows', 1 + 7 * strength), 1, 8)
+  // RULE (meaning): a word of many — a crowd, a festival, a city — is written
+  // more than once even where its writing does not repeat; stirring adds to it.
+  const crowd = 4.2 * economy(sem, motifs ?? { repetition: 0, pairing: 0, nesting: 0, absence: 0, articulation: 0, echo: 0 }).kept.crowd
+  const rows = clip(lean('rows', 1 + 7 * strength + crowd), 1, 8)
+  if (crowd > 0.25) grounds.push(`多さ（${sem.many.toFixed(2)}）・ざわめき（${sem.stirred.toFixed(2)}）：題は ${rows.toFixed(1)} 回書かれる`)
   if (rows > 1.05) grounds.push(`反復が題の ${repeatShare.toFixed(2)} を ${occurrences} 回覆う：題は ${rows.toFixed(1)} 回書かれる`)
   const spacing = 1 + 0.35 * (1 - repeatShare)
   const shear = clip(lean('shear', clip(1 / Math.max(1, units.length) + 0.6 * turnDensity, 0, 1.2)), 0, 1.2)
@@ -197,7 +226,7 @@ export function traceParams(a: Analysis, m: Material, rng: Rng, motifs?: Motifs,
   if (decay > 0.02) grounds.push(`同じ字の連なりと消された席：行ごとに ${(100 * decay).toFixed(0)}% ずつ小さくなる`)
 
   // --- the page ------------------------------------------------------------------
-  const paper = paperParams(a, m, { potential, operation, side, units, sizes, grounds, lean })
+  const paper = paperParams(a, m, { potential, operation, side, units, sizes, grounds, lean, sem })
   // what the page is about is written larger than the rest of it
   if (paper.hierarchy > 1.02) {
     const subject = focusGraphemes(a, m)
@@ -206,7 +235,11 @@ export function traceParams(a: Analysis, m: Material, rng: Rng, motifs?: Motifs,
     grounds.push(`主題は他より ${paper.hierarchy.toFixed(1)} 倍の大きさで書かれる`)
   }
 
-  return { params: { closure, corners, opening, eccentricity, tangency, side, weights, sizes, breaks, branch, rows, spacing, shear, decay, paper }, grounds }
+  // what is done to the characters themselves (parametric/acts.ts)
+  const acts = readActs({ a, units, meaning, motifs: motifs ?? { repetition: 0, pairing: 0, nesting: 0, absence: 0, articulation: 0, echo: 0 }, weights, toward: paper.toward })
+  grounds.push(...acts.grounds)
+
+  return { params: { closure, corners, opening, eccentricity, tangency, side, weights, sizes, breaks, branch, rows, spacing, shear, decay, paper, acts }, grounds }
 }
 
 /**
@@ -232,23 +265,32 @@ export function traceParams(a: Analysis, m: Material, rng: Rng, motifs?: Motifs,
 function paperParams(
   a: Analysis,
   m: Material,
-  ctx: { potential: number; operation: number; side: 1 | -1; units: Unit[]; sizes: number[]; grounds: string[]; lean: (key: string, value: number) => number },
+  ctx: { potential: number; operation: number; side: 1 | -1; units: Unit[]; sizes: number[]; grounds: string[]; lean: (key: string, value: number) => number; sem: Poles },
 ): PaperParams {
-  const { potential, operation, side, units, grounds, lean } = ctx
+  const { potential, operation, side, units, grounds, lean, sem } = ctx
   const vertical = a.direction === 'vertical'
   // the size one character asks for, as a share of the page: micro → macro
-  const scale = clip(lean('scale', clip(0.04 + 0.22 * potential + 0.9 * operation, 0.035, 1.15)), 0.035, 1.15)
+  // RULE (meaning): stillness, solitude, fading and openness write the word
+  // smaller against the page; weight, enclosure and stirring write it larger —
+  // an enclosed word presses on its page. A share of what the readings asked.
+  const press = clip(1 - 0.15 * sem.still - 0.12 * sem.alone - 0.1 * sem.fading - 0.12 * sem.open + 0.4 * sem.heavy + 0.45 * sem.closed + 0.25 * sem.stirred, 0.72, 1.5)
+  // the press acts on the ordinary register only; what an operation produced
+  // (v2c's macro — a residue, the parts of a glyph) is as large as it is
+  const scale = clip(lean('scale', clip((0.04 + 0.22 * potential) * press + 0.9 * operation, 0.035, 1.15)), 0.035, 1.15)
   // how much of the page that is likely to take, for the standing back below
   const occupancy = clip((scale * Math.max(1, units.length)) / 0.86, 0.05, 1.3)
   // the smaller the figure, the further from the middle it may stand; a figure
   // larger than the page cannot be centred at all — the page cuts it where the
   // reading runs out
-  const offset = clip(lean('offset', Math.max(clip(1.05 - occupancy), clip((occupancy - 1) * 3))))
+  const offset = clip(lean('offset', Math.max(clip(1.05 - occupancy), clip((occupancy - 1) * 3))) + 0.3 * sem.alone + 0.2 * sem.far + 0.15 * sem.open - 0.3 * sem.closed)
   // Which way: against the writing, so that the page opens ahead of the reading,
   // and to the side the curve turns toward.
   const along = vertical ? { x: 0, y: 1 } : { x: 1, y: 0 }
   const across = vertical ? { x: -1, y: 0 } : { x: 0, y: 1 }
-  const toward = Math.atan2(-along.y + across.y * side * 0.8, -along.x + across.x * side * 0.8)
+  // RULE (meaning): what falls stands lower on the page, what rises higher —
+  // a lean of the corner the figure takes, never a place of its own
+  const sink = 1.4 * (sem.falling - sem.rising)
+  const toward = Math.atan2(-along.y + across.y * side * 0.8 + sink, -along.x + across.x * side * 0.8)
   // what the page is about stands larger than the rest of the title
   const hierarchy = clip(lean('hierarchy', clip(1 + 3.2 * operation + 1.4 * clip((potential - 0.5) / 0.5), 1, 5)), 1, 5)
   grounds.push(
@@ -300,7 +342,12 @@ function partInside(a: Analysis, grapheme: number | undefined): { char: string; 
     const best = [...counts.entries()].sort((x, y) => y[1].n * y[1].share - x[1].n * x[1].share)[0]
     if (!best) return null
     const [char, { n, score, share }] = best
-    return { char, score: clip(score * Math.min(1, share * 1.2) * (n > 1 ? 1 : 0.7)) }
+    // A part read once is how nearly every kanji is built, and taking it as the
+    // page's material made one page of half the titles people typed (a large
+    // dotted component). Only a form the character repeats in itself — 森's
+    // three 木, 品's three 口, 林's two 木 — is material it offers.
+    if (n < 2) return null
+    return { char, score: clip(score * Math.min(1, share * 1.2)) }
   } catch {
     return null
   }
@@ -326,7 +373,15 @@ export function materialParams(
   const repeated = [...counts.entries()].filter(([, c]) => c > 1).sort((x, y) => y[1] - x[1])[0] ?? null
   const repeatStrength = repeated ? clip((repeated[1] - 1) / 3 + 0.3) : 0
   const nucleus = figureNucleus ?? chars[0]?.char ?? ''
-  const relation = a.glyphRelations.filter((r) => r.kind === 'containment' && r.outer === nucleus).sort((x, y) => y.score - x.score)[0] ?? null
+  // a form read inside the character that the title itself writes (中 in 雨),
+  // or that the character decomposes into (ぜ = せ + ゛) — not a component the
+  // computer's inventory happens to find in its ink, which nearly every kanji has
+  // v2c's own threshold: below it a relation is not read at all (in a long
+  // title of many kanji some weak containment can always be found)
+  const relation =
+    a.glyphRelations
+      .filter((r) => r.kind === 'containment' && r.outer === nucleus && r.origin !== 'inventory' && r.score >= RELATION_THRESHOLD && cjk(r.outer) && cjk(r.inner))
+      .sort((x, y) => y.score - x.score)[0] ?? null
   const part = partInside(a, nucleusGrapheme)
   // a form read inside the character: one the title also writes, or one the
   // character's own parts read as
@@ -344,11 +399,15 @@ export function materialParams(
   // same halo on every page, which is a family again).
   const coordination = a.relations.some((r) => r.kind === 'coordination') ? 1 : 0
   const dependency = a.relations.some((r) => r.kind === 'dependency') ? 0.6 : 0
-  const counters = a.interiors.get(nucleus)?.counters.length ?? 0
   // Where the material stands leans with the title's structures, but a place
   // with no evidence of its own is never opened by a lean alone: the pressure
   // is a share of what is already there.
-  const onForm = lean('onForm', clip(innerStrength + 0.25 * clip(counters / 2)))
+  // the white a character closes in is material only where it is what the poem
+  // is about (v2c's own rule): nearly every kanji closes some white
+  // The white a character closes in is read (v2c's fourth level), but it is no
+  // longer a form to sample: drawn in small marks it became the same dotted
+  // grid on every page whose character held a box (日, 目, 口).
+  const onForm = lean('onForm', clip(innerStrength))
   const onRing = lean('onRing', clip(Math.max(coordination, dependency) * (0.35 + 0.5 * repeatStrength)))
   const onPage = lean('onPage', clip(0.7 * erasure + 0.25 * clip(repeatStrength - innerStrength)))
   const offeredMaterial = 0.55 * repeatStrength + 0.4 * innerStrength + 0.3 * erasure + 0.15 * restStrength

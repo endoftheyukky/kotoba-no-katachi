@@ -19,6 +19,7 @@ import type { Rng } from '../../core/random'
 import type { Analysis, Mark, Material } from '../types'
 import { materialParams, traceParams } from './params'
 import { dominant, readMotifs, type Motifs } from './motif'
+import type { Meaning } from '../../language/semantic/axes'
 import { figureOf, materialMarks, type MaterialParams } from './material'
 import { traceGeometry, traceMarks, type TraceParams } from './trace'
 import type { PaperParams } from './paper'
@@ -41,6 +42,10 @@ export interface ParametricApplied {
   motifs: Motifs
   /** the one it has most of (review only, never drawn) */
   motif: string
+  /** what the title was read to mean, if it was (review only, never drawn) */
+  meaning: Meaning | null
+  /** the characters an act sent away from the reading (the order audit reads them) */
+  withdrawn: number[]
   grounds: string[]
   /** where each written unit went (review: the study sheet) */
   put: { grapheme: number; x: number; y: number; size: number; rotate: number }[]
@@ -64,11 +69,13 @@ export function parametricPage(
   faces: (marks: Mark[]) => Mark[] = (marks) => marks,
   /** how far the title's structures draw the page toward their chords */
   rhyme?: number,
+  /** what the title means (language/semantic/axes.ts); none, and the page is read without it */
+  meaning?: Meaning | null,
 ): { marks: Mark[]; applied: ParametricApplied } {
   const units = m.tokens.flat()
   // what the title's structures press on every layer at once
   const motifs = readMotifs(a, m)
-  const t = traceParams(a, m, rng, motifs, rhyme)
+  const t = traceParams(a, m, rng, motifs, rhyme, meaning)
   const forced = kind === 'trace' ? { rows: 1 } : kind === 'lattice' ? { rows: Math.max(2, t.params.rows) } : {}
   const p: TraceParams = { ...t.params, ...forced, ...override }
   const { marks: drawn, put } = traceMarks(a, units, p)
@@ -80,7 +87,15 @@ export function parametricPage(
   // decides its ink, and the material must not stand on ink that will be there.
   const figure = figureOf(faces(drawn))
   const mat = materialParams(a, m, figure.nucleus?.char ?? null, figure.nucleus?.grapheme, motifs, rhyme)
-  const mp = { ...mat.params, ...(material ?? {}) }
+  // RULE (economy): the material competes with the acts. Where an act leads the
+  // page more strongly than the material would, the material recedes as the
+  // weaker acts do — its share of the leader's strength, squared. A page whose
+  // strongest reading is its material keeps all of it.
+  const lead = p.acts?.lead ?? 0
+  const offered = mat.params.density
+  const recede = offered > 0 && lead > offered ? (offered / lead) ** 2 : 1
+  const mp = { ...mat.params, density: offered * recede, ...(material ?? {}) }
+  if (recede < 0.95) mat.grounds.push(`素材は主な行為に譲る（${offered.toFixed(2)} → ${(offered * recede).toFixed(2)}）`)
   // the frame the material is placed in: where the reading itself went
   const made = materialMarks(a, figure, mp, mat.chars, put)
   return {
@@ -94,6 +109,8 @@ export function parametricPage(
       placed: made.placed,
       motifs,
       motif: dominant(motifs),
+      meaning: meaning ?? null,
+      withdrawn: p.acts?.withdraw ? [units[p.acts.withdraw.unit]?.grapheme].filter((g): g is number => g !== undefined && g >= 0) : [],
       grounds: [...t.grounds, ...mat.grounds],
       put,
       curve: { at: g?.path.at ?? [], k: g?.k ?? 0, em: g?.em ?? 0 },

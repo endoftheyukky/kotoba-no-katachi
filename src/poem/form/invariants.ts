@@ -83,7 +83,17 @@ const visible = (k: Mark) => {
 export function soundness(
   a: Analysis,
   marks: Mark[],
-  o: { repetition: boolean; absent: number[]; alongCurve?: boolean },
+  o: {
+    repetition: boolean
+    absent: number[]
+    alongCurve?: boolean
+    /**
+     * Characters an act sent away from the others (parametric/acts.ts,
+     * withdraw): they have left the reading on purpose, so the order of the
+     * reading is checked without them. Named, not ignored: the act is recorded.
+     */
+    left?: number[]
+  },
 ): Soundness {
   const own = marks.filter((k) => !k.derived)
   const derived = marks.filter((k) => k.derived)
@@ -101,7 +111,8 @@ export function soundness(
     else lost++
   }
   const along = (k: Mark) => (a.direction === 'vertical' ? k.y : k.x)
-  const once = title.filter((g) => title.filter((h) => h.char === g.char).length === 1)
+  const gone = new Set(o.left ?? [])
+  const once = title.filter((g) => !gone.has(g.index) && title.filter((h) => h.char === g.char).length === 1)
   const seen = once.flatMap((g) => {
     const hits = own.filter((k) => k.char === g.char)
     return hits.length === 1 ? [{ at: along(hits[0]), size: hits[0].size }] : []

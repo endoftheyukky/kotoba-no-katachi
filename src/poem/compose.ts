@@ -186,6 +186,12 @@ export interface Force {
    * parameter read on its own.
    */
   rhyme?: number
+  /**
+   * What the title means, read before composing (language/semantic/axes.ts).
+   * Only the parametric generator reads it; without it the page is read from
+   * the writing alone.
+   */
+  meaning?: import('../language/semantic/axes').Meaning | null
 }
 
 export function compose(a: Analysis, force: Force = {}): Composition {
@@ -358,7 +364,7 @@ export function compose(a: Analysis, force: Force = {}): Composition {
   // this is the composition's own marks, exactly as v1 wrote them.
   // v4, review only: the page drawn from continuous parameters instead
   const drawn4 = force.parametric
-    ? parametricPage(a, material, force.parametric, new Rng(seed).fork('parametric'), force.params, force.material ?? null, (ms) => withFaces(a, material, ms), force.rhyme)
+    ? parametricPage(a, material, force.parametric, new Rng(seed).fork('parametric'), force.params, force.material ?? null, (ms) => withFaces(a, material, ms), force.rhyme, force.meaning)
     : null!
   const behaved = writeWith(force.grammar, a, material, drawn, placed, new Rng(seed).fork(`grammar:${force.grammar ?? 'uniform'}`), {
     semantic: force.semantic,

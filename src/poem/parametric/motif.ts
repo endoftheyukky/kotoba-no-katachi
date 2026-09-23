@@ -25,6 +25,7 @@
  * already use — this layer only says which of them belong together.
  */
 import type { Analysis, Material } from '../types'
+import { RELATION_THRESHOLD } from '../../glyph/relation'
 import { allUnits } from '../spatial/common'
 
 const clip = (v: number, lo = 0, hi = 1) => (Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo)
@@ -62,12 +63,16 @@ export function readMotifs(a: Analysis, m: Material): Motifs {
   const tokens = Math.max(1, a.tokens.filter((t) => t.end > t.start).length)
   const pairing = clip(terms * (0.6 + 0.4 * clip((tokens - 1) / 3)))
 
-  const inside = a.glyphRelations.filter((r) => r.kind === 'containment' && r.score > 0).sort((x, y) => y.score - x.score)[0]
+  // kanji and kana only: one Latin letter inside another is the alphabet's own build
+  const cjk = (s: string) => [...s].every((c) => /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(c))
+  const inside = a.glyphRelations
+    .filter((r) => r.kind === 'containment' && r.score >= RELATION_THRESHOLD && r.origin !== 'inventory' && cjk(r.inner) && cjk(r.outer))
+    .sort((x, y) => y.score - x.score)[0]
   const counters = [...a.interiors.values()].reduce((s, i) => s + i.counters.length, 0)
   const focus = m.primary.focus
   // a containment the reading actually rests on, not any ink that happens to
   // lie on other ink
-  const read = inside && inside.score >= 0.4 ? clip((inside.score - 0.35) / 0.55) : 0
+  const read = inside ? clip((inside.score - 0.5) / 0.45) : 0
   const nesting = clip(Math.max(read, focus.kind === 'parts' ? 0.75 : 0, focus.kind === 'counter' ? 0.5 : 0) + 0.1 * clip(counters / 3))
 
   const erased = units.filter((u) => u.absent).length
@@ -112,7 +117,12 @@ export function readMotifs(a: Analysis, m: Material): Motifs {
  */
 export const CHORDS: Record<keyof Motifs, Record<string, number>> = {
   repetition: { rows: 3.2, closure: 0.45, corners: 0.25, scale: 0.12, offset: 0.25, density: 0.8, onPage: 0.5, fineness: 0.75 },
-  pairing: { eccentricity: 0.35, opening: 0.18, corners: 0.45, hierarchy: 2.6, offset: 0.55, scale: 0.2, onRing: 0.55 },
+  // Pairing no longer draws the satellites or the hierarchy: drawn toward the
+  // same small copies round the same large character, every "A と B" title became
+  // one page (大と太, 木と本, 土と土, 王と玉…). The pair now rhymes in how its
+  // curve swells and opens and where it stands; the seam between its terms is an
+  // act (acts.ts, split), and whether it carries satellites is the title's own.
+  pairing: { eccentricity: 0.35, opening: 0.18, corners: 0.45, offset: 0.55, scale: 0.2 },
   nesting: { scale: 0.5, hierarchy: 3.2, closure: 0.25, tangency: 0.25, onForm: 0.7, cut: 0.4, density: 0.75, fineness: 0.6 },
   absence: { offset: 0.75, scale: 0.09, decay: 0.15, corners: 0.35, onPage: 0.6, spread: 0.7, density: 0.6 },
   articulation: { corners: 0.8, shear: 0.6, closure: 0.3, offset: 0.45, spread: 0.4 },
@@ -123,7 +133,7 @@ export const CHORDS: Record<keyof Motifs, Record<string, number>> = {
  * How far a page is drawn toward the chords it belongs to. One number, so that
  * the whole rhyme can be turned off (0 is v5) and measured.
  */
-export const RHYME = 0.9
+export const RHYME = 0.6
 
 /**
  * A parameter, drawn toward every chord the title strikes. `value` is what the

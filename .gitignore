@@ -2,3 +2,6 @@ node_modules
 dist
 .wrangler
 .dev.vars
+
+# prototype semantic table (release data is sharded under public/semantic/)
+public/semantic-proto/

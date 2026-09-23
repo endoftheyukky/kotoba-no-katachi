@@ -6,13 +6,20 @@ export default async function ({ evaluate, load }) {
   const data = await evaluate(`(async () => {
     const C = await import('/src/poem/compose.ts'); const N = await import('/src/title.ts'); const R = await import('/src/render/png.ts')
     const T = await import('/src/study/titles.ts'); const H = await import('/src/study/holdout.ts'); const P = await import('/src/study/probes.ts')
+    const D = await import('/src/study/difficult.ts')
     const sets = '${process.env.SETS ?? 'dev,holdout'}'.split(',')
+    const extra = ${process.env.TITLES_JSON ?? '[]'}
     const titles = [
       ...(sets.includes('dev') ? T.STUDY_TITLES : []),
       ...(sets.includes('holdout') ? H.HOLDOUT_TITLES : []),
       ...(sets.includes('probe') ? P.PROBE_TITLES : []),
+      ...(sets.includes('difficult') ? D.DIFFICULT_WORDS : []),
+      ...(sets.includes('edges') ? D.EDGE_TITLES : []),
+      ...extra,
     ]
     const force = ${process.env.FORCE ?? '{"grammar":"auto"}'}
+    const SEM = await import('/src/language/semantic/axes.ts')
+    const table = ${process.env.MEANING ? 'SEM.parseTable("proto", await (await fetch("/semantic-proto/axes.tsv")).text())' : 'null'}
     const perRow = ${process.env.PER_ROW ?? 8}, cell = ${process.env.CELL ?? 150}, pad = 8, cap = 16
     const rows = Math.ceil(titles.length / perRow)
     const sheet = document.createElement('canvas')
@@ -26,7 +33,7 @@ export default async function ({ evaluate, load }) {
       const input = N.normalizeTitle({ text: t.text, reading: t.reading })
       if (typeof input === 'string') continue
       const a = await C.analyze(input)
-      const c = C.compose(a, force)
+      const c = C.compose(a, table ? { ...force, meaning: SEM.meaningOf(t.text, table) } : force)
       const x = pad + (i % perRow) * (cell + pad)
       const y = 30 + Math.floor(i / perRow) * (cell + cap + pad)
       ctx.drawImage(R.renderCanvas(c.draft, a.glyphs, cell), x, y)
