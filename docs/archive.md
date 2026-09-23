@@ -38,13 +38,16 @@ Exactly when someone newly writes a poem:
 | action | recorded |
 | --- | --- |
 | typing words and pressing Enter (also after 別のことばで試す) | yes, `source = manual` |
-| choosing an example (森 · 見えない · 雨の中の雨) | yes, `source = example` |
-| opening a shared address, reloading, Back / Forward | no |
+| opening a shared address or one of the 作例, reloading, Back / Forward | no |
 | entering the same words that are already on the paper | no (no new poem) |
 | 保存, 共有 (X · その他 · コピー), About | no |
 | `npm run dev` (Vite) | no (nothing is sent) |
 
-`show(input, 'push', source)` in `src/main.ts` is the only call site; it calls
+Records with `source = example` come from before the 作例: the root then
+offered three words (「たとえば…」) that wrote a poem when chosen. The 作例 are
+existing poems opened at their own address, and are not recorded.
+
+`show(input, 'push', version, source)` in `src/main.ts` is the only call site; it calls
 `record()` after the page is on the paper. `record()` returns at once; the
 snapshot is read, hashed and sent in a later task, with a 10 s timeout, and
 nothing is sent while the browser says it is offline. Every failure is silent.

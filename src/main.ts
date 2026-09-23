@@ -15,9 +15,9 @@
  * Back and Forward walk through them. The development sheets are
  * /study.html and /review.html.
  *
- * A poem someone newly writes (typed, or an example) is also recorded, after
- * it is drawn and without waiting, in the anonymous archive (archive/record.ts,
- * docs/archive.md). Nothing else is.
+ * A poem someone newly writes is also recorded, after it is drawn and without
+ * waiting, in the anonymous archive (archive/record.ts, docs/archive.md).
+ * Nothing else is: not an address opened, not a 作例 looked at.
  */
 import './style.css'
 import './glyph/font-face'
@@ -64,6 +64,8 @@ let current: {
   composition: Composition
   /** the paper as an image, made once the poem is drawn, so that 保存 can hand it over at once */
   png: Promise<Blob>
+  /** the same image once it is made: a share sheet must be asked for within the touch itself */
+  file?: File
 } | null = null
 /** only the latest request may draw: a slow page must not replace a newer one */
 let ticket = 0
@@ -128,6 +130,9 @@ function sharedText(input: TitleInput, v: Version): string {
   return `${__SITE__.title}\n「${input.text}」\n${sharedURL(input, v)}`
 }
 
+/** the file name of the paper: the words, with what a file system will not take made plain */
+const fileName = (input: TitleInput) => input.text.replace(/[\\/:*?"<>|\s]+/g, '_')
+
 const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void>; canShare?: (d: ShareData) => boolean }
 
 /** the row of places to share to, under 共有; it closes when a place is chosen or the poem changes */
@@ -185,8 +190,8 @@ function wait(on: boolean): void {
 
 /**
  * Draw the poem for these words. `source` is given only when someone has just
- * written it (typed words, or an example chosen): that poem, and only that
- * one, is recorded in the archive — after it is on the paper, never before.
+ * written it (typed words): that poem, and only that one, is recorded in the
+ * archive — after it is on the paper, never before.
  */
 async function show(input: TitleInput, history: 'push' | 'replace' | 'none', version: Version, source?: Source): Promise<void> {
   const mine = ++ticket
@@ -212,6 +217,10 @@ async function show(input: TitleInput, history: 'push' | 'replace' | 'none', ver
     // an image not yet asked for is not an error
     png.catch(() => undefined)
     current = { input, version, analysis, composition, png }
+    const held = current
+    png.then((blob) => {
+      if (typeof File === 'function') held.file = new File([blob], `${fileName(input)}.png`, { type: 'image/png' })
+    }, () => undefined)
     const drawn = renderSVG(stage, composition.draft, analysis.glyphs)
     const label = input.reading ? `${input.text}（${input.reading}）` : input.text
     stage.setAttribute('aria-label', `「${label}」の紙面`)
@@ -220,8 +229,6 @@ async function show(input: TitleInput, history: 'push' | 'replace' | 'none', ver
     // a poem on the paper is looked at first, however it came: the line closes
     // until 別のことばで試す opens it again
     mode('view')
-    // once a poem has been written, the examples have done their work
-    examples.hidden = true
     document.title = `${input.text} — ${__SITE__.title}`
     if (history === 'push') window.history.pushState(null, '', addressOf(input, version))
     if (history === 'replace') window.history.replaceState(null, '', addressOf(input, version))
@@ -315,14 +322,20 @@ form.addEventListener('submit', (e) => {
   void show(input, 'push', writing, 'manual')
 })
 
+// 作例: a poem that already exists, opened at its own address (title, reading,
+// version) — as if that address had been followed. Nothing is written anew and
+// nothing is recorded. A click that asks for a new tab is left to the link.
 examples.addEventListener('click', (e) => {
   const a = (e.target as HTMLElement).closest('a')
-  if (!a) return
-  e.preventDefault()
-  const input = read(a.textContent ?? '', '')
+  if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+  const q = new URL(a.href).searchParams
+  const input = read(q.get('title') ?? '', q.get('reading') ?? '')
   if (typeof input === 'string') return
-  field.value = input.text
-  void show(input, 'push', writing, 'example')
+  e.preventDefault()
+  field.value = ''
+  window.scrollTo(0, 0)
+  mode('view')
+  void show(input, 'push', versionOf(q.get('v')))
 })
 
 /**
@@ -334,7 +347,7 @@ examples.addEventListener('click', (e) => {
 const touch = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 save.addEventListener('click', async () => {
   if (!current) return
-  const name = current.input.text.replace(/[\\/:*?"<>|\s]+/g, '_')
+  const name = fileName(current.input)
   let blob: Blob
   try {
     blob = await current.png
@@ -364,12 +377,17 @@ shareX.addEventListener('click', () => {
 })
 
 // その他: the system's share sheet. The three lines go as the text, and the
-// address is not given again separately, so it cannot appear twice.
+// address is not given again separately, so it cannot appear twice. Where the
+// system takes a file with text (iOS, Android, Safari, Edge / Chrome on
+// Windows), the paper goes with them as a PNG — the same image 保存 gives;
+// which of the two an app keeps is the app's own choice. Elsewhere, the text.
 shareOther.addEventListener('click', async () => {
   if (!current || typeof nav.share !== 'function') return
   const text = sharedText(current.input, current.version)
   const url = sharedURL(current.input, current.version)
-  const sent = nav.share({ title: __SITE__.title, text })
+  const withPaper: ShareData = { title: __SITE__.title, text, files: current.file ? [current.file] : [] }
+  const paper = !!current.file && typeof nav.canShare === 'function' && nav.canShare(withPaper)
+  const sent = nav.share(paper ? withPaper : { title: __SITE__.title, text })
   shareRow(false, true)
   try {
     await sent

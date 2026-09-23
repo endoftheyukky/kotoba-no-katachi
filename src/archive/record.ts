@@ -1,8 +1,8 @@
 /**
  * The archive, from the page's side: when a poem is newly written by someone
- * (typed words, or an example chosen), one record is sent — and only then.
- * Opening a shared address, Back / Forward, reloading, saving, sharing and
- * About send nothing.
+ * (typed words), one record is sent — and only then. Opening a shared
+ * address or a 作例, Back / Forward, reloading, saving, sharing and About
+ * send nothing.
  *
  * It never stands in the way of the poem: the page is already drawn when this
  * is called, the work is done later, and every failure (no storage, no

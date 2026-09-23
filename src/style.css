@@ -211,33 +211,69 @@ body[data-waiting] #stage::after {
   color: var(--ink);
 }
 
-/* the first time only: a few words to begin with, written as words */
+/*
+ * 作例: nine poems as small sheets of the same paper, under the line, only
+ * while the paper waits for words. Each sheet is a v3 page drawn by the site's
+ * own renderer; its title is said small under it. Nothing moves.
+ */
 #examples {
-  margin-top: 14px !important;
-  font-size: 13px;
-  letter-spacing: 0.08em;
+  width: min(var(--sheet), 540px);
+  max-width: 100%;
+  margin: 8px 0 calc(3 * var(--gutter));
+}
+
+#examples h2 {
+  margin: 0 0 18px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-align: center;
   color: var(--mute);
 }
 
-#examples .lead {
-  margin-right: 0.6em;
+#examples ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px clamp(12px, 3vw, 22px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 #examples a {
-  display: inline-block;
-  white-space: nowrap;
-  color: var(--ink);
+  display: block;
+  color: var(--mute);
   text-decoration: none;
-  margin: 0 0.45em;
-  padding: 6px 0;
+  outline: none;
 }
 
-#examples a:hover,
-#examples a:focus-visible {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1px;
-  outline: none;
+#examples img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgba(40, 36, 28, 0.06), 0 4px 14px rgba(40, 36, 28, 0.04);
+}
+
+#examples span {
+  display: block;
+  padding-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+#examples a:hover span,
+#examples a:focus-visible span {
+  color: var(--ink);
+}
+
+#examples a:focus-visible img {
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
 }
 
 #actions {
@@ -341,26 +377,22 @@ body[data-mode="write"] #caption {
   display: none;
 }
 
-/* looking at a poem that arrived by its address: the poem, its title, then the rest */
-body[data-mode="view"] #entry,
-body[data-mode="view"] #examples {
+/* looking at a poem: the poem, its title, then the rest */
+body[data-mode="view"] #entry {
   display: none;
 }
 
-#examples[hidden] {
+/* 作例 only under white paper waiting for words: not beside a poem, not while one is written */
+body:not([data-mode="write"]) #examples,
+body:not([data-state="idle"]) #examples {
   display: none;
 }
 
-/* the examples and the actions share one row: words to begin with, then what to do with a poem */
 body:not([data-state="shown"]) #actions {
   display: none;
 }
 
 body[data-mode="write"] #try {
-  display: none;
-}
-
-body[data-state="shown"] #examples {
   display: none;
 }
 

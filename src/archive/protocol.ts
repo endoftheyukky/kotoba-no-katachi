@@ -3,7 +3,11 @@
  * The server checks every field again and keeps nothing else.
  */
 
-/** how the words came: typed on the line (also after 別のことばで試す), or one of the examples */
+/**
+ * how the words came: typed on the line (also after 別のことばで試す). `example`
+ * was one of the examples chosen, until the 作例 became poems opened at their
+ * own address (which are not recorded); it stays for the records that have it.
+ */
 export const SOURCES = ['manual', 'example'] as const
 export type Source = (typeof SOURCES)[number]
 

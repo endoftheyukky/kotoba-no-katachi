@@ -1,0 +1,92 @@
+[
+ {
+  "text": "森",
+  "v": 3,
+  "file": "mori.png",
+  "px": 360,
+  "draft": "ada495919cc2e22f8121b1d25a96482862ce70a605b0556935adec90e451ae87",
+  "png": "479a419b51e58052aef217312cebf8f57fb5ea1fcde4b6bc9c318f5cfa62085a",
+  "bytes": 16924,
+  "og": "0c85d56b0ce6970f80713cc8caa5c3dc1670faea98fa627a9655fbe72d3c4da5"
+ },
+ {
+  "text": "孤独",
+  "v": 3,
+  "file": "kodoku.png",
+  "px": 360,
+  "draft": "b24191de8f81c9418912da321c49ca1bdbe7f7356b711fc3625a956aab142e27",
+  "png": "806c535dd563c90152fb52b4b6147def31a3199c21495b878739daf9f3862e2c",
+  "bytes": 7943,
+  "og": "7076fe3828c68bc90b0ae311f9c5e19b14b0388bf7564e8cff20d21ce13598e8"
+ },
+ {
+  "text": "雨の中の雨",
+  "v": 3,
+  "file": "ame-no-naka-no-ame.png",
+  "px": 360,
+  "draft": "e009699bd68fdf900c1c53655953e81730b0c483a48dd3bccf53e3101ee0d896",
+  "png": "cef3e46250853f7ccd68abad9b47a8479971aaee8df432112597afe978c5d59f",
+  "bytes": 19988,
+  "og": "ab5737e89b7894d23de830b51f0ff33ba91969eeab137d334a9a5fbad1e29a58"
+ },
+ {
+  "text": "余白",
+  "v": 3,
+  "file": "yohaku.png",
+  "px": 360,
+  "draft": "82208cee0b1339d809d2648af65dd38037daa31065744e0206328aa463e1f510",
+  "png": "ad9728ff12fea5d96120b08505fe6ef50e0cabf3598b90118985594e6948c55e",
+  "bytes": 16068,
+  "og": "1e25981ad079cbee6cd7c035387895daa67c5c8a2d3216f9582676354ad6b332"
+ },
+ {
+  "text": "見えない",
+  "v": 3,
+  "file": "mienai.png",
+  "px": 360,
+  "draft": "f95a2fdc3ae34157ea6991a25be0bfce6d5237938f4ec89b37bb6e1d52106e62",
+  "png": "d75cd5e760fd8bdc7f93e9bd1c7ccd16a81c7309e4df9aa2008d3f618de1d457",
+  "bytes": 7599,
+  "og": "961c559d03d604c411b0759c20156087159fff74d7e4f766fcd11f515141e342"
+ },
+ {
+  "text": "群衆",
+  "v": 3,
+  "file": "gunshu.png",
+  "px": 360,
+  "draft": "dff50d18eff2f83a3f8fdfea8cc2e83195e7bc9f6a20d889428e4cd0b421d5c3",
+  "png": "cff277f275250935964107d10db86597145890575c789dad545f72f8a9cd62e1",
+  "bytes": 13499,
+  "og": "b987a89cb28e73dba54a8b2eaf70478877657d66d9c25fe28fc1dca62b6d0b68"
+ },
+ {
+  "text": "ささやき",
+  "v": 3,
+  "file": "sasayaki.png",
+  "px": 360,
+  "draft": "622e79b660edacfe170fa39df3fe93e40bff952551a1b40a890c951b1996cc2f",
+  "png": "2cbe8161fa2e7e0ff77c0a643425b48d1619989a9a928f53d5cfd78ccea2532b",
+  "bytes": 12086,
+  "og": "6401f59add3e91605f48ddb372029e61efdc48eb8bc13ccfe11dce45f84a5c98"
+ },
+ {
+  "text": "境界",
+  "v": 3,
+  "file": "kyokai.png",
+  "px": 360,
+  "draft": "cca7ab6f7c451ebc868a7a4a97caa074ec1a4187804d0048e2023699f14acdf7",
+  "png": "3c1cc61dbb81bdaa5ef99969827dbf32ec5842a91489406cf15b3e89e5834420",
+  "bytes": 9591,
+  "og": "b4812681404ed6c0fbcb82a6329c7e42224501fd5052842ab0c93bee1556bd3c"
+ },
+ {
+  "text": "記憶",
+  "v": 3,
+  "file": "kioku.png",
+  "px": 360,
+  "draft": "0fa8292ad20b52c53dd9a8356cc8400702a2bda21126e2f96e38e91691dad630",
+  "png": "2a66d8c1bee0010a4b96d44aa5f1c2914d63c704228a648599a6a36079abc9dd",
+  "bytes": 7052,
+  "og": "c8a3c8444bde1e84d36ab79b2c23d9baf80f151d6cc81a312bb843b7f99c9320"
+ }
+]

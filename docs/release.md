@@ -7,7 +7,7 @@
 Branch `release/v2c`, from `v2c-rc1` (`fc2af5a`). The generator is frozen at
 v2c: no grammar, semantic layer or tuning is added here. The semantic
 experiment (`v2d-semantic-experiment`, `fa48586`) and the notes for v3
-(`docs/v3-notes.md` on branch `v2`) are not part of this branch.
+(`docs/v3-notes.md` on branch `v2`, now `docs/research/v3-notes.md`) were not part of this branch.
 
 The published page is `index.html` + `src/main.ts` + `src/style.css`: the
 name ことばのかたち said small above a sheet of paper, one line under it, and
@@ -19,7 +19,7 @@ are served by `npm run dev`; they are not built for publication.
 
 | address | page |
 | --- | --- |
-| `/` | blank paper, the line, three example words (until a poem is written) |
+| `/` | blank paper, the line, and under it 作例: nine v3 poems as small sheets, each a link to its own `?title=…&v=3` (shown while the paper is blank) |
 | `/?title=見えない` | the poem first, its title under it, then 保存 · 共有 · 別のことばで試す |
 | `/?title=子供の城&reading=こどものしろ` | the same, with its reading |
 | `…&v=3` | v3 (`docs/release-v3.md`): every poem written from the root since rc1 |
