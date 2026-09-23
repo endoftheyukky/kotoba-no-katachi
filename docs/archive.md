@@ -24,7 +24,8 @@ admin (admin/index.html, src/admin/*) ── GET /admin/api/* ── functions/a
 
 - Cloudflare Pages project `kotoba-no-katachi` (unchanged address), now with
   Pages Functions (`functions/`) and one D1 database bound as `DB`
-  (`wrangler.toml`, the source of truth for bindings).
+  (`wrangler.toml`, the source of truth for bindings; kept out of the
+  repository for its database id — `wrangler.example.toml` is the template).
 - `public/_routes.json` runs Functions only for `/api/*`, `/admin` and
   `/admin/*`. Everything else stays static (free, unlimited, and unaffected if
   the Functions quota runs out).

@@ -52,7 +52,10 @@ npx vite preview       # serves dist/ on :4173 to check it (.claude/launch.json:
   the top of the page (ことば / の / かたち on three lines, fixed). (An earlier
   project, `one-reading`, served the same build at
   https://one-reading.pages.dev/ before the name was chosen.)
-- `wrangler.toml` holds the project name and the output directory.
+- `wrangler.toml` holds the project name, the output directory and the D1
+  binding. It is git-ignored (it carries the production database id); the
+  deploying checkout keeps its own copy, and `wrangler.example.toml` is the
+  template with a placeholder id.
 - Deploy (after `npm ci && npm run build`, logged in with `npx wrangler@4 login`):
 
 ```

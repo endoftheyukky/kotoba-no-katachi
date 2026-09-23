@@ -5,3 +5,6 @@ dist
 
 # prototype semantic table (release data is sharded under public/semantic/)
 public/semantic-proto/
+
+# the published project's bindings (its D1 id): wrangler.example.toml is the template
+wrangler.toml

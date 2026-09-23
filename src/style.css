@@ -503,6 +503,25 @@ dialog .record {
   }
 }
 
+/*
+ * Where the 作例 reach the corner About stands in (narrow screens), About
+ * leaves the corner of the window for the foot of the page, under the last
+ * sheet, so that it never lies on a poem while they are scrolled past.
+ */
+@media (max-width: 720px) {
+  body[data-mode="write"][data-state="idle"] {
+    position: relative;
+  }
+
+  body[data-mode="write"][data-state="idle"] #about-open {
+    position: absolute;
+  }
+
+  #examples {
+    margin-bottom: calc(4.5 * var(--gutter) + env(safe-area-inset-bottom));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   body[data-state="working"] #stage svg {
     transition: none;

@@ -1,3 +1,6 @@
+# Copy to wrangler.toml (git-ignored) and put in the id of your own D1
+# database (`npx wrangler d1 create <name>` prints it). The published
+# project's own file is kept out of the repository.
 # Cloudflare Pages: the published site (direct upload from dist/) and, beside
 # it, the archive: Pages Functions in functions/ (POST /api/generations and
 # /admin) with one D1 database. The project name is only the address
@@ -11,5 +14,5 @@ compatibility_date = "2026-09-22"
 [[d1_databases]]
 binding = "DB"
 database_name = "kotoba-no-katachi-archive"
-database_id = "6f2bdccb-3a40-4f4d-9ccb-3a7fcc79ba6a"
+database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"

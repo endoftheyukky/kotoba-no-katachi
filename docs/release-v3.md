@@ -1,6 +1,8 @@
-# Release candidate: v3 (`release/rc1`)
+# v3 (`release/rc1`)
 
 The generator published as `?v=3`, and the site that writes new words with it.
+Published on 2026-09-24 (JST; deployment `63084aaf`, commit `4397966`,
+2026-09-24 01:02 JST).
 Built on the research line (v3 → v6, `docs/research/v3-composition-space.md`,
 `docs/research/v4-parametric.md`) with the published site (`release/v2c`) merged in.
 v1 and v2c are unchanged and still draw every address shared before v3.
@@ -38,7 +40,7 @@ vocabulary of operations on the word — spacing, displacement, partial glyphs,
 fragmentation, disappearance, the operations of concrete poetry — whose strength
 comes from all the readings at once and whose *form* comes from the word's own
 letters. That is the acts layer; its competition (the economy) keeps a page to
-one leading gesture, as CLAUDE.md asks ("a small number of operations").
+one leading gesture, as the brief of the work asks ("a small number of operations").
 
 **Kept from v6**: the continuous figure / page / material / frame; the motif as
 rhyme (at 0.6, and pairing no longer pulls satellites); every invariant.
