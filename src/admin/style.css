@@ -1,0 +1,382 @@
+/*
+ * Generations: the same ground and paper as the work, the sheets large, every
+ * word about them small. Not a dashboard: the pages people wrote are the thing.
+ */
+:root {
+  --ground: #e8e6e1;
+  --paper: #fff;
+  --ink: #1b1b19;
+  --mute: #85837c;
+  --faint: #aeaba3;
+  --line: #cfccc5;
+  --ui: system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  --side: 32px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: var(--ground);
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  outline: none;
+}
+
+button {
+  font: inherit;
+  color: var(--mute);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 6px 4px;
+  cursor: pointer;
+}
+
+button:hover,
+button[aria-pressed="true"] {
+  color: var(--ink);
+}
+
+button:focus-visible,
+.sheet:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* --- the head: the name of the sheet, three numbers, the way out --- */
+
+#head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding: 28px var(--side) 6px;
+}
+
+#home {
+  font-size: 13px;
+  letter-spacing: 0.14em;
+}
+
+#totals {
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--mute);
+}
+
+#out {
+  margin-left: auto;
+}
+
+#out button {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+#filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 22px;
+  padding: 0 var(--side) 18px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+#filters .group {
+  display: flex;
+  gap: 0 6px;
+}
+
+#q {
+  width: 11em;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 4px 0;
+  outline: none;
+}
+
+#q:focus {
+  border-bottom-color: var(--ink);
+}
+
+#q::placeholder {
+  color: var(--faint);
+}
+
+/* --- where we are, inside a visitor or a visit --- */
+
+#context {
+  padding: 0 var(--side) 18px;
+  font-size: 12px;
+  color: var(--mute);
+}
+
+#context h1 {
+  margin: 14px 0 2px;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+
+#context .sub {
+  margin: 0;
+  letter-spacing: 0.03em;
+}
+
+.visit {
+  padding: 0 0 12px;
+}
+
+.visit h2 {
+  margin: 10px var(--side) 14px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--mute);
+}
+
+.visit h2 a {
+  color: var(--ink);
+}
+
+/* --- the sheets --- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 34px 28px;
+  padding: 6px var(--side) 30px;
+}
+
+.card {
+  min-width: 0;
+}
+
+.sheet {
+  display: block;
+  width: 100%;
+  padding: 0;
+}
+
+.paper {
+  aspect-ratio: 1;
+  width: 100%;
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgba(40, 36, 28, 0.06), 0 6px 20px rgba(40, 36, 28, 0.05);
+  display: grid;
+  place-items: center;
+}
+
+.paper svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* as on the work's own page: its own layer, so glyph edges are grey, never coloured */
+  will-change: transform;
+}
+
+.paper .none {
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.card p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.card .title {
+  margin-top: 11px;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+.card .time {
+  margin-top: 3px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--mute);
+}
+
+.card .meta {
+  margin-top: 1px;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--faint);
+}
+
+.card .step {
+  margin-bottom: 7px;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.card .since {
+  margin-left: 0.8em;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+#more,
+#status {
+  margin: 0;
+  padding: 0 var(--side) 36px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--mute);
+}
+
+#more button {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  min-height: 44px;
+  padding: 0 16px;
+}
+
+/* --- one page, large --- */
+
+#detail {
+  --pad: 28px;
+  width: min(1080px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0 var(--pad) 26px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--ground);
+  color: var(--ink);
+}
+
+#detail::backdrop {
+  background: rgba(232, 230, 225, 0.92);
+}
+
+#detail .bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  height: 44px;
+  margin: 0 calc(-1 * var(--pad) + 2px);
+  background: var(--ground);
+}
+
+#detail .bar button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+#detail .body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 17em;
+  gap: 28px;
+  align-items: start;
+}
+
+#detail .big {
+  width: min(100%, calc(100dvh - 120px));
+}
+
+#detail dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 14px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+#detail dt {
+  color: var(--faint);
+}
+
+#detail dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+#detail dd.hash {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--mute);
+}
+
+#detail dd a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+@media (max-width: 760px) {
+  #detail .body {
+    grid-template-columns: 1fr;
+  }
+
+  #detail .big {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  :root {
+    --side: 16px;
+  }
+
+  #head {
+    padding-top: 20px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 14px;
+  }
+
+  #detail {
+    --pad: 16px;
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+}

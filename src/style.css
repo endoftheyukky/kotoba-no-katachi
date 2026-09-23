@@ -1,0 +1,529 @@
+/*
+ * A sheet of paper on a quiet ground, the name said small above it, one line
+ * to write on under it, and a few words said small. Nothing here should
+ * compete with the poem: the paper is the work, everything else is the room
+ * it hangs in.
+ */
+:root {
+  --ground: #e8e6e1;
+  --paper: #fff;
+  --ink: #1b1b19;
+  --mute: #85837c;
+  --faint: #aeaba3;
+  --line: #cfccc5;
+  --ui: system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  --gutter: 16px;
+  /* the room under the paper: one line, one row of words, one quiet note */
+  --under: 148px;
+  /* the room above it: the name in three short lines, then a clear gap */
+  --name-size: 12px;
+  --name-line: 20px;
+  --name-gap: 36px;
+  --head: calc(3 * var(--name-line) + var(--name-gap));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--ground);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+#work {
+  --top: calc(var(--gutter) * 1.5);
+  --sheet: min(calc(100vw - 2 * var(--gutter)), calc(100dvh - var(--head) - var(--under) - var(--top) - 2 * var(--gutter)), 76vh);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--top) + env(safe-area-inset-top)) var(--gutter) calc(var(--gutter) + env(safe-area-inset-bottom));
+}
+
+/*
+ * The name: ことば / の / かたち, three words on three lines, fixed.
+ *   input      the name itself, always the same: a noun, the particle の, a noun
+ *   rule       の hangs under the last kana of ことば, the word it follows;
+ *              かたち starts one kana in, so that の also stands over its middle
+ *   output     a small block, centred as a whole; each line sits a few pixels
+ *              off the centre (half a kana, ≈ 7px). No rotation, no motion.
+ */
+#name {
+  --kana: calc(1em + 0.16em);
+  flex: none;
+  margin: 0 0 var(--name-gap);
+  font-size: var(--name-size);
+  font-weight: 400;
+  line-height: var(--name-line);
+  letter-spacing: 0.16em;
+  text-align: left;
+  color: var(--mute);
+}
+
+#name span {
+  display: block;
+  white-space: nowrap;
+}
+
+#name span:nth-child(3) {
+  padding-left: calc(2 * var(--kana));
+}
+
+#name span:nth-child(4) {
+  padding-left: var(--kana);
+}
+
+/* the paper: always square, as large as the room allows */
+#stage {
+  width: var(--sheet);
+  aspect-ratio: 1;
+  flex: none;
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgba(40, 36, 28, 0.06), 0 8px 28px rgba(40, 36, 28, 0.05);
+}
+
+/*
+ * 〓 — the geta: the mark a compositor sets in the place of a character not yet
+ * cast. While a poem is being written (and only once that is long enough to be
+ * noticed) one stands, small and faint, in the middle of the white paper. It
+ * breathes; nothing else moves, and it is gone the moment the poem is there.
+ */
+#stage {
+  position: relative;
+}
+
+body[data-waiting] #stage::after {
+  content: "〓";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Noto Serif JP", serif;
+  font-size: max(11px, calc(var(--sheet) * 0.03));
+  line-height: 1;
+  color: var(--ink);
+  opacity: 0.16;
+  animation: geta 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes geta {
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.28;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-waiting] #stage::after {
+    animation: none;
+    opacity: 0.2;
+  }
+}
+
+#stage svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* its own layer: glyph edges are antialiased in grey, never in colour */
+  will-change: transform;
+}
+
+#under {
+  width: max(var(--sheet), min(20em, 100%));
+  max-width: 100%;
+  height: var(--under);
+  padding-top: 20px;
+  text-align: center;
+}
+
+#under p {
+  margin: 0;
+}
+
+/* the line */
+#entry {
+  display: flex;
+  justify-content: center;
+}
+
+#title {
+  width: min(16em, 100%);
+  font: inherit;
+  /* at least 16px, so that a phone does not zoom into the line */
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  border-radius: 0;
+  padding: 6px 0 7px;
+  outline: none;
+}
+
+#title::placeholder {
+  color: var(--faint);
+  letter-spacing: 0.1em;
+}
+
+#title:focus-visible {
+  border-bottom-color: var(--ink);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+#title[aria-invalid="true"] {
+  border-bottom-style: dashed;
+}
+
+/* the title of a poem that arrived by its address */
+#caption {
+  min-height: 38px;
+  padding-top: 8px;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+}
+
+/*
+ * 作例: nine poems as small sheets of the same paper, under the line, only
+ * while the paper waits for words. Each sheet is a v3 page drawn by the site's
+ * own renderer; its title is said small under it. Nothing moves.
+ */
+#examples {
+  width: min(var(--sheet), 540px);
+  max-width: 100%;
+  margin: 8px 0 calc(3 * var(--gutter));
+}
+
+#examples h2 {
+  margin: 0 0 18px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-align: center;
+  color: var(--mute);
+}
+
+#examples ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px clamp(12px, 3vw, 22px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#examples a {
+  display: block;
+  color: var(--mute);
+  text-decoration: none;
+  outline: none;
+}
+
+#examples img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgba(40, 36, 28, 0.06), 0 4px 14px rgba(40, 36, 28, 0.04);
+}
+
+#examples span {
+  display: block;
+  padding-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+#examples a:hover span,
+#examples a:focus-visible span {
+  color: var(--ink);
+}
+
+#examples a:focus-visible img {
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
+}
+
+#actions {
+  margin-top: 10px !important;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 0.8em;
+}
+
+#actions button,
+#about-open,
+dialog button {
+  font: inherit;
+  color: var(--mute);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+#actions button {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  min-height: 44px;
+  padding: 0 10px;
+}
+
+#actions button:hover,
+#actions a:hover,
+#about-open:hover,
+dialog button:hover {
+  color: var(--ink);
+}
+
+#actions button:focus-visible,
+#actions a:focus-visible,
+#about-open:focus-visible,
+dialog button:focus-visible {
+  color: var(--ink);
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* 共有 while its row is open */
+#share[aria-expanded="true"] {
+  color: var(--ink);
+}
+
+/*
+ * Where to share: a second, smaller row under the actions, in the place of
+ * the note (which is hidden while it is open). It follows 共有 in the markup,
+ * so the keyboard goes from 共有 straight into it.
+ */
+#share-menu {
+  order: 1;
+  flex-basis: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 0 0.8em;
+}
+
+#share-menu[hidden] {
+  display: none;
+}
+
+#share-menu a,
+#share-menu button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--mute);
+  text-decoration: none;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+#share-menu [hidden] {
+  display: none;
+}
+
+#note {
+  min-height: 20px;
+  margin-top: 6px !important;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--mute);
+  overflow-wrap: anywhere;
+}
+
+/* --- what shows when -------------------------------------------------- */
+
+/* writing: the line is open, the caption is the line itself */
+body[data-mode="write"] #caption {
+  display: none;
+}
+
+/* looking at a poem: the poem, its title, then the rest */
+body[data-mode="view"] #entry {
+  display: none;
+}
+
+/* 作例 only under white paper waiting for words: not beside a poem, not while one is written */
+body:not([data-mode="write"]) #examples,
+body:not([data-state="idle"]) #examples {
+  display: none;
+}
+
+body:not([data-state="shown"]) #actions {
+  display: none;
+}
+
+body[data-mode="write"] #try {
+  display: none;
+}
+
+body[data-state="working"] #stage svg {
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+
+#about-open {
+  position: fixed;
+  right: calc(var(--gutter) + env(safe-area-inset-right));
+  bottom: calc(var(--gutter) + env(safe-area-inset-bottom));
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  padding: 8px 4px;
+}
+
+dialog {
+  --pad: 30px;
+  width: min(34em, calc(100vw - 2 * var(--gutter)));
+  max-height: calc(100dvh - 4 * var(--gutter));
+  padding: 0 var(--pad) 24px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 2;
+  letter-spacing: 0.02em;
+}
+
+dialog::backdrop {
+  background: rgba(232, 230, 225, 0.88);
+}
+
+dialog p {
+  margin: 0 0 12px;
+  outline: none;
+}
+
+dialog .aside {
+  font-size: 12px;
+  color: var(--mute);
+}
+
+dialog dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 14px;
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--mute);
+}
+
+dialog dd {
+  margin: 0;
+}
+
+/* what is recorded: the last words of About */
+dialog .record {
+  margin: 16px 0 0;
+  line-height: 1.8;
+}
+
+/* the top edge of About, with × in its corner: it stays while the text scrolls under it */
+#about-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  height: 44px;
+  margin: 0 calc(-1 * var(--pad) + 2px) 0;
+  background: var(--paper);
+}
+
+#about-close {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+@media (max-width: 520px) {
+  :root {
+    --under: 148px;
+  }
+
+  /* a phone: the name closer to the top and to the paper, so the paper is not pushed far down */
+  :root {
+    --name-line: 18px;
+    --name-gap: 26px;
+  }
+
+  #work {
+    --top: 20px;
+    --sheet: min(calc(100vw - 2 * var(--gutter)), calc(100dvh - var(--head) - var(--under) - var(--top) - 1.5 * var(--gutter)), 76vh);
+    justify-content: flex-start;
+  }
+
+  dialog {
+    --pad: 22px;
+    padding-bottom: 18px;
+    font-size: 13.5px;
+    line-height: 1.95;
+  }
+}
+
+/*
+ * Where the 作例 reach the corner About stands in (narrow screens), About
+ * leaves the corner of the window for the foot of the page, under the last
+ * sheet, so that it never lies on a poem while they are scrolled past.
+ */
+@media (max-width: 720px) {
+  body[data-mode="write"][data-state="idle"] {
+    position: relative;
+  }
+
+  body[data-mode="write"][data-state="idle"] #about-open {
+    position: absolute;
+  }
+
+  #examples {
+    margin-bottom: calc(4.5 * var(--gutter) + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-state="working"] #stage svg {
+    transition: none;
+  }
+}
