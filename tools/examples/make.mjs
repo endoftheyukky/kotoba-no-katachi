@@ -3,7 +3,7 @@
 // render/png.renderCanvas, the renderer 保存 uses), written to
 // public/examples/v3/, with a manifest of what each one is. The same paper,
 // larger, on the site's ground, is the link image of that poem's address
-// (public/og/v3/, 1200 × 630; see docs/ogp.md). The site's own link image
+// (public/og/v3/, 1200 × 630; see docs/site.md). The site's own link image
 // (public/ogp.png) is drawn here too: the v3 page of the work's own name.
 //
 // The thumbnails are the poems, not pictures of them: `CHECK=1` draws them
@@ -11,8 +11,8 @@
 // thumbnail can never drift from the page its link opens.
 //
 // usage (with a dev server running, e.g. `npx vite --port 5175`):
-//   node tools/form/cdp.mjs http://127.0.0.1:5175 <shots-dir> tools/examples/make.mjs
-//   CHECK=1 node tools/form/cdp.mjs … tools/examples/make.mjs
+//   node tools/verify/cdp.mjs http://127.0.0.1:5175 <shots-dir> tools/examples/make.mjs
+//   CHECK=1 node tools/verify/cdp.mjs … tools/examples/make.mjs
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 

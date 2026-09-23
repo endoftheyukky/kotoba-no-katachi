@@ -6,10 +6,9 @@
 © 2026 Yuki Sunaga. All rights reserved.
 
 - 作品名「ことばのかたち」
-- 作品についての文章：`README.md` の「作品について」、`index.html` の About の
-  本文、`CONCEPT.md`
+- 作品についての文章：`README.md` の作品の説明、`index.html` の About の本文
 - 画像：`public/examples/`、`public/og/`、`public/ogp.png`、`public/favicon.svg`、
-  `docs/contact/`、`docs/research/contact/`
+  `public/favicon.ico`、`public/apple-touch-icon.png`
 
 ## 作品画像の共有
 
@@ -33,8 +32,8 @@
 ---
 
 The source code is MIT-licensed (`LICENSE`). The name 「ことばのかたち」, the
-texts about the work (the “作品について” part of `README.md`, the About text in
-`index.html`, `CONCEPT.md`) and the images listed above are © 2026 Yuki Sunaga,
+texts about the work (the description of the work in `README.md`, the About
+text in `index.html`) and the images listed above are © 2026 Yuki Sunaga,
 all rights reserved, and are not covered by the MIT License. Images of poems
 you opened or made with ことばのかたち may be shared on personal social media
 and similar, with the name ことばのかたち and the poem's URL.

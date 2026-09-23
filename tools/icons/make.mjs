@@ -5,7 +5,7 @@
 // Drawn by the browser from the SVG, as a tab would draw it.
 //
 // usage (with a dev server running, e.g. `npx vite --port 5175`):
-//   node tools/form/cdp.mjs http://127.0.0.1:5175 <shots-dir> tools/icons/make.mjs
+//   node tools/verify/cdp.mjs http://127.0.0.1:5175 <shots-dir> tools/icons/make.mjs
 import { writeFileSync } from 'node:fs'
 
 const ICO = [16, 32, 48]

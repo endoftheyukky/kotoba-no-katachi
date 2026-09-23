@@ -12,11 +12,10 @@
  *
  * The same words always give the same poem: there is nothing here to redraw,
  * shuffle or vary. Every poem written is a place in the browser's history, so
- * Back and Forward walk through them. The development sheets are
- * /study.html and /review.html.
+ * Back and Forward walk through them.
  *
  * A poem someone newly writes is also recorded, after it is drawn and without
- * waiting, in the anonymous archive (archive/record.ts, docs/archive.md).
+ * waiting, in the anonymous archive (archive/record.ts, docs/site.md).
  * Nothing else is: not an address opened, not a 作例 looked at.
  */
 import './style.css'
