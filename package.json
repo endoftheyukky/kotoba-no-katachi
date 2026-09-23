@@ -5,8 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "build": "tsc --noEmit && tsc --noEmit -p functions && vite build",
+    "preview": "vite preview",
+    "dev:archive": "npm run build && npx --yes wrangler@4 pages dev dist --port 8788",
+    "db:migrate:local": "npx --yes wrangler@4 d1 migrations apply kotoba-no-katachi-archive --local",
+    "db:migrate:remote": "npx --yes wrangler@4 d1 migrations apply kotoba-no-katachi-archive --remote",
+    "admin:password": "node scripts/admin-password.mjs",
+    "admin:local": "node scripts/admin-password.mjs --local"
   },
   "devDependencies": {
     "typescript": "^7.0.2",

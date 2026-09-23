@@ -8,6 +8,14 @@
   </head>
   <body data-mode="write" data-state="idle">
     <main id="work">
+      <!-- the name, small, above the paper: always ことばのかたち, in three words (see style.css) -->
+      <h1 id="name">
+        <span class="hidden">ことばのかたち</span>
+        <span aria-hidden="true">ことば</span>
+        <span aria-hidden="true">の</span>
+        <span aria-hidden="true">かたち</span>
+      </h1>
+
       <!-- the paper: the work, and nothing else -->
       <div id="stage" role="img" aria-label="白い紙面"></div>
 
@@ -37,8 +45,14 @@
 
         <p id="actions">
           <button type="button" id="save">保存</button>
-          <button type="button" id="share">共有</button>
-          <button type="button" id="try">自分のことばで試す</button>
+          <button type="button" id="share" aria-expanded="false" aria-controls="share-menu">共有</button>
+          <!-- where to share: after 共有 in reading order, shown on its own row under the actions -->
+          <span id="share-menu" role="group" aria-label="共有" hidden>
+            <a id="share-x" href="https://x.com/intent/post" target="_blank" rel="noopener" aria-label="Xで共有">X</a>
+            <button type="button" id="share-other">その他</button>
+            <button type="button" id="share-copy">コピー</button>
+          </span>
+          <button type="button" id="try">別のことばで試す</button>
         </p>
 
         <p id="note" role="status" aria-live="polite"></p>
@@ -48,17 +62,20 @@
     <button type="button" id="about-open" aria-haspopup="dialog">About</button>
 
     <!-- About: the only text about the work, kept here in one place -->
-    <dialog id="about" aria-labelledby="about-title">
-      <h1 id="about-title" tabindex="-1" autofocus>具体詩</h1>
-      <p>
-        この作品は、入力された言葉を、意味だけでなく、音、文字の形、反復、欠落、語のまとまりなど複数の構造として読み取り、一枚の詩へ変換します。
+    <dialog id="about" aria-label="About">
+      <!-- stays at the top while the text scrolls under it -->
+      <form method="dialog" id="about-bar">
+        <button type="submit" id="about-close" aria-label="閉じる">×</button>
+      </form>
+      <p tabindex="-1" autofocus>
+        この作品は、入力された言葉を、音、文字の形、反復、欠落、語や文字のまとまりと関係といった複数の構造として読み取り、一枚の詩へ変換します。
       </p>
       <p>
         あらかじめ用意されたデザインに言葉を当てはめるのではなく、言葉から得られた特徴を、反復する、分かれる、消える、集まる、離れるといった操作として実行し、その結果として紙面を生成します。
       </p>
       <p>同じ言葉からは、いつも同じ詩が生まれます。生成の違いは偶然ではなく、入力された言葉そのものの違いから生まれます。</p>
       <p>
-        本作を考えるうえで、コンクリート・ポエトリー、とりわけ新國誠一による視覚詩の実践を参照しています。言葉を意味の伝達手段としてだけでなく、文字の形、音、配置、反復、空白を含む素材として扱うその問題意識を踏まえつつ、本作では言語解析や字形の計測を通して、現在の計算環境から別の方法を試みています。
+        本作を考えるうえで、コンクリート・ポエトリー、とりわけ新國誠一による視覚詩の実践を参照しています。言葉を意味の伝達手段としてだけでなく、文字の形、音、配置、反復、空白を含む素材として扱うその問題意識を踏まえつつ、本作では語や文字の関係の解析と字形の計測を通して、現在の計算環境から別の方法を試みています。
       </p>
       <p class="aside">ことばは十六字まで。読みを指定するときは「子供の城（こどものしろ）」のように括弧で添えます。</p>
       <dl>
@@ -67,7 +84,10 @@
         <dt>制作</dt>
         <dd>Yuki Sunaga</dd>
       </dl>
-      <form method="dialog"><button type="submit">閉じる</button></form>
+      <!-- what the archive keeps (src/archive/record.ts, migrations/0001_archive.sql): keep the two in agreement -->
+      <p class="aside record">
+        ことばを入れて（または例を選んで）詩をつくると、そのことばと紙面が日時とともに記録されます。同じブラウザからの記録や、一度の訪問のなかでの順序がわかるよう、このブラウザに匿名のIDを保存します。この記録には、名前・メールアドレス・IPアドレス・位置情報は含まれません。記録は、この作品の制作と改善のためにのみ使います。
+      </p>
     </dialog>
 
     <script type="module" src="/src/main.ts"></script>

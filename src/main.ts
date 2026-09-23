@@ -1,8 +1,9 @@
 /**
- * The shell: a sheet of paper, one line to write on, and nothing else.
+ * The shell: the name said small, a sheet of paper, one line to write on,
+ * and nothing else.
  *
  *   /                                   blank paper and the line
- *   /?title=見えない                     the poem first; the line comes later
+ *   /?title=見えない                     the poem first; 別のことばで試す opens the line
  *   /?title=子供の城&reading=こどものしろ  with its reading
  *   &v=1       the generator as it was frozen at v1 (v2 is the default)
  *   &debug=1   why the page is as it is, in the console (never on the page)
@@ -11,9 +12,15 @@
  * shuffle or vary. Every poem written is a place in the browser's history, so
  * Back and Forward walk through them. The development sheets are
  * /study.html and /review.html.
+ *
+ * A poem someone newly writes (typed, or an example) is also recorded, after
+ * it is drawn and without waiting, in the anonymous archive (archive/record.ts,
+ * docs/archive.md). Nothing else is.
  */
 import './style.css'
 import './glyph/font-face'
+import type { Source } from './archive/protocol'
+import { record } from './archive/record'
 import { uncovered } from './glyph/coverage'
 import { analyze, compose, OPERATIONS, SPACES } from './poem/compose'
 import type { Analysis, Composition } from './poem/types'
@@ -29,6 +36,10 @@ const caption = document.getElementById('caption')!
 const examples = document.getElementById('examples')!
 const save = document.getElementById('save') as HTMLButtonElement
 const share = document.getElementById('share') as HTMLButtonElement
+const shareMenu = document.getElementById('share-menu')!
+const shareX = document.getElementById('share-x') as HTMLAnchorElement
+const shareOther = document.getElementById('share-other') as HTMLButtonElement
+const shareCopy = document.getElementById('share-copy') as HTMLButtonElement
 const tryOwn = document.getElementById('try') as HTMLButtonElement
 const note = document.getElementById('note')!
 const about = document.getElementById('about') as HTMLDialogElement
@@ -51,7 +62,7 @@ function say(text: string, fade = false): void {
   if (fade && text) quiet = window.setTimeout(() => (note.textContent = ''), 2400)
 }
 
-/** write: the line is open. view: a poem arrived by its address, and is looked at first */
+/** write: the line is open. view: a poem is on the paper and is looked at first (保存 · 共有 · 別のことばで試す) */
 function mode(m: 'write' | 'view'): void {
   body.dataset.mode = m
 }
@@ -86,37 +97,92 @@ function addressOf(input: TitleInput | null): string {
 
 const same = (a: TitleInput | null, b: TitleInput | null) => !!a && !!b && a.text === b.text && (a.reading ?? '') === (b.reading ?? '')
 
+/** the poem's canonical address: the site's own, wherever the page was opened from */
+function sharedURL(input: TitleInput): string {
+  return new URL(addressOf(input), __SITE__.url ? `${__SITE__.url}/` : location.href).href
+}
+
+/**
+ * what is shared, by every way of sharing, on three lines: the name, the
+ * poem's title (the words alone; a reading stays in the address), its address
+ */
+function sharedText(input: TitleInput): string {
+  return `${__SITE__.title}\n「${input.text}」\n${sharedURL(input)}`
+}
+
+const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }
+
+/** the row of places to share to, under 共有; it closes when a place is chosen or the poem changes */
+function shareRow(open: boolean, refocus = false): void {
+  if (open && !current) return
+  if (open && current) {
+    // X is asked to write the three lines itself: a link card alone would drop the name and the title
+    shareX.href = `https://x.com/intent/post?text=${encodeURIComponent(sharedText(current.input))}`
+    shareOther.hidden = typeof nav.share !== 'function'
+    say('')
+  }
+  shareMenu.hidden = !open
+  // the row stands where the note is said
+  note.hidden = open
+  share.setAttribute('aria-expanded', String(open))
+  if (!open && refocus) share.focus()
+}
+
+async function copy(text: string, url: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text)
+    say('コピーしました', true)
+  } catch {
+    // no clipboard: the address, to be copied by hand
+    say(url)
+  }
+}
+
 function blank(): void {
   ticket++
   current = null
+  shareRow(false)
   stage.replaceChildren()
   stage.setAttribute('aria-label', '白い紙面')
   caption.textContent = ''
   body.dataset.state = 'idle'
-  document.title = '具体詩'
+  document.title = __SITE__.title
 }
 
-async function show(input: TitleInput, history: 'push' | 'replace' | 'none'): Promise<void> {
+/**
+ * Draw the poem for these words. `source` is given only when someone has just
+ * written it (typed words, or an example chosen): that poem, and only that
+ * one, is recorded in the archive — after it is on the paper, never before.
+ */
+async function show(input: TitleInput, history: 'push' | 'replace' | 'none', source?: Source): Promise<void> {
   const mine = ++ticket
   const was = body.dataset.state
   body.dataset.state = 'working'
+  // the row belonged to the poem that was on the paper
+  shareRow(false)
   say('')
   try {
     const analysis = await analyze(input)
     if (mine !== ticket) return
     const composition = compose(analysis, version === 2 ? { grammar: 'auto' } : {})
     current = { input, analysis, composition }
-    renderSVG(stage, composition.draft, analysis.glyphs)
+    const drawn = renderSVG(stage, composition.draft, analysis.glyphs)
     const label = input.reading ? `${input.text}（${input.reading}）` : input.text
     stage.setAttribute('aria-label', `「${label}」の紙面`)
     caption.textContent = `「${label}」`
     body.dataset.state = 'shown'
+    // a poem on the paper is looked at first, however it came: the line closes
+    // until 別のことばで試す opens it again
+    mode('view')
     // once a poem has been written, the examples have done their work
     examples.hidden = true
-    document.title = `${input.text} — 具体詩`
+    document.title = `${input.text} — ${__SITE__.title}`
     if (history === 'push') window.history.pushState(null, '', addressOf(input))
     if (history === 'replace') window.history.replaceState(null, '', addressOf(input))
     if (debug) report(analysis, composition)
+    if (source && history === 'push') {
+      record({ text: input.text, reading: input.reading ?? '', source, generator: version === 1 ? 'v1' : 'v2c', svg: drawn.svg })
+    }
   } catch (e) {
     if (mine !== ticket) return
     body.dataset.state = was === 'shown' ? 'shown' : 'idle'
@@ -185,8 +251,12 @@ form.addEventListener('submit', (e) => {
   field.removeAttribute('aria-invalid')
   // the keyboard would keep covering the poem
   field.blur()
-  if (same(input, current?.input ?? null) && body.dataset.state === 'shown') return
-  void show(input, 'push')
+  // the poem already on the paper: nothing to write again, only to look at
+  if (same(input, current?.input ?? null) && body.dataset.state === 'shown') {
+    mode('view')
+    return
+  }
+  void show(input, 'push', 'manual')
 })
 
 examples.addEventListener('click', (e) => {
@@ -196,7 +266,7 @@ examples.addEventListener('click', (e) => {
   const input = read(a.textContent ?? '', '')
   if (typeof input === 'string') return
   field.value = input.text
-  void show(input, 'push')
+  void show(input, 'push', 'example')
 })
 
 save.addEventListener('click', () => {
@@ -206,38 +276,78 @@ save.addEventListener('click', () => {
   downloadPNG(renderCanvas(current.composition.draft, current.analysis.glyphs), name)
 })
 
-share.addEventListener('click', async () => {
-  if (!current) return
-  const url = new URL(addressOf(current.input), location.href).href
-  const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }
-  if (typeof nav.share === 'function') {
-    try {
-      await nav.share({ title: `「${current.input.text}」 — 具体詩`, url })
-      return
-    } catch (e) {
-      // the person closed the sheet: nothing to say
-      if ((e as DOMException)?.name === 'AbortError') return
-    }
-  }
+// 共有 opens (or closes) the row: X · その他 · コピー. Every one of them shares
+// the same three lines — the name, the title and the address of the poem on the paper.
+share.addEventListener('click', () => shareRow(shareMenu.hidden !== false))
+
+// X: its own post screen in a new tab (the link does the opening), the text written in
+shareX.addEventListener('click', () => {
+  window.setTimeout(() => shareRow(false, true))
+})
+
+// その他: the system's share sheet. The three lines go as the text, and the
+// address is not given again separately, so it cannot appear twice.
+shareOther.addEventListener('click', async () => {
+  if (!current || typeof nav.share !== 'function') return
+  const text = sharedText(current.input)
+  const url = sharedURL(current.input)
+  const sent = nav.share({ title: __SITE__.title, text })
+  shareRow(false, true)
   try {
-    await navigator.clipboard.writeText(url)
-    say('リンクをコピーしました', true)
-  } catch {
-    say(url)
+    await sent
+  } catch (e) {
+    // the person closed the sheet: nothing to say
+    if ((e as DOMException)?.name === 'AbortError') return
+    await copy(text, url)
   }
 })
 
+shareCopy.addEventListener('click', () => {
+  if (!current) return
+  const text = sharedText(current.input)
+  const url = sharedURL(current.input)
+  shareRow(false, true)
+  void copy(text, url)
+})
+
+// the row closes with Escape, or with a touch anywhere else
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || shareMenu.hidden || about.open) return
+  e.preventDefault()
+  shareRow(false, shareMenu.contains(document.activeElement) || document.activeElement === share)
+})
+document.addEventListener('pointerdown', (e) => {
+  if (shareMenu.hidden) return
+  const t = e.target as Node
+  if (!share.contains(t) && !shareMenu.contains(t)) shareRow(false)
+})
+
+// 別のことばで試す: the line opens again on this page. The address and the
+// history stay as they are until new words are written (then a new entry).
 tryOwn.addEventListener('click', () => {
+  shareRow(false)
   mode('write')
   field.value = ''
+  field.removeAttribute('aria-invalid')
+  say('')
   field.focus()
 })
 
-aboutOpen.addEventListener('click', () => about.showModal())
-about.addEventListener('click', (e) => {
-  // a click on the backdrop closes it
-  if (e.target === about) about.close()
+// About closes with ×, Escape (the dialog's own), or a click outside it; the
+// focus goes back to About.
+aboutOpen.addEventListener('click', () => {
+  about.showModal()
+  // opens at its first line, however far it was read last time
+  about.scrollTop = 0
 })
+about.addEventListener('click', (e) => {
+  // a click on the backdrop reaches the dialog itself, outside its box
+  if (e.target !== about) return
+  const r = about.getBoundingClientRect()
+  const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom
+  if (!inside) about.close()
+})
+about.addEventListener('close', () => aboutOpen.focus({ preventScroll: true }))
 
 // Back and Forward: the poem at that address, drawn again the same
 window.addEventListener('popstate', () => {
@@ -253,7 +363,6 @@ window.addEventListener('popstate', () => {
     say(input)
     return
   }
-  if (body.dataset.mode === 'write') field.value = input.reading ? `${input.text}（${input.reading}）` : input.text
   void show(input, 'none')
 })
 

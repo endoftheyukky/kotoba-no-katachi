@@ -1,7 +1,8 @@
 /*
- * A sheet of paper on a quiet ground, one line to write on under it, and a
- * few words said small. Nothing here should compete with the poem: the paper
- * is the work, everything else is the room it hangs in.
+ * A sheet of paper on a quiet ground, the name said small above it, one line
+ * to write on under it, and a few words said small. Nothing here should
+ * compete with the poem: the paper is the work, everything else is the room
+ * it hangs in.
  */
 :root {
   --ground: #e8e6e1;
@@ -14,6 +15,11 @@
   --gutter: 16px;
   /* the room under the paper: one line, one row of words, one quiet note */
   --under: 148px;
+  /* the room above it: the name in three short lines, then a clear gap */
+  --name-size: 12px;
+  --name-line: 20px;
+  --name-gap: 36px;
+  --head: calc(3 * var(--name-line) + var(--name-gap));
 }
 
 * {
@@ -45,14 +51,48 @@ body {
 }
 
 #work {
-  --sheet: min(calc(100vw - 2 * var(--gutter)), calc(100dvh - var(--under) - 5 * var(--gutter)), 76vh);
+  --top: calc(var(--gutter) * 1.5);
+  --sheet: min(calc(100vw - 2 * var(--gutter)), calc(100dvh - var(--head) - var(--under) - var(--top) - 2 * var(--gutter)), 76vh);
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: calc(var(--gutter) * 2 + env(safe-area-inset-top)) var(--gutter) calc(var(--gutter) + env(safe-area-inset-bottom));
+  padding: calc(var(--top) + env(safe-area-inset-top)) var(--gutter) calc(var(--gutter) + env(safe-area-inset-bottom));
+}
+
+/*
+ * The name: ことば / の / かたち, three words on three lines, fixed.
+ *   input      the name itself, always the same: a noun, the particle の, a noun
+ *   rule       の hangs under the last kana of ことば, the word it follows;
+ *              かたち starts one kana in, so that の also stands over its middle
+ *   output     a small block, centred as a whole; each line sits a few pixels
+ *              off the centre (half a kana, ≈ 7px). No rotation, no motion.
+ */
+#name {
+  --kana: calc(1em + 0.16em);
+  flex: none;
+  margin: 0 0 var(--name-gap);
+  font-size: var(--name-size);
+  font-weight: 400;
+  line-height: var(--name-line);
+  letter-spacing: 0.16em;
+  text-align: left;
+  color: var(--mute);
+}
+
+#name span {
+  display: block;
+  white-space: nowrap;
+}
+
+#name span:nth-child(3) {
+  padding-left: calc(2 * var(--kana));
+}
+
+#name span:nth-child(4) {
+  padding-left: var(--kana);
 }
 
 /* the paper: always square, as large as the room allows */
@@ -185,17 +225,62 @@ dialog button {
 }
 
 #actions button:hover,
+#actions a:hover,
 #about-open:hover,
 dialog button:hover {
   color: var(--ink);
 }
 
 #actions button:focus-visible,
+#actions a:focus-visible,
 #about-open:focus-visible,
 dialog button:focus-visible {
   color: var(--ink);
   outline: 1px solid var(--ink);
   outline-offset: 2px;
+}
+
+/* 共有 while its row is open */
+#share[aria-expanded="true"] {
+  color: var(--ink);
+}
+
+/*
+ * Where to share: a second, smaller row under the actions, in the place of
+ * the note (which is hidden while it is open). It follows 共有 in the markup,
+ * so the keyboard goes from 共有 straight into it.
+ */
+#share-menu {
+  order: 1;
+  flex-basis: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 0 0.8em;
+}
+
+#share-menu[hidden] {
+  display: none;
+}
+
+#share-menu a,
+#share-menu button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--mute);
+  text-decoration: none;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+#share-menu [hidden] {
+  display: none;
 }
 
 #note {
@@ -252,9 +337,10 @@ body[data-state="working"] #stage svg {
 }
 
 dialog {
+  --pad: 30px;
   width: min(34em, calc(100vw - 2 * var(--gutter)));
   max-height: calc(100dvh - 4 * var(--gutter));
-  padding: 30px 30px 20px;
+  padding: 0 var(--pad) 24px;
   border: 1px solid var(--line);
   border-radius: 0;
   background: var(--paper);
@@ -268,16 +354,9 @@ dialog::backdrop {
   background: rgba(232, 230, 225, 0.88);
 }
 
-dialog h1 {
-  outline: none;
-  margin: 0 0 14px;
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: 0.24em;
-}
-
 dialog p {
   margin: 0 0 12px;
+  outline: none;
 }
 
 dialog .aside {
@@ -299,15 +378,30 @@ dialog dd {
   margin: 0;
 }
 
-dialog form {
-  margin-top: 12px;
-  text-align: right;
+/* what is recorded: the last words of About */
+dialog .record {
+  margin: 16px 0 0;
+  line-height: 1.8;
 }
 
-dialog button {
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  min-height: 40px;
+/* the top edge of About, with × in its corner: it stays while the text scrolls under it */
+#about-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  height: 44px;
+  margin: 0 calc(-1 * var(--pad) + 2px) 0;
+  background: var(--paper);
+}
+
+#about-close {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
 }
 
 @media (max-width: 520px) {
@@ -315,13 +409,21 @@ dialog button {
     --under: 148px;
   }
 
+  /* a phone: the name closer to the top and to the paper, so the paper is not pushed far down */
+  :root {
+    --name-line: 18px;
+    --name-gap: 26px;
+  }
+
   #work {
+    --top: 20px;
+    --sheet: min(calc(100vw - 2 * var(--gutter)), calc(100dvh - var(--head) - var(--under) - var(--top) - 1.5 * var(--gutter)), 76vh);
     justify-content: flex-start;
-    padding-top: calc(var(--gutter) * 3 + env(safe-area-inset-top));
   }
 
   dialog {
-    padding: 24px 22px 14px;
+    --pad: 22px;
+    padding-bottom: 18px;
     font-size: 13.5px;
     line-height: 1.95;
   }

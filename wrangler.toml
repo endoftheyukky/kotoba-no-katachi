@@ -1,0 +1,15 @@
+# Cloudflare Pages: the published site (direct upload from dist/) and, beside
+# it, the archive: Pages Functions in functions/ (POST /api/generations and
+# /admin) with one D1 database. The project name is only the address
+# (kotoba-no-katachi.pages.dev). This file is the source of truth for the
+# project's bindings; the admin secrets are set with `wrangler pages secret put`
+# (see docs/archive.md), never here.
+name = "kotoba-no-katachi"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-09-22"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "kotoba-no-katachi-archive"
+database_id = "6f2bdccb-3a40-4f4d-9ccb-3a7fcc79ba6a"
+migrations_dir = "migrations"
