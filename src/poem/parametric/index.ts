@@ -22,6 +22,8 @@ export interface ParametricApplied {
   material: MaterialParams
   /** how many small marks the material field put on the page */
   grains: number
+  /** what each placement asked for before the page sifted it (review) */
+  placed: { form: number; ring: number; dust: number }
   grounds: string[]
   /** where each written unit went (review: the study sheet) */
   put: { grapheme: number; x: number; y: number; size: number; rotate: number }[]
@@ -63,13 +65,15 @@ export function parametricPage(
           return { kind: 'trace' as const, params: p as TraceParams | LatticeParams, grounds: t.grounds, marks, put, curve: { at: g?.path.at ?? [], k: g?.k ?? 0, em: g?.em ?? 0 } }
         })()
 
-  // the material: small marks over it, on its ink, on a ring, or over the page.
+  // the material: small marks in the figure's own geometry — on its ink, on the
+  // loop at a fixed distance from the reading, or in dust that runs along it.
   // The figure is put in its faces first: which face a character is written in
   // decides its ink, and the material must not stand on ink that will be there.
   const figure = figureOf(faces(drawn.marks))
-  const mat = materialParams(a, m, figure.nucleus?.char ?? null)
+  const mat = materialParams(a, m, figure.nucleus?.char ?? null, figure.nucleus?.grapheme)
   const mp = { ...mat.params, ...(material ?? {}) }
-  const made = materialMarks(a, figure, mp, mat.chars)
+  // the frame the material is placed in: where the reading itself went
+  const made = materialMarks(a, figure, mp, mat.chars, drawn.put)
   return {
     marks: [...made.figure, ...made.marks],
     applied: {
@@ -77,6 +81,7 @@ export function parametricPage(
       params: drawn.params,
       material: mp,
       grains: made.grains,
+      placed: made.placed,
       grounds: [...drawn.grounds, ...mat.grounds],
       put: drawn.put,
       curve: drawn.curve,

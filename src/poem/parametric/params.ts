@@ -8,6 +8,8 @@
  * (a path); a title that repeats itself entirely closes into a ring (an orbit);
  * a directed relation leaves that ring open toward its dependent.
  */
+import { readPart } from '../../glyph/legibility'
+import { structuralParts } from '../operations/decomposition'
 import type { Rng } from '../../core/random'
 import type { Analysis, Material, Unit } from '../types'
 import { allUnits } from '../spatial/common'
@@ -219,7 +221,39 @@ export interface MaterialGrounds {
  * page (dust). None of these is a kind of page: they are three weights, and
  * most titles have some of each.
  */
-export function materialParams(a: Analysis, m: Material, figureNucleus: string | null): MaterialGrounds {
+/**
+ * A form read inside the character by the parts it falls into: 森's three 木,
+ * 品's three 口. v2c's silhouette takes its material this way, and without it a
+ * character that is made of a smaller character offers the poem nothing.
+ * The strength is how much of the character those parts are, and how well they
+ * read.
+ */
+function partInside(a: Analysis, grapheme: number | undefined): { char: string; score: number } | null {
+  if (grapheme === undefined) return null
+  const g = a.graphemes[grapheme]
+  if (!g?.char.trim()) return null
+  try {
+    const metrics = a.glyphs.get(g.char).metrics
+    const parts = structuralParts(a, grapheme)
+    if (parts.length < 2) return null
+    const read = parts.map((part) => ({ part, r: readPart(part, metrics, a.readables, g.char) })).filter((x) => x.r?.kind === 'character')
+    if (!read.length) return null
+    // the character most of the parts read as
+    const counts = new Map<string, { n: number; score: number; share: number }>()
+    for (const { part, r } of read) {
+      const at = counts.get(r!.char) ?? { n: 0, score: 0, share: 0 }
+      counts.set(r!.char, { n: at.n + 1, score: Math.max(at.score, r!.score), share: at.share + part.share })
+    }
+    const best = [...counts.entries()].sort((x, y) => y[1].n * y[1].share - x[1].n * x[1].share)[0]
+    if (!best) return null
+    const [char, { n, score, share }] = best
+    return { char, score: clip(score * Math.min(1, share * 1.2) * (n > 1 ? 1 : 0.7)) }
+  } catch {
+    return null
+  }
+}
+
+export function materialParams(a: Analysis, m: Material, figureNucleus: string | null, nucleusGrapheme?: number): MaterialGrounds {
   const grounds: string[] = []
   const units = allUnits(m)
   const chars = a.graphemes.filter((g) => g.char.trim())
@@ -232,7 +266,12 @@ export function materialParams(a: Analysis, m: Material, figureNucleus: string |
   const repeatStrength = repeated ? clip((repeated[1] - 1) / 3 + 0.3) : 0
   const nucleus = figureNucleus ?? chars[0]?.char ?? ''
   const relation = a.glyphRelations.filter((r) => r.kind === 'containment' && r.outer === nucleus).sort((x, y) => y.score - x.score)[0] ?? null
-  const innerStrength = relation ? clip(relation.score) : 0
+  const part = partInside(a, nucleusGrapheme)
+  // a form read inside the character: one the title also writes, or one the
+  // character's own parts read as
+  const innerStrength = Math.max(relation ? clip(relation.score) : 0, part ? part.score : 0)
+  const innerChar = (part && (!relation || part.score > relation.score) ? part.char : relation?.inner) ?? null
+  if (part) grounds.push(`「${nucleus}」の部品は「${part.char}」と読まれる（${part.score.toFixed(2)}）`)
   const rest = chars.filter((g) => g.char !== nucleus).map((g) => g.char)
   const restStrength = clip(rest.length / Math.max(1, n))
   const erased = units.filter((u) => u.absent).length
@@ -259,12 +298,22 @@ export function materialParams(a: Analysis, m: Material, figureNucleus: string |
 
   grounds.push(`立つ場所：字のインク ${onForm.toFixed(2)}／環 ${onRing.toFixed(2)}／紙面 ${onPage.toFixed(2)}`)
 
-  // how fine: the more the title offers, the finer the grain
-  const fineness = clip(0.3 + 0.5 * repeatStrength + 0.3 * erasure)
+  // How fine: the more the title offers, the finer the grain — and the denser
+  // the letterform the material gathers on, the finer it has to be met, or the
+  // form drawn in grains is not that form.
+  const strokes = clip((inkOf(a, nucleus) - 0.12) / 0.16)
+  const fineness = clip(0.3 + 0.4 * repeatStrength + 0.25 * erasure + 0.3 * strokes)
   const special = a.morae.filter((mo) => mo.kind === 'N' || mo.kind === 'Q' || mo.kind === 'R' || mo.devoiced).length
   const regularity = clip(1 - 0.5 * (a.morae.length ? special / a.morae.length : 0))
   const cut = clip(relation && relation.origin !== 'inventory' ? relation.containment : 0)
-  const radius = clip(0.16 + 0.12 * (onRing > 0 ? 1 : 0), 0.1, 0.4)
+  // How far from the reading the material stands. The ring keeps the distance
+  // the title's own material asks for — the more there is of it, the wider it
+  // orbits; the dust strays as far as the title is loose from what is written:
+  // an erasure scatters it over the page, a repetition keeps it near the words
+  // it came from.
+  const radius = clip(0.12 + 0.14 * repeatStrength + 0.06 * restStrength, 0.1, 0.32)
+  const spread = clip(0.8 * erasure + 0.35 * restStrength - 0.2 * repeatStrength)
+  if (onPage > 0.02) grounds.push(`塵は読みから ${spread.toFixed(2)} の幅に散る（消された席 ${erasure.toFixed(2)}／題の残り ${restStrength.toFixed(2)}）`)
 
   // as in v2c: the title's repetition first, then a form read inside the
   // character, then the rest of the title — its own character only where
@@ -277,12 +326,12 @@ export function materialParams(a: Analysis, m: Material, figureNucleus: string |
     self: offered < 0.2 ? 0.3 : 0,
   }
   return {
-    params: { density, fineness, onForm, onRing, onPage, radius, cut, regularity, sources },
+    params: { density, fineness, onForm, onRing, onPage, radius, spread, cut, regularity, sources },
     chars: {
       ...sources,
       chars: {
         repeat: repeated?.[0] ?? null,
-        inner: relation?.inner ?? null,
+        inner: innerChar,
         rest: rest[0] ?? null,
         self: nucleus || null,
       },
