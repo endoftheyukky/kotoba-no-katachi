@@ -1,5 +1,9 @@
 # Public release (v2c)
 
+> Since `release/rc1` the root writes new words with **v3**
+> (`docs/release-v3.md`). This page describes v2c, which still draws every
+> address without a version.
+
 Branch `release/v2c`, from `v2c-rc1` (`fc2af5a`). The generator is frozen at
 v2c: no grammar, semantic layer or tuning is added here. The semantic
 experiment (`v2d-semantic-experiment`, `fa48586`) and the notes for v3
@@ -18,6 +22,7 @@ are served by `npm run dev`; they are not built for publication.
 | `/` | blank paper, the line, three example words (until a poem is written) |
 | `/?title=見えない` | the poem first, its title under it, then 保存 · 共有 · 別のことばで試す |
 | `/?title=子供の城&reading=こどものしろ` | the same, with its reading |
+| `…&v=3` | v3 (`docs/release-v3.md`): every poem written from the root since rc1 |
 | `…&v=1` | the generator as frozen at v1 (not offered anywhere; kept for the archive) |
 | `…&debug=1` | the reasons, in the console only |
 

@@ -1,5 +1,9 @@
 # The archive (anonymous generation log and /admin)
 
+> `generator_version` is `v2c`, `v1` or — since `release/rc1` — `v3`
+> (`src/archive/protocol.ts`). The column has no constraint, so no migration
+> was needed; a snapshot always keeps the name of the generator that drew it.
+
 Around the published work, never inside it: when someone writes a poem, the
 page records what was written, and an admin sheet at `/admin/` shows the pages
 people wrote — newest first, per browser, per visit. The generator, grammar,
