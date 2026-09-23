@@ -8,10 +8,14 @@ per-poem card is served yet, what is ready, and the steps to add one.
 
 ## What is in the repository now
 
-- `public/ogp.png` — the site's card, redrawn for v3: three of the 作例 (孤独 ·
-  雨の中の雨 · 余白) as papers on the ground, laid out as the v2c card was.
+- `public/ogp.png` (addressed as `/ogp.png?v=3`, so that previews cached
+  with the v2c card fetch it again) — the site's card: the work reading its
+  own name. One paper, the v3 page of 「ことばのかたち」 (the page
+  `/?title=ことばのかたち&v=3` draws), in the middle of the ground as the site
+  shows a poem; no other text, since every preview prints the name beside it.
+  A single centred paper also survives the square crop some apps (LINE) make.
   Drawn by the site's own renderer (`tools/examples/make.mjs`, checked with
-  `CHECK=1`); the poems are not altered, cropped or restyled.
+  `CHECK=1`); the poem is not altered, cropped or restyled.
 - `public/og/v3/<name>.png` — for each of the nine 作例, a 1200 × 630 card of
   its own paper (540 px, centred on the ground). Nothing names them yet: they
   are ready for step 1 below and cost nothing while unused.

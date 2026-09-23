@@ -3,8 +3,8 @@
 // render/png.renderCanvas, the renderer 保存 uses), written to
 // public/examples/v3/, with a manifest of what each one is. The same paper,
 // larger, on the site's ground, is the link image of that poem's address
-// (public/og/v3/, 1200 × 630; see docs/ogp.md). Three of them, side by side,
-// are the site's own link image (public/ogp.png).
+// (public/og/v3/, 1200 × 630; see docs/ogp.md). The site's own link image
+// (public/ogp.png) is drawn here too: the v3 page of the work's own name.
 //
 // The thumbnails are the poems, not pictures of them: `CHECK=1` draws them
 // again and compares the drafts and the images with the manifest, so that a
@@ -29,8 +29,13 @@ export const EXAMPLES = [
 ]
 const PX = 360
 const OUT = 'public/examples/v3'
-/** the site's own link image (public/ogp.png): three of the 作例 side by side, as the v2c one was laid out */
-const SITE = { file: 'public/ogp.png', w: 1200, h: 630, paper: 340, y: 145, x: [50, 430, 810], texts: ['孤独', '雨の中の雨', '余白'] }
+/**
+ * the site's own link image (public/ogp.png): the work reading its own name —
+ * the v3 page of 「ことばのかたち」 (the same page /?title=ことばのかたち&v=3 draws),
+ * one paper in the middle of the ground, as the site shows a poem. Nothing else:
+ * the card's own title already says the name the paper is made of.
+ */
+const SITE = { file: 'public/ogp.png', w: 1200, h: 630, papers: [{ text: 'ことばのかたち', s: 570 }] }
 /** the link image: the paper, square, on the ground, with the sheet's own faint shadow — nothing added */
 const OG = { dir: 'public/og/v3', w: 1200, h: 630, paper: 540 }
 const MANIFEST = 'tools/examples/manifest.json'
@@ -60,11 +65,11 @@ export default async function ({ evaluate, load }) {
     site.width = ${SITE.w}; site.height = ${SITE.h}
     const g = site.getContext('2d')
     g.fillStyle = '#e8e6e1'; g.fillRect(0, 0, site.width, site.height)
-    for (const [i, t] of ${JSON.stringify(SITE.texts)}.entries()) {
-      const a = await C.analyze(N.normalizeTitle({ text: t }))
+    for (const p of ${JSON.stringify(SITE.papers)}) {
+      const a = await C.analyze(N.normalizeTitle({ text: p.text }))
       const c = await G.write(a, 3)
-      const x = ${JSON.stringify(SITE.x)}[i], y = ${SITE.y}, s = ${SITE.paper}
-      g.save(); g.shadowColor = 'rgba(40, 36, 28, 0.07)'; g.shadowBlur = 20; g.shadowOffsetY = 5
+      const s = p.s, x = p.x ?? (site.width - s) / 2, y = p.y ?? (site.height - s) / 2
+      g.save(); g.shadowColor = 'rgba(40, 36, 28, 0.07)'; g.shadowBlur = 24; g.shadowOffsetY = 6
       g.fillStyle = '#fff'; g.fillRect(x, y, s, s); g.restore()
       g.drawImage(R.renderCanvas(c.draft, a.glyphs, s), x, y)
     }
