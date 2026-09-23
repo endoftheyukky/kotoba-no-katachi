@@ -83,7 +83,7 @@ export default defineConfig({
     rollupOptions: {
       // The published build is the work alone. The development sheets —
       // study.html (what was read and decided), review.html (the pages with
-      // their titles), experiments.html (study-dynamic-v1) — are served by
+      // their titles), experiments.html (the first, dynamic study) — are served by
       // `npm run dev` and are not published.
       // admin/index.html is the archive sheet: published, but served only
       // behind /admin's login (functions/admin/_middleware.ts).

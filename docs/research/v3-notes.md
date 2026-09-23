@@ -1,11 +1,10 @@
 # v3 — notes for after the first public release
 
-Nothing here is implemented. The first public release is v2c (`v2c-rc1`,
-branch `release/v2c`); these notes must not delay it.
+Nothing here is implemented. The first public release is v2c; these notes must not delay it.
 
 ## What the v2d experiment settled
 
-`v2d-semantic-experiment` (`fa48586`): related characters taken from a space
+The experiment (v2d, not adopted): related characters taken from a space
 of meaning — seed-lexicon v0, Aozora Bunko character co-occurrence
 (PPMI + SVD), chiVe single-kanji word vectors — and added to a finished page
 as grain, satellite, orbit mark or counterpoint read as a misprint, a gloss

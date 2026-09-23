@@ -135,11 +135,11 @@ touches fitness or selection.
 
 ## AXIS — the rest of the title beside the poles, never on them
 
-(Ported to `v2` from `242c642`, which was made on the older `510431c`.)
+(Carried into v2 from a fix first made on an earlier state of the code.)
 The row that keeps the rest of the title was set beside the first pole and
 clamped only to the page's margin, so where the side away from the far pole
 had no room the margin took it back onto the pole. On the current code this
-still happened, in a different place than on `510431c`: with the two-pole
+still happened, in a different place than on that earlier code: with the two-pole
 branch forced, 大きな犬 v5 (き・な on 犬・大) and 王と玉 v5 (the small 王 on
 玉); 白い 犬 no longer did. Now, in the two-pole branch: the row is never
 drawn on what the figure draws; away from the far pole first, the other side
@@ -264,9 +264,9 @@ Distribution: 片隅 11, 二極 default 11, 二極 joint 9, 中心・周縁 6, �
 入れ子 2, 散在 2, 場 1, 経路 1, 空洞 1. Pages by their largest mark: micro 12,
 small 17, normal 10, large 4, macro 4.
 
-## v2 — mark grammars (branch `v2`)
+## v2 — mark grammars
 
-v1 is kept as it was frozen (tag `v1`, branch `main`); on this branch it is
+v1 is kept as it was frozen; in v2 it is
 still what `compose()` returns when no grammar is named, identical to the mark.
 
 **The layer.** A spatial composition decides where the title is held. A mark
@@ -316,10 +316,10 @@ grammar. Contact sheets: `docs/research/contact/dev34-v2.png`, `docs/research/co
 size), so several of them read as a family; orbits are circles; a quiet page
 stays quiet; the joint line and the corner page are untouched.
 
-Checkpoint: tag `v2a` (= `ccdc3df`), sheets `docs/research/contact/dev34-v2a.png`,
+Checkpoint v2a: sheets `docs/research/contact/dev34-v2a.png`,
 `docs/research/contact/holdout-v2a.png`.
 
-## v2b — second generation (branch `v2`)
+## v2b — second generation
 
 **Roles, as sizes.** A grammar says what each mark it adds is; the role, not
 the grammar, says how large and how many (`grammar/roles.ts`): satellite —

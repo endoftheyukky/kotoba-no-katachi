@@ -1,10 +1,9 @@
-# v3 (`release/rc1`)
+# v3
 
 The generator published as `?v=3`, and the site that writes new words with it.
-Published on 2026-09-24 (JST; deployment `63084aaf`, commit `4397966`,
-2026-09-24 01:02 JST).
+Published on 2026-09-24 (JST); tagged `v3.0.0` in this repository.
 Built on the research line (v3 → v6, `docs/research/v3-composition-space.md`,
-`docs/research/v4-parametric.md`) with the published site (`release/v2c`) merged in.
+`docs/research/v4-parametric.md`) with the published v2c site merged in.
 v1 and v2c are unchanged and still draw every address shared before v3.
 
 ## What the work does now
@@ -123,7 +122,7 @@ named to the order audit (`invariants.ts`, `left`); a character the poem writes
 as space is named by the composition (`absent`).
 
 **Determinism**: 170 pages byte-identical across runs.
-**Regression**: v1 and v2c byte-identical to `release/v2c`'s own code (372 pages
+**Regression**: v1 and v2c byte-identical to the code of the v2c release (372 pages
 × 4 variants each); 8 of 8 legacy addresses draw the same SVG as the live site.
 
 Sheets (`docs/contact/`): `v3-dev.png`, `v3-holdout.png`, `v3-difficult.png`,
@@ -167,7 +166,7 @@ cell is pixel-identical. The numbers above were measured with the earlier three.
 
 ## Production migration plan
 
-1. On `release/rc1`: `npm ci && npm run build` (runs `tsc` for the app and the
+1. From the release source (`v3.0.0`): `npm ci && npm run build` (runs `tsc` for the app and the
    Functions). Check `dist/` holds `index.html`, `admin/`, `assets/`,
    `semantic/axes-1/` (64 shards, meta, licence, notice), `_routes.json`.
 2. Deploy to production (same project, same branch label; no D1 migration, no
@@ -185,8 +184,8 @@ cell is pixel-identical. The numbers above were measured with the earlier three.
   their v3 poems. One line, no data change.
 - **Full rollback**: Pages keeps every deployment; in the Cloudflare dashboard
   (Pages → kotoba-no-katachi → Deployments) the previous production deployment
-  (`release/v2c` at `de6fa43`) can be promoted back in one step, or redeployed
-  from the `release/v2c` checkout with the same command. Consequence: `?v=3`
+  (the v2c site) can be promoted back in one step, or the v2c source
+  redeployed with the same command. Consequence: `?v=3`
   addresses already shared would open as v2c pages (the old site reads no v=3)
   — a different poem at the same address, which is why the soft rollback is
   preferred.

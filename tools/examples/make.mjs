@@ -10,7 +10,7 @@
 // again and compares the drafts and the images with the manifest, so that a
 // thumbnail can never drift from the page its link opens.
 //
-// usage (dev server running on the worktree):
+// usage (with a dev server running, e.g. `npx vite --port 5175`):
 //   node tools/form/cdp.mjs http://127.0.0.1:5175 <shots-dir> tools/examples/make.mjs
 //   CHECK=1 node tools/form/cdp.mjs … tools/examples/make.mjs
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'

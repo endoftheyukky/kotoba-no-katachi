@@ -1,6 +1,8 @@
 # v4 — parametric anchors (experiment)
 
-Branch `v4-parametric-anchors` (from `v3-composition-space`). Review only:
+The research stage after the composition space (`v3-composition-space.md`),
+not published itself: this line (v4 → v6) is what the published v3 was built
+on. Review only:
 `compose()` without `parametric` is byte-for-byte what it was (372 pages ×
 variants 0–3 verified after every change).
 

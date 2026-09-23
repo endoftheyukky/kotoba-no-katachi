@@ -45,7 +45,7 @@ export interface ComposeContext {
   glyphs: GlyphLibrary
 }
 
-/** The statements CLAUDE.md asks every behaviour to make explicit. */
+/** The statements the work's brief asks every behaviour to make explicit. */
 export interface RuleStatement {
   input: string
   transformation: string

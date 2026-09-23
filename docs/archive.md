@@ -1,6 +1,6 @@
 # The archive (anonymous generation log and /admin)
 
-> `generator_version` is `v2c`, `v1` or — since `release/rc1` — `v3`
+> `generator_version` is `v2c`, `v1` or — since the v3 release — `v3`
 > (`src/archive/protocol.ts`). The column has no constraint, so no migration
 > was needed; a snapshot always keeps the name of the generator that drew it.
 

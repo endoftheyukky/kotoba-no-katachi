@@ -1,13 +1,13 @@
 # Public release (v2c)
 
-> Since `release/rc1` the root writes new words with **v3**
+> Since the v3 release (2026-09-24, tag `v3.0.0`) the root writes new words with **v3**
 > (`docs/release-v3.md`). This page describes v2c, which still draws every
 > address without a version.
 
-Branch `release/v2c`, from `v2c-rc1` (`fc2af5a`). The generator is frozen at
-v2c: no grammar, semantic layer or tuning is added here. The semantic
-experiment (`v2d-semantic-experiment`, `fa48586`) and the notes for v3
-(`docs/v3-notes.md` on branch `v2`, now `docs/research/v3-notes.md`) were not part of this branch.
+v2c was the first public release. Its generator is frozen: no grammar,
+semantic layer or tuning has been added to it since (it is pinned in
+`src/poem/generators.ts`). The semantic experiment that followed it (v2d, not
+adopted) and the notes for v3 (`docs/research/v3-notes.md`) were not part of it.
 
 The published page is `index.html` + `src/main.ts` + `src/style.css`: the
 name ことばのかたち said small above a sheet of paper, one line under it, and
@@ -22,7 +22,7 @@ are served by `npm run dev`; they are not built for publication.
 | `/` | blank paper, the line, and under it 作例: nine v3 poems as small sheets, each a link to its own `?title=…&v=3` (shown while the paper is blank) |
 | `/?title=見えない` | the poem first, its title under it, then 保存 · 共有 · 別のことばで試す |
 | `/?title=子供の城&reading=こどものしろ` | the same, with its reading |
-| `…&v=3` | v3 (`docs/release-v3.md`): every poem written from the root since rc1 |
+| `…&v=3` | v3 (`docs/release-v3.md`): every poem written from the root since the v3 release |
 | `…&v=1` | the generator as frozen at v1 (not offered anywhere; kept for the archive) |
 | `…&debug=1` | the reasons, in the console only |
 
@@ -35,7 +35,7 @@ A reading can be given on the line as 「子供の城（こどものしろ）」
 ```
 npm ci
 npm run build          # tsc --noEmit && vite build → dist/
-npx vite preview       # serves dist/ on :4173 to check it (.claude/launch.json: concrete-poetry-preview)
+npx vite preview       # serves dist/ on :4173 to check it
 ```
 
 - Node `^20.19.0 || >=22.12.0` (Vite 8).
@@ -49,12 +49,10 @@ npx vite preview       # serves dist/ on :4173 to check it (.claude/launch.json:
 - Cloudflare Pages, project `kotoba-no-katachi` (direct upload), production
   branch label `release`: https://kotoba-no-katachi.pages.dev/ . The public
   name ことばのかたち is used in the metadata, in what is shared, and small at
-  the top of the page (ことば / の / かたち on three lines, fixed). (An earlier
-  project, `one-reading`, served the same build at
-  https://one-reading.pages.dev/ before the name was chosen.)
+  the top of the page (ことば / の / かたち on three lines, fixed).
 - `wrangler.toml` holds the project name, the output directory and the D1
   binding. It is git-ignored (it carries the production database id); the
-  deploying checkout keeps its own copy, and `wrangler.example.toml` is the
+  machine that deploys keeps its own copy, and `wrangler.example.toml` is the
   template with a placeholder id.
 - Deploy (after `npm ci && npm run build`, logged in with `npx wrangler@4 login`):
 

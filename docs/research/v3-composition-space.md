@@ -1,6 +1,6 @@
 # v3 — composition space (experiment)
 
-Branch `v3-composition-space` (from `v2`). Review only: nothing here reaches
+A research stage after v2, not published. Review only: nothing here reaches
 the public page, and `compose()` without the `form: 'v3'` force is byte-for-byte
 what it was (all 372 development / holdout / probe pages × variants 0–3).
 
