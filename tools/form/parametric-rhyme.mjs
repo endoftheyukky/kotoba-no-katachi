@@ -6,18 +6,23 @@ export default async function ({ evaluate, load }) {
   await load('/index.html', 1280, 800)
   const data = await evaluate(`(async () => { try {
     const C = await import('/src/poem/compose.ts'); const N = await import('/src/title.ts'); const R = await import('/src/render/png.ts')
-    const T = await import('/src/study/titles.ts'); const H = await import('/src/study/holdout.ts')
-    const titles = [...T.STUDY_TITLES, ...H.HOLDOUT_TITLES]
+    const T = await import('/src/study/titles.ts'); const H = await import('/src/study/holdout.ts'); const D = await import('/src/study/difficult.ts')
+    const titles = [...T.STUDY_TITLES, ...H.HOLDOUT_TITLES, ...(${process.env.WITH_DIFFICULT ? 'true' : 'false'} ? D.DIFFICULT_WORDS : [])]
     const cell = ${process.env.CELL ?? 132}, perRow = ${process.env.PER_ROW ?? 9}, pad = 7, cap = 13, head = 22
     const made = []
     for (const t of titles) {
       const input = N.normalizeTitle({ text: t.text, reading: t.reading })
       if (typeof input === 'string') continue
       const a = await C.analyze(input)
-      const c = C.compose(a, { parametric: 'auto', rhyme: ${process.env.RHYME ?? 'undefined'} })
-      made.push({ text: t.text, motif: c.parametric.motif, strength: c.parametric.motifs[c.parametric.motif] ?? 0, canvas: R.renderCanvas(c.draft, a.glyphs, cell) })
+      const L = await import("/src/language/semantic/load.ts")
+      const meaning = await L.readMeaning(t.text)
+      const c = C.compose(a, { parametric: 'auto', rhyme: ${process.env.RHYME ?? 'undefined'}, meaning })
+      const byAct = ${process.env.BY === 'act' ? 'true' : 'false'}
+      const acts = c.parametric.params.acts
+      const group = byAct ? (acts && acts.leader && acts.lead > 0.12 ? acts.leader : (c.parametric.grains > 0 ? 'material' : 'plain')) : c.parametric.motif
+      made.push({ text: t.text, motif: group, strength: byAct ? (acts ? acts.lead : 0) : (c.parametric.motifs[c.parametric.motif] ?? 0), canvas: R.renderCanvas(c.draft, a.glyphs, cell) })
     }
-    const order = ['repetition', 'pairing', 'nesting', 'absence', 'articulation', 'echo', 'plain']
+    const order = ['repetition', 'pairing', 'nesting', 'absence', 'articulation', 'echo', 'split', 'spread', 'gather', 'withdraw', 'erode', 'lean', 'crowd', 'material', 'plain']
     const groups = order.map((m) => ({ m, rows: made.filter((x) => x.motif === m).sort((x, y) => y.strength - x.strength) })).filter((g) => g.rows.length)
     let lines = 0
     for (const g of groups) lines += Math.ceil(g.rows.length / perRow)

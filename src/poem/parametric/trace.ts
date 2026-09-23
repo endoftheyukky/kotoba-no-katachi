@@ -22,6 +22,7 @@
  * parametric/params.ts, and the plastic choices are the same ones the v1
  * compositions make (which side, where on the page).
  */
+import { EM } from '../../glyph/font'
 import { PAGE } from '../../render/stage'
 import type { Analysis, Mark, Unit, Vec } from '../types'
 import { directions, isWritten, unitMarks } from '../spatial/common'
@@ -195,6 +196,20 @@ export function traceGeometry(a: Analysis, units: Unit[], p: TraceParams) {
   const acts = p.acts
   const offsets: number[] = [0]
   for (let i = 1; i < steps.length; i++) offsets.push(offsets[i - 1] + (acts?.gaps[i - 1] ?? 0) * step)
+  // A word that comes apart across the page does not get smaller for it: the
+  // gaps open only as far as the page holds the word at the size it asks for
+  // (paper.scale). Measured along the writing, as the gaps are.
+  {
+    const want = ((p.paper ?? CENTRED).scale * PAGE) / (0.86 * Math.max(1e-6, Math.min(...steps.map((x) => x.weight), 1)))
+    const along0 = path.at.map((q) => q.x * along.x + q.y * along.y)
+    const base = Math.max(...along0) - Math.min(...along0)
+    const opened = offsets[offsets.length - 1]
+    const room = (0.78 * PAGE) / Math.max(1e-6, want) - base
+    if (opened > 0 && opened > room) {
+      const f = Math.max(0, room) / opened
+      for (let i = 0; i < offsets.length; i++) offsets[i] *= f
+    }
+  }
   const acted = (i: number, last: boolean) => {
     const d = offsets[i]
     let dx = along.x * d
@@ -411,7 +426,22 @@ export function traceMarks(a: Analysis, units: Unit[], p: TraceParams, at?: Vec)
     // Where the glyph already came in parts of its own (an earlier operation)
     // and none of them lies in what the wear keeps, the wear yields: a
     // character is never taken off the page by an act.
-    const made = worn.length ? worn : plain.map((m) => (rotate ? { ...m, rotate: (m.rotate ?? 0) + rotate } : m))
+    let made = worn.length ? worn : plain.map((m) => (rotate ? { ...m, rotate: (m.rotate ?? 0) + rotate } : m))
+    // The edge rule holds for what is drawn: a character that comes in parts
+    // (shifted apart by an earlier operation) is held on the page as a group,
+    // each part keeping the room its size is owed.
+    const room = edgeKeep(size) * size
+    const shifted = made.map((m) => ({ x: m.x + ((m.shift?.x ?? 0) * m.size) / EM, y: m.y + ((m.shift?.y ?? 0) * m.size) / EM }))
+    const nudge = (axis: 'x' | 'y') => {
+      const lo = Math.min(...shifted.map((p) => p[axis]))
+      const hi = Math.max(...shifted.map((p) => p[axis]))
+      if (lo < room) return room - lo
+      if (hi > PAGE - room) return PAGE - room - hi
+      return 0
+    }
+    const dx = made.length ? nudge('x') : 0
+    const dy = made.length ? nudge('y') : 0
+    if (dx || dy) made = made.map((m) => ({ ...m, x: m.x + dx, y: m.y + dy }))
     marks.push(...made)
     if (!q.part || q.part.x + q.part.y < 0) put.push({ grapheme: q.unit.grapheme, x: point.x, y: point.y, size, rotate })
   }

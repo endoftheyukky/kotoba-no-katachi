@@ -65,6 +65,8 @@ export interface Acts {
   cut: { unit: number; axis: 'x' | 'y'; at: number; apart: number } | null
   /** how strong the leading act is, before competing (the material competes with it) */
   lead: number
+  /** which act leads the page, if any does (review only) */
+  leader: string | null
   /** what was read, and what it did (review only) */
   grounds: string[]
 }
@@ -76,6 +78,7 @@ export const NO_ACTS = (n: number): Acts => ({
   lean: new Array(n).fill(0),
   cut: null,
   lead: 0,
+  leader: null,
   grounds: [],
 })
 
@@ -233,6 +236,7 @@ export function readActs(ctx: ActsContext): Acts {
   const written = units.map((u) => !u.absent && !!u.char.trim())
   const { kept: e, raw, leader } = economy(p, motifs)
   acts.lead = Math.max(...Object.values(raw))
+  acts.leader = leader
   if (leader) acts.grounds.push(`主な行為：${leader}（${Object.entries(e).map(([k, v]) => k + ' ' + v.toFixed(2)).join('／')}）`)
 
   // --- gaps -----------------------------------------------------------------
