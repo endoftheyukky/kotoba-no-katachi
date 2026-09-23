@@ -81,10 +81,7 @@ export default defineConfig({
   plugins: [site(), archiveStub()],
   build: {
     rollupOptions: {
-      // The published build is the work alone. The development sheets —
-      // study.html (what was read and decided), review.html (the pages with
-      // their titles), experiments.html (the first, dynamic study) — are served by
-      // `npm run dev` and are not published.
+      // The published build is the work alone.
       // admin/index.html is the archive sheet: published, but served only
       // behind /admin's login (functions/admin/_middleware.ts).
       input: {

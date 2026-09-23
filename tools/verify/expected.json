@@ -1,0 +1,5259 @@
+{
+ "about": "Expected output of the published generators for the public title sets. sha256 is the SHA-256 of JSON.stringify(draft.marks). invariants: the v3 audit, every count 0. Produced by tools/verify/fixture.mjs (MODE=write).",
+ "produced": {
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+  "fonts": {
+   "@fontsource/noto-sans-jp": "5.3.0",
+   "@fontsource/noto-serif-jp": "5.3.0"
+  },
+  "table": "axes-1",
+  "words": 62653
+ },
+ "versions": [
+  "v1",
+  "v2c",
+  "v3"
+ ],
+ "pages": [
+  {
+   "set": "dev",
+   "text": "嘘",
+   "reading": "",
+   "v1": {
+    "sha256": "b57665d9e25af714522d4b53ae8f8fee7de4455c34a92a12e8ce87565834cf76",
+    "marks": 4,
+    "sum": [
+     407.691,
+     3371.893,
+     220.416
+    ]
+   },
+   "v2c": {
+    "sha256": "b57665d9e25af714522d4b53ae8f8fee7de4455c34a92a12e8ce87565834cf76",
+    "marks": 4,
+    "sum": [
+     407.691,
+     3371.893,
+     220.416
+    ]
+   },
+   "v3": {
+    "sha256": "f11733396db730396ba00d72716d3a2d5a5249d3296ed37f41907008ee9acd94",
+    "marks": 5,
+    "sum": [
+     3794.449,
+     2107.139,
+     925.031
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "嘘",
+   "reading": "うそ",
+   "v1": {
+    "sha256": "07ed625137f683e9274e0833262d492eb2c13661f042d735224e9f0340ee4a9d",
+    "marks": 3,
+    "sum": [
+     397.37,
+     397.37,
+     150.036
+    ]
+   },
+   "v2c": {
+    "sha256": "07ed625137f683e9274e0833262d492eb2c13661f042d735224e9f0340ee4a9d",
+    "marks": 3,
+    "sum": [
+     397.37,
+     397.37,
+     150.036
+    ]
+   },
+   "v3": {
+    "sha256": "9c12be71b1c42282806df67629bea09795898c62b450cffb7357085118b228a4",
+    "marks": 5,
+    "sum": [
+     1259.864,
+     2107.139,
+     925.031
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "森",
+   "reading": "",
+   "v1": {
+    "sha256": "42813ef4666cb1e727438090c6b4ab82fd6e2aea894edff969fa2885660ad91e",
+    "marks": 4,
+    "sum": [
+     2629.718,
+     1522.095,
+     1328.624
+    ]
+   },
+   "v2c": {
+    "sha256": "a7e97b0faac55518d3bc1149ebf39ae03b376a188ccba31bdc3d17548ec88b9b",
+    "marks": 69,
+    "sum": [
+     45494.116,
+     27452.565,
+     1989.342
+    ]
+   },
+   "v3": {
+    "sha256": "ada495919cc2e22f8121b1d25a96482862ce70a605b0556935adec90e451ae87",
+    "marks": 59,
+    "sum": [
+     29169.646,
+     28009.704,
+     2542.447
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "川",
+   "reading": "",
+   "v1": {
+    "sha256": "9eaa66cd209f0197d66ab79985d63921db877981b410cf61465d0434d64c9be1",
+    "marks": 4,
+    "sum": [
+     2393.208,
+     2852.63,
+     1423.611
+    ]
+   },
+   "v2c": {
+    "sha256": "9eaa66cd209f0197d66ab79985d63921db877981b410cf61465d0434d64c9be1",
+    "marks": 4,
+    "sum": [
+     2393.208,
+     2852.63,
+     1423.611
+    ]
+   },
+   "v3": {
+    "sha256": "3ad4a6983bf2d7b90f32d06d5ce4f505c73ed84b3961943a71325a8839c9c6d7",
+    "marks": 2,
+    "sum": [
+     983.297,
+     911.137,
+     749.068
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "あ",
+   "reading": "",
+   "v1": {
+    "sha256": "b7d56a6ad37d2976630bf7b0484dd495cf27b044e8bfcf4e2bd317a7e8f188c3",
+    "marks": 1,
+    "sum": [
+     80.415,
+     861.953,
+     57.632
+    ]
+   },
+   "v2c": {
+    "sha256": "b7d56a6ad37d2976630bf7b0484dd495cf27b044e8bfcf4e2bd317a7e8f188c3",
+    "marks": 1,
+    "sum": [
+     80.415,
+     861.953,
+     57.632
+    ]
+   },
+   "v3": {
+    "sha256": "ef868d6b4abd87db70b51748f1312fb212096482c83ee0e723634a91eb1ec439",
+    "marks": 1,
+    "sum": [
+     753.788,
+     182.765,
+     106
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "言葉",
+   "reading": "",
+   "v1": {
+    "sha256": "18ce56cdea05248a346677d9cb213e5d6556b117eae663d682f7c9ffca409aa2",
+    "marks": 7,
+    "sum": [
+     5130.6,
+     2987.376,
+     2637.584
+    ]
+   },
+   "v2c": {
+    "sha256": "5fb2d5157d8ff30e6d256fcbef6c773318d071f21b88942253f8839aff347452",
+    "marks": 48,
+    "sum": [
+     38329.692,
+     25458.538,
+     1794.932
+    ]
+   },
+   "v3": {
+    "sha256": "2653f48b8034a00182ad90202799903252f7d7e5ea7b29fb686c0ba4223a6826",
+    "marks": 2,
+    "sum": [
+     1000,
+     1000,
+     719.412
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "空間断面",
+   "reading": "くうかんだんめん",
+   "v1": {
+    "sha256": "cc99be8673ac9f55c1d180344435f381ee6e2be34dbe0785c25b8accb58043ba",
+    "marks": 6,
+    "sum": [
+     2159.392,
+     2662.552,
+     1423.188
+    ]
+   },
+   "v2c": {
+    "sha256": "123b71c4ee38c9f2918a221c78372eaadfaf55b883f20beeeba719ea7f5f38ed",
+    "marks": 27,
+    "sum": [
+     18049.068,
+     10467.358,
+     1719.036
+    ]
+   },
+   "v3": {
+    "sha256": "b863e2c2ef25d894e8caaab8c1e7f7f1421b955f98bf93234b936addca976861",
+    "marks": 6,
+    "sum": [
+     2875.313,
+     2433.125,
+     796.016
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "東京特許許可局",
+   "reading": "",
+   "v1": {
+    "sha256": "6e27f03aa3e3d8c2e0c00d65e0e31945183c461845d0c6182e9cd07ff2d06d11",
+    "marks": 19,
+    "sum": [
+     14910.538,
+     9500,
+     960
+    ]
+   },
+   "v2c": {
+    "sha256": "e50e0fd4093e4082efd2dc7a48052f41f1e9bd58e478fa21e6e8818656b41d5e",
+    "marks": 19,
+    "sum": [
+     14910.538,
+     9500,
+     788.079
+    ]
+   },
+   "v3": {
+    "sha256": "157a7ebf2a2c6084706bf9db5d3ca1e99bf2e3d535bcfef2f6b1220bdc281013",
+    "marks": 27,
+    "sum": [
+     17058.848,
+     9701.889,
+     911.544
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "触る",
+   "reading": "さわる",
+   "v1": {
+    "sha256": "542f49d571fae319db9831a46114956de080ca18e212c90387d7c2e761ec27ec",
+    "marks": 2,
+    "sum": [
+     1000.146,
+     1465.413,
+     415.534
+    ]
+   },
+   "v2c": {
+    "sha256": "06afda1c5c1d8ea6cf6cb103de37de50f606365d47e1cefc04592ed258c341f8",
+    "marks": 20,
+    "sum": [
+     5045.981,
+     14654.129,
+     862.285
+    ]
+   },
+   "v3": {
+    "sha256": "c4dfddeba4c3d3500d77f2d854e4a690842cf223c0cc62a41e67d9a12cd5c778",
+    "marks": 8,
+    "sum": [
+     4365.288,
+     3601.791,
+     1525.815
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "美しい",
+   "reading": "",
+   "v1": {
+    "sha256": "cf7520ff6542a7196750cf12222ca1d1f0b88a85826881db7af3e44c8ee6bbef",
+    "marks": 3,
+    "sum": [
+     2064,
+     1561.429,
+     707.657
+    ]
+   },
+   "v2c": {
+    "sha256": "cf7520ff6542a7196750cf12222ca1d1f0b88a85826881db7af3e44c8ee6bbef",
+    "marks": 3,
+    "sum": [
+     2064,
+     1561.429,
+     707.657
+    ]
+   },
+   "v3": {
+    "sha256": "84be1c4e72ca33ffa794e0e7f37eb4b2ec521d8218c9f33a21a00e060dce27d1",
+    "marks": 3,
+    "sum": [
+     1172.904,
+     1550.188,
+     344.238
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "走れ",
+   "reading": "",
+   "v1": {
+    "sha256": "01701a21c4676d2ab543a6c3748e93e7856d4cc4d6d9f7e6bf07121add0fc170",
+    "marks": 2,
+    "sum": [
+     1541.986,
+     612.674,
+     409.89
+    ]
+   },
+   "v2c": {
+    "sha256": "01701a21c4676d2ab543a6c3748e93e7856d4cc4d6d9f7e6bf07121add0fc170",
+    "marks": 2,
+    "sum": [
+     1541.986,
+     612.674,
+     409.89
+    ]
+   },
+   "v3": {
+    "sha256": "3c14bd1281742eb77a6c28dd472b36e449a19cbb8393dcba4eccdfb3f12b5627",
+    "marks": 2,
+    "sum": [
+     733.494,
+     887.399,
+     335.733
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "見えない",
+   "reading": "",
+   "v1": {
+    "sha256": "78eb2303e9dac972957530215cb4e9ef5c644b756541fc718f0a31bfa3d7c90f",
+    "marks": 2,
+    "sum": [
+     689.18,
+     477.778,
+     366.933
+    ]
+   },
+   "v2c": {
+    "sha256": "626ecc062653db5134e51fe91e4b02fd4eeffada50fd181c2c0e852155914bf3",
+    "marks": 20,
+    "sum": [
+     6908.287,
+     12534.266,
+     820.242
+    ]
+   },
+   "v3": {
+    "sha256": "f95a2fdc3ae34157ea6991a25be0bfce6d5237938f4ec89b37bb6e1d52106e62",
+    "marks": 10,
+    "sum": [
+     6625.587,
+     1999.196,
+     401.255
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "空をさがせ！",
+   "reading": "",
+   "v1": {
+    "sha256": "64ce884ebd694d4da4cb4db9fdcc6878267b7c517ec3e60afd33b1eb2f0331f2",
+    "marks": 5,
+    "sum": [
+     2433.493,
+     2824.38,
+     779
+    ]
+   },
+   "v2c": {
+    "sha256": "64ce884ebd694d4da4cb4db9fdcc6878267b7c517ec3e60afd33b1eb2f0331f2",
+    "marks": 5,
+    "sum": [
+     2433.493,
+     2824.38,
+     779
+    ]
+   },
+   "v3": {
+    "sha256": "9312e55b723af223d2333975f2d80cc74b8dd1895c263d819a1779f5962cd621",
+    "marks": 16,
+    "sum": [
+     6986.761,
+     8601.331,
+     1146.581
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "子供の城",
+   "reading": "こどものしろ",
+   "v1": {
+    "sha256": "38b073b5144dc8dda0807e87365e501a261c74e0db517b0db6667f0b7a1798d7",
+    "marks": 3,
+    "sum": [
+     2226.373,
+     502.005,
+     244.867
+    ]
+   },
+   "v2c": {
+    "sha256": "36dd0c3bbd3240da1055af4efdcef77214229e9093acbf1ec629bc64c09b001a",
+    "marks": 89,
+    "sum": [
+     35531.191,
+     33406.203,
+     3582.882
+    ]
+   },
+   "v3": {
+    "sha256": "ac84c8968b3d47c2c0b7476688e0c89eec38d1328bd7024fb47e7288b0c3fb0d",
+    "marks": 14,
+    "sum": [
+     6230.782,
+     6577.265,
+     1009.624
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "夜の位置",
+   "reading": "",
+   "v1": {
+    "sha256": "b6fec42f01aca3a8c98a788a5a6923ab31d2781bb274e51ccdb8b42d0dbfa64e",
+    "marks": 3,
+    "sum": [
+     1724.848,
+     837.257,
+     369.445
+    ]
+   },
+   "v2c": {
+    "sha256": "88d7e4352b27258a2f50e49cf42a06d8a39a1432166c9aff9c58beb8e4904b1b",
+    "marks": 115,
+    "sum": [
+     47937.254,
+     48203.946,
+     3046.722
+    ]
+   },
+   "v3": {
+    "sha256": "d39f98fe20ab64d06b1e058014569e4a4e702f2fd973be7ddd24dfded1010865",
+    "marks": 12,
+    "sum": [
+     6137.732,
+     7241.569,
+     973.143
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "海のあと",
+   "reading": "うみのあと",
+   "v1": {
+    "sha256": "97d1de324640344579c3b3e834832f17fc51b725f0595451a98568420fdcee71",
+    "marks": 3,
+    "sum": [
+     1659.608,
+     1332.652,
+     401.824
+    ]
+   },
+   "v2c": {
+    "sha256": "146899f7916a7aeea67c13c96bc742ebc833d2be7cf8793b201045d27435accc",
+    "marks": 66,
+    "sum": [
+     24167.558,
+     39633.642,
+     1764.293
+    ]
+   },
+   "v3": {
+    "sha256": "430758e1b1fcc3e11ab294e8b0d63fa5e82cab8fc33effb1766d5aea888f8920",
+    "marks": 12,
+    "sum": [
+     6451.221,
+     6352.838,
+     853.993
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "花が咲く",
+   "reading": "",
+   "v1": {
+    "sha256": "fb51a5865a8bae20e6ebe08812e146842dbd0ce2f9cf71ed66c811a2a00d7e7f",
+    "marks": 3,
+    "sum": [
+     1040.033,
+     1547.778,
+     458.667
+    ]
+   },
+   "v2c": {
+    "sha256": "7464572a953fb4c8f001685a86a04f3e03c37eb0ee6f527b15a4352855a44209",
+    "marks": 5,
+    "sum": [
+     1728.231,
+     2255.954,
+     509.9
+    ]
+   },
+   "v3": {
+    "sha256": "1e9f08ca9f88319aaaa3bab4d1c9503fa1328ec7ff3bc14aa895d9fe78b74ff3",
+    "marks": 15,
+    "sum": [
+     7198.436,
+     7439.343,
+     988.358
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "雨の中の雨",
+   "reading": "",
+   "v1": {
+    "sha256": "6108a12c8831a20514ce9cb902b25e827c9078cd118e2ace0b951e698cc41cdc",
+    "marks": 3,
+    "sum": [
+     1881.815,
+     1883.347,
+     1056
+    ]
+   },
+   "v2c": {
+    "sha256": "cba8dfb42a1d40be46203a198625208879cbf42b5cc7c8db1492b094a2b2b5c5",
+    "marks": 16,
+    "sum": [
+     8583.518,
+     7619.585,
+     1064.369
+    ]
+   },
+   "v3": {
+    "sha256": "e009699bd68fdf900c1c53655953e81730b0c483a48dd3bccf53e3101ee0d896",
+    "marks": 92,
+    "sum": [
+     41967.045,
+     30818.516,
+     2484.477
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "川または州",
+   "reading": "かわまたはす",
+   "v1": {
+    "sha256": "0b172c6b03af877c01cbb9d532e14d2da0a0bf74ae0fbbae7965d4bfcc5fd9d4",
+    "marks": 2,
+    "sum": [
+     601.938,
+     1075.28,
+     646.126
+    ]
+   },
+   "v2c": {
+    "sha256": "0b172c6b03af877c01cbb9d532e14d2da0a0bf74ae0fbbae7965d4bfcc5fd9d4",
+    "marks": 2,
+    "sum": [
+     601.938,
+     1075.28,
+     646.126
+    ]
+   },
+   "v3": {
+    "sha256": "bebf8cb66c50d0c99da979b0dd06a5879f762f8dfe8bfd3ef5c12b803fc573a0",
+    "marks": 6,
+    "sum": [
+     2524.044,
+     1460.798,
+     1358.183
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "木と林と森",
+   "reading": "",
+   "v1": {
+    "sha256": "0d34c637dc00f20c7c160bb75d69e875b1862e640c275cdfe8b01d24c261a602",
+    "marks": 3,
+    "sum": [
+     1546.563,
+     1500,
+     600
+    ]
+   },
+   "v2c": {
+    "sha256": "d997afcce914ee7a0c53b1ec625215a3c9154bb2865fb473c732941222f82bce",
+    "marks": 25,
+    "sum": [
+     8199.209,
+     13057.399,
+     1267.424
+    ]
+   },
+   "v3": {
+    "sha256": "b11c1af4920ed51b3535f9463ed1edb9ddf668fee165a2e600d2a44fded06946",
+    "marks": 43,
+    "sum": [
+     22268.26,
+     17075.388,
+     1430.865
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "大きな犬",
+   "reading": "",
+   "v1": {
+    "sha256": "7bc095888abe70b459bf0fda931bdfc7f5a31f0bf5752bded8ee8005d083dbb7",
+    "marks": 5,
+    "sum": [
+     3046.342,
+     2494.386,
+     785.279
+    ]
+   },
+   "v2c": {
+    "sha256": "74f62850fe2dfff9409c905ffbac9ac8fa1c0bebce3a059911bc0cd39c8cde34",
+    "marks": 59,
+    "sum": [
+     39690.816,
+     28853.452,
+     2103.366
+    ]
+   },
+   "v3": {
+    "sha256": "1c4381e3fcfd36a856cd04dd82491d8d6418dbc703675bc722d7276ca0adcd2b",
+    "marks": 18,
+    "sum": [
+     10627.483,
+     7380.235,
+     1474.107
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "日と白",
+   "reading": "",
+   "v1": {
+    "sha256": "afe91c76badfa738b057f73c097afa783209a389458ae8551eada879d00b925a",
+    "marks": 2,
+    "sum": [
+     1129.164,
+     1387.194,
+     533.34
+    ]
+   },
+   "v2c": {
+    "sha256": "20491eb8cfa80644e260cd100a926c77cb081df2267658667c687aa7a3f31b08",
+    "marks": 35,
+    "sum": [
+     30607.321,
+     24594.397,
+     1081.601
+    ]
+   },
+   "v3": {
+    "sha256": "f957a309d2db6e41907a8e69fa96876628b7c8bc954054f6974056975a9bbf44",
+    "marks": 10,
+    "sum": [
+     4615.651,
+     4459.198,
+     1349.357
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "王の国",
+   "reading": "",
+   "v1": {
+    "sha256": "48cb299f741c671fd83f7750355060fc384f0e38367c03c417e98f09df90063d",
+    "marks": 3,
+    "sum": [
+     976.301,
+     1627.379,
+     1281.84
+    ]
+   },
+   "v2c": {
+    "sha256": "3c375ea564ced215e4072653f901dba395b209b414722d76f20381d0e8f557be",
+    "marks": 100,
+    "sum": [
+     53782.437,
+     50370.169,
+     4262.09
+    ]
+   },
+   "v3": {
+    "sha256": "11c5a00b002df8e0114798fbc4d278668ce9d4b310b3b76392d07b1b5db404d4",
+    "marks": 4,
+    "sum": [
+     2242.22,
+     2524.736,
+     855.585
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "人と入",
+   "reading": "",
+   "v1": {
+    "sha256": "3d189ce8554d7275762914bf3167287f391313ab78bafc4eff74244a712ad72d",
+    "marks": 3,
+    "sum": [
+     663.108,
+     1807.016,
+     662.678
+    ]
+   },
+   "v2c": {
+    "sha256": "f3b20fd0fa51c7d4cd31aa2891b60bef765a9ebb8ba228a715b82c684f3ec742",
+    "marks": 46,
+    "sum": [
+     10189.545,
+     24776.604,
+     1707.177
+    ]
+   },
+   "v3": {
+    "sha256": "71a2f7ca6aad294385d792325af20a7313201839d9cc295e064e31acbf918616",
+    "marks": 8,
+    "sum": [
+     3547.929,
+     4239.765,
+     820
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "ころころ",
+   "reading": "",
+   "v1": {
+    "sha256": "d3f11dcace6293812089ada879f01fe4e7a198dd4d000493ff754b1a6036ec52",
+    "marks": 4,
+    "sum": [
+     2000,
+     2000,
+     1513.6
+    ]
+   },
+   "v2c": {
+    "sha256": "b2391dc526340d2f41e63941b00447d2577de58ff935803f840028583751df9b",
+    "marks": 6,
+    "sum": [
+     3000,
+     3463.452,
+     1588.129
+    ]
+   },
+   "v3": {
+    "sha256": "194282fa5ae5bb5bb0518554894ebb3ef5112da8a45e31bbd0b8e1e3da69f7ad",
+    "marks": 22,
+    "sum": [
+     11901.814,
+     9820.841,
+     1007.465
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "ささやき",
+   "reading": "",
+   "v1": {
+    "sha256": "f9f6ea873c12ab4fc540cdc3445bbf438a49972715b9fabc709029d3076e0663",
+    "marks": 20,
+    "sum": [
+     15556.886,
+     10000,
+     960
+    ]
+   },
+   "v2c": {
+    "sha256": "a84f7b70344b231de11df52daef3b4c19773ea74c148e0ba1945609f0b172a64",
+    "marks": 20,
+    "sum": [
+     15556.886,
+     10000,
+     764.855
+    ]
+   },
+   "v3": {
+    "sha256": "622e79b660edacfe170fa39df3fe93e40bff952551a1b40a890c951b1996cc2f",
+    "marks": 16,
+    "sum": [
+     8808.485,
+     7776.432,
+     862.991
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "人々",
+   "reading": "",
+   "v1": {
+    "sha256": "5acc2db332ceb723719d8a9632e21224120567690db5213619e71272b8f5cfce",
+    "marks": 309,
+    "sum": [
+     161941.176,
+     153176.471,
+     17449.412
+    ]
+   },
+   "v2c": {
+    "sha256": "a4ec08dbf3aa08b47d363e8b8eac542adcfb7e7e7cfdf334af94b655c8078e5d",
+    "marks": 309,
+    "sum": [
+     161941.176,
+     153176.471,
+     17449.412
+    ]
+   },
+   "v3": {
+    "sha256": "d3253225e9cf0616f658fd3b07936bce093e455b4bdb11eebcf4af6a4f2793eb",
+    "marks": 15,
+    "sum": [
+     8104.544,
+     6134.306,
+     1240.154
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "コーヒー",
+   "reading": "",
+   "v1": {
+    "sha256": "345c97b25bf17f95ee57dece334634672141aaccec4c3f0b58d60db169b99d65",
+    "marks": 22,
+    "sum": [
+     11000,
+     3921.374,
+     960
+    ]
+   },
+   "v2c": {
+    "sha256": "2a6b26c7063596cde3329c40aa7924274cfe533f63e0eabb49b14a09370c9efe",
+    "marks": 22,
+    "sum": [
+     11000,
+     3921.374,
+     792.718
+    ]
+   },
+   "v3": {
+    "sha256": "f7e9e8ad454983572ef24f5e880f2d0e38de6ad3e57ce6ca9e1c1ebfd06f79bd",
+    "marks": 15,
+    "sum": [
+     6195.201,
+     6685.321,
+     916.566
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "カタカナ",
+   "reading": "",
+   "v1": {
+    "sha256": "f0081c8bc5a2eb7082b5bed502ce5004da411891bfae5f5d79153607fdf3c180",
+    "marks": 4,
+    "sum": [
+     2074.574,
+     2821.36,
+     1098.46
+    ]
+   },
+   "v2c": {
+    "sha256": "95719bb2abcccc5d4bed6984500721b16cab9488db85acc667e5b7f935a9024f",
+    "marks": 16,
+    "sum": [
+     9400.858,
+     10752.534,
+     1012.003
+    ]
+   },
+   "v3": {
+    "sha256": "c6e8f90a83fd34b28d25ef5d1bf28ef408473ba51e8efd97c61cde138dd449e8",
+    "marks": 64,
+    "sum": [
+     31857.506,
+     34904.157,
+     1712.754
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "きっと",
+   "reading": "",
+   "v1": {
+    "sha256": "9ade8886e84c6e802526a1692e142b15ebf4183a8ea57747049f2c2730d32a3c",
+    "marks": 2,
+    "sum": [
+     487.436,
+     1000,
+     504.533
+    ]
+   },
+   "v2c": {
+    "sha256": "2201110105fe83d00a57c0600dc20a0a3bc35aa6b7e26633d3004f76f9ad0095",
+    "marks": 3,
+    "sum": [
+     731.154,
+     1535.848,
+     700.156
+    ]
+   },
+   "v3": {
+    "sha256": "00b035098eac46d3f765f534d9cda8878f2fa38c974ac55541d97d810160b83c",
+    "marks": 16,
+    "sum": [
+     12139.989,
+     6206.632,
+     875.984
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "ちょっと",
+   "reading": "",
+   "v1": {
+    "sha256": "ee891e92705c2d3d01d79654d4e27fa8eff214fed59c282750b9628fd54e8a5d",
+    "marks": 3,
+    "sum": [
+     2043.359,
+     1198.197,
+     504.533
+    ]
+   },
+   "v2c": {
+    "sha256": "fb59d951ad00cde08e789756b79990aa3329fbf22cbc7bde19ffbcfdfad9dcc7",
+    "marks": 4,
+    "sum": [
+     2718.593,
+     1749.789,
+     672.043
+    ]
+   },
+   "v3": {
+    "sha256": "b83c9b5c1aed5c5ffff3e35392acea58724f6eef4d2e9f822c38e83e79eebda4",
+    "marks": 4,
+    "sum": [
+     1985.246,
+     1562.002,
+     437.006
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "なぜ？",
+   "reading": "",
+   "v1": {
+    "sha256": "11d5402c6cd4f0ed232f4fa7c10033fd9cde9b13b6245e96efef49ccb9fe018d",
+    "marks": 5,
+    "sum": [
+     2177.282,
+     2882.037,
+     1965.417
+    ]
+   },
+   "v2c": {
+    "sha256": "11d5402c6cd4f0ed232f4fa7c10033fd9cde9b13b6245e96efef49ccb9fe018d",
+    "marks": 5,
+    "sum": [
+     2177.282,
+     2882.037,
+     1965.417
+    ]
+   },
+   "v3": {
+    "sha256": "d11d24da73808441e0349497eedf4a49028aa90ab9e5ddd49815e69d5b6b01f4",
+    "marks": 3,
+    "sum": [
+     1159.977,
+     1418.418,
+     909.334
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "白い 犬",
+   "reading": "",
+   "v1": {
+    "sha256": "ef5f21dc3a656c4bd563f47ba13a7f9b1b30defc9b51a7dd6840ca41aaf4783f",
+    "marks": 3,
+    "sum": [
+     2349.397,
+     1452.222,
+     458.667
+    ]
+   },
+   "v2c": {
+    "sha256": "ef5f21dc3a656c4bd563f47ba13a7f9b1b30defc9b51a7dd6840ca41aaf4783f",
+    "marks": 3,
+    "sum": [
+     2349.397,
+     1452.222,
+     458.667
+    ]
+   },
+   "v3": {
+    "sha256": "707a418c3acdac604b56d63f6843ab1f58e5b79da23f230133597adc140ce5b1",
+    "marks": 4,
+    "sum": [
+     2235.737,
+     2348.142,
+     637.12
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "text": "1と2",
+   "reading": "",
+   "v1": {
+    "sha256": "7803e1bee9928ddd0f1f97dcb51e845d13619b8929ee771522c090d7ff69c99f",
+    "marks": 2,
+    "sum": [
+     1414.817,
+     999.67,
+     236.162
+    ]
+   },
+   "v2c": {
+    "sha256": "7803e1bee9928ddd0f1f97dcb51e845d13619b8929ee771522c090d7ff69c99f",
+    "marks": 2,
+    "sum": [
+     1414.817,
+     999.67,
+     236.162
+    ]
+   },
+   "v3": {
+    "sha256": "91e6478eb485b63494d571042503364550ee275cfabb06cc58d1376f8bb700bb",
+    "marks": 9,
+    "sum": [
+     5097.929,
+     3462.263,
+     631.863
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "月",
+   "reading": "",
+   "v1": {
+    "sha256": "8eddab0c6180625c82c1685ebb0a9e6dbdb2e48798a28b93fa80d94a4198769a",
+    "marks": 1,
+    "sum": [
+     62.353,
+     871.684,
+     65.963
+    ]
+   },
+   "v2c": {
+    "sha256": "8eddab0c6180625c82c1685ebb0a9e6dbdb2e48798a28b93fa80d94a4198769a",
+    "marks": 1,
+    "sum": [
+     62.353,
+     871.684,
+     65.963
+    ]
+   },
+   "v3": {
+    "sha256": "d97b951a925cc8678c6e6d066ce0c7c7e694e66ebf6e932b00c493f11fb37ab3",
+    "marks": 1,
+    "sum": [
+     301.518,
+     192.354,
+     152.032
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "糸",
+   "reading": "",
+   "v1": {
+    "sha256": "e7429dbf8234e0ca03bec48329412efb1781d0d20e4dfd0f599eca0a9df47076",
+    "marks": 3,
+    "sum": [
+     2590.379,
+     1211.357,
+     179.701
+    ]
+   },
+   "v2c": {
+    "sha256": "e7429dbf8234e0ca03bec48329412efb1781d0d20e4dfd0f599eca0a9df47076",
+    "marks": 3,
+    "sum": [
+     2590.379,
+     1211.357,
+     179.701
+    ]
+   },
+   "v3": {
+    "sha256": "00d8c9ab7247b2e46de98e8be0027c752b2c9bb02746a9a16f4b8ebc6db3dc4b",
+    "marks": 3,
+    "sum": [
+     2375.733,
+     959.965,
+     471.825
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "鳥",
+   "reading": "",
+   "v1": {
+    "sha256": "3c7d790eddbf8889b5d18dfb696073a3462cfc6f9d0a2266676a9d8ed8fb810d",
+    "marks": 4,
+    "sum": [
+     2281.299,
+     455.961,
+     229.234
+    ]
+   },
+   "v2c": {
+    "sha256": "3c7d790eddbf8889b5d18dfb696073a3462cfc6f9d0a2266676a9d8ed8fb810d",
+    "marks": 4,
+    "sum": [
+     2281.299,
+     455.961,
+     229.234
+    ]
+   },
+   "v3": {
+    "sha256": "affe31130a2aef68fdc79622098a4dff2ca28bb436df287c4050ad26932886cc",
+    "marks": 12,
+    "sum": [
+     6353.726,
+     4775.683,
+     1312.197
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "光",
+   "reading": "",
+   "v1": {
+    "sha256": "100e42842264c521d20d944f314e0c3412bea0ad86e31a952dd85d1ad0c43e0c",
+    "marks": 3,
+    "sum": [
+     1797.949,
+     275.406,
+     138.763
+    ]
+   },
+   "v2c": {
+    "sha256": "100e42842264c521d20d944f314e0c3412bea0ad86e31a952dd85d1ad0c43e0c",
+    "marks": 3,
+    "sum": [
+     1797.949,
+     275.406,
+     138.763
+    ]
+   },
+   "v3": {
+    "sha256": "5892834d226b93db0e176fa47641fe176a0a7fd70e79bedfa76888f393868959",
+    "marks": 3,
+    "sum": [
+     2065.459,
+     364.37,
+     383.66
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "ん",
+   "reading": "",
+   "v1": {
+    "sha256": "211e1d5fbc907cf4a8a7cc55f409e5d20fc8d502a59bc11bfed4132a7debf892",
+    "marks": 1,
+    "sum": [
+     95.762,
+     861.533,
+     42.705
+    ]
+   },
+   "v2c": {
+    "sha256": "211e1d5fbc907cf4a8a7cc55f409e5d20fc8d502a59bc11bfed4132a7debf892",
+    "marks": 1,
+    "sum": [
+     95.762,
+     861.533,
+     42.705
+    ]
+   },
+   "v3": {
+    "sha256": "cf20ce374f787ff707445197b69b63d0a0eae3ed1d19f38d071c8cb6d38b50f6",
+    "marks": 1,
+    "sum": [
+     753.788,
+     182.765,
+     106
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "音楽",
+   "reading": "",
+   "v1": {
+    "sha256": "a861923a3ca97c790ffed5b4e266b6ab1e26a55a3e4ca15ca2bff7b976128579",
+    "marks": 2,
+    "sum": [
+     1861.713,
+     937.168,
+     112.129
+    ]
+   },
+   "v2c": {
+    "sha256": "a861923a3ca97c790ffed5b4e266b6ab1e26a55a3e4ca15ca2bff7b976128579",
+    "marks": 2,
+    "sum": [
+     1861.713,
+     937.168,
+     112.129
+    ]
+   },
+   "v3": {
+    "sha256": "8a286a4d5959c94f6a03065067405c5df43e6cbe088af8e678f11780217a2331",
+    "marks": 2,
+    "sum": [
+     1118.172,
+     452.732,
+     237.833
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "朝日",
+   "reading": "",
+   "v1": {
+    "sha256": "929e9847a01aebacba33e1cb47e792d6b1cdaa6eecc1f5185ec6d6e3daae3d0f",
+    "marks": 2,
+    "sum": [
+     897.046,
+     1088.993,
+     1216.005
+    ]
+   },
+   "v2c": {
+    "sha256": "7fcc604efe53be96d38190f0ee451b7650ddef9ee5f6a35232a0269f69ffe929",
+    "marks": 85,
+    "sum": [
+     42871.846,
+     47314.371,
+     4114.005
+    ]
+   },
+   "v3": {
+    "sha256": "ac004b80605919304be853a6d0b81d7ba53568bb8e3d14fca59d19fe652850b2",
+    "marks": 2,
+    "sum": [
+     1125.848,
+     983.384,
+     581.837
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "砂時計",
+   "reading": "",
+   "v1": {
+    "sha256": "3e07ed864d7c110ef5884755e9800121535fdc55b7849f00f70242bfe83c27fd",
+    "marks": 3,
+    "sum": [
+     2649.499,
+     552.519,
+     202.018
+    ]
+   },
+   "v2c": {
+    "sha256": "3e07ed864d7c110ef5884755e9800121535fdc55b7849f00f70242bfe83c27fd",
+    "marks": 3,
+    "sum": [
+     2649.499,
+     552.519,
+     202.018
+    ]
+   },
+   "v3": {
+    "sha256": "7d0c9637affeecc74efde335b8a826fc30d5376836ea5bcec04c757c343c21fb",
+    "marks": 3,
+    "sum": [
+     1402.938,
+     1926.805,
+     450.495
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "国際空港",
+   "reading": "",
+   "v1": {
+    "sha256": "b180d6231df92aa0dc791884728d09af63e7e2dd3de6c07bdcf813defc3a4f0d",
+    "marks": 4,
+    "sum": [
+     1437.001,
+     1873.09,
+     1339.8
+    ]
+   },
+   "v2c": {
+    "sha256": "e8c6e577e1809eea4f70e917a62bd554cb0fa83b702274aa56d4fef8ebc110a2",
+    "marks": 125,
+    "sum": [
+     59469.324,
+     71835.317,
+     5307.05
+    ]
+   },
+   "v3": {
+    "sha256": "411f12db7950642a25c92232653ef2ab74e037b4d1c6cea72966dd2231913b82",
+    "marks": 5,
+    "sum": [
+     3087.323,
+     2213.924,
+     449.658
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "ひかり",
+   "reading": "",
+   "v1": {
+    "sha256": "d74db29dc9742fb5f428de31eacac7e80859fe2e0ef893486b119d1d3519f13c",
+    "marks": 3,
+    "sum": [
+     2770.616,
+     396.447,
+     167.063
+    ]
+   },
+   "v2c": {
+    "sha256": "d74db29dc9742fb5f428de31eacac7e80859fe2e0ef893486b119d1d3519f13c",
+    "marks": 3,
+    "sum": [
+     2770.616,
+     396.447,
+     167.063
+    ]
+   },
+   "v3": {
+    "sha256": "38526572ab097ad1a7cdc23c2a913ca6bf73d227a88edd1a1810b714dbf913b4",
+    "marks": 3,
+    "sum": [
+     1646.709,
+     1741.508,
+     364.483
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "しずかに",
+   "reading": "",
+   "v1": {
+    "sha256": "c9c5cab336c71b1f71a545816e57ec5359678a236696e83f7fe83b1cd613e45d",
+    "marks": 6,
+    "sum": [
+     1838.448,
+     3110.711,
+     1675.983
+    ]
+   },
+   "v2c": {
+    "sha256": "c9c5cab336c71b1f71a545816e57ec5359678a236696e83f7fe83b1cd613e45d",
+    "marks": 6,
+    "sum": [
+     1838.448,
+     3110.711,
+     1675.983
+    ]
+   },
+   "v3": {
+    "sha256": "d820ea6a2c0f457a730fa84019337355a99718d6f6d795ef1198f89359ae087b",
+    "marks": 4,
+    "sum": [
+     1829.145,
+     2096.902,
+     669.266
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "さらさら",
+   "reading": "",
+   "v1": {
+    "sha256": "631d81e2bfa94bd9ed3a004bd6100a9cef9733e49a0afaf0a89f4a9ecfab6d4b",
+    "marks": 4,
+    "sum": [
+     2000,
+     2000,
+     1513.6
+    ]
+   },
+   "v2c": {
+    "sha256": "4a2eafa46031dbc1bfef46c6dacc58d6bdba511ffcc258584873e07a7630f05f",
+    "marks": 6,
+    "sum": [
+     3000,
+     3490.498,
+     1616.758
+    ]
+   },
+   "v3": {
+    "sha256": "c5886104bb10ac7f1a121feeeec22cfc2e7d1437a601cb2b3c4f7ed275b5002f",
+    "marks": 33,
+    "sum": [
+     20766.93,
+     13176.389,
+     1224.38
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "ぽつぽつ",
+   "reading": "",
+   "v1": {
+    "sha256": "15593d365b4e89777824cf07177c620d19426793e08b55d3c45ffe32bec36914",
+    "marks": 4,
+    "sum": [
+     2000,
+     2000,
+     1513.6
+    ]
+   },
+   "v2c": {
+    "sha256": "f16b92931362270f06791a82451d6450e0f99792052256f78bcfc202ae1eb4e8",
+    "marks": 6,
+    "sum": [
+     3000,
+     3573.973,
+     1706.265
+    ]
+   },
+   "v3": {
+    "sha256": "734395b3c679f314563716831c1418965bbe21bb6405af66c5fe97d1a5f0a98b",
+    "marks": 25,
+    "sum": [
+     13746.248,
+     10871.92,
+     1112.727
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "ことことこと",
+   "reading": "",
+   "v1": {
+    "sha256": "77d29d9f0867f3d08d66cf826cd35b42e7170eb931b152fd4d98da376828df01",
+    "marks": 6,
+    "sum": [
+     3000,
+     3000,
+     1513.6
+    ]
+   },
+   "v2c": {
+    "sha256": "11ac3a95d7e62fbfe4228c79bcff21a3db624de87ffdecf782ac60435b13a0c9",
+    "marks": 15,
+    "sum": [
+     7500,
+     10407.424,
+     2128.458
+    ]
+   },
+   "v3": {
+    "sha256": "c3fa3a111a10a99aab21255185ecbaeb45086b9227f91990324295249170ade3",
+    "marks": 23,
+    "sum": [
+     13365.239,
+     9025.072,
+     1029.207
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "あいうえお",
+   "reading": "",
+   "v1": {
+    "sha256": "fa7327c03baad08bf7242186f98a7440bf0adb7de9fd3661a6e53530cadb5ba2",
+    "marks": 5,
+    "sum": [
+     4555.359,
+     2767.407,
+     326.039
+    ]
+   },
+   "v2c": {
+    "sha256": "fa7327c03baad08bf7242186f98a7440bf0adb7de9fd3661a6e53530cadb5ba2",
+    "marks": 5,
+    "sum": [
+     4555.359,
+     2767.407,
+     326.039
+    ]
+   },
+   "v3": {
+    "sha256": "0179f1d33bb8f64f28ffe2e1a98eb17db94747a1d730442a84385cf5903748e1",
+    "marks": 5,
+    "sum": [
+     2787.934,
+     2884.332,
+     650.356
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "パン",
+   "reading": "",
+   "v1": {
+    "sha256": "8ab25bbb71174ddc7aaec9dd3a0416f234647fa41fceadfaa0cd3e40729b89cf",
+    "marks": 4,
+    "sum": [
+     1295.487,
+     2153.807,
+     1844.624
+    ]
+   },
+   "v2c": {
+    "sha256": "8ab25bbb71174ddc7aaec9dd3a0416f234647fa41fceadfaa0cd3e40729b89cf",
+    "marks": 4,
+    "sum": [
+     1295.487,
+     2153.807,
+     1844.624
+    ]
+   },
+   "v3": {
+    "sha256": "022425d27b03c2e7bd2b78411f992f5a1e041cf936c2677833d9d7ed9a91876d",
+    "marks": 3,
+    "sum": [
+     1476.018,
+     1205.834,
+     1000.794
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "ガラス",
+   "reading": "",
+   "v1": {
+    "sha256": "c6cdca70044ce0f43c3ef9143a0b5df29ff815cb7eb2700c6c609a257e6070e1",
+    "marks": 5,
+    "sum": [
+     1514.052,
+     2302.276,
+     2154.67
+    ]
+   },
+   "v2c": {
+    "sha256": "c6cdca70044ce0f43c3ef9143a0b5df29ff815cb7eb2700c6c609a257e6070e1",
+    "marks": 5,
+    "sum": [
+     1514.052,
+     2302.276,
+     2154.67
+    ]
+   },
+   "v3": {
+    "sha256": "1e4b6dd6db2e0a828af1472949ebbc46ccc31edc21b1cdf49d25e39608cb8da3",
+    "marks": 3,
+    "sum": [
+     1644.767,
+     1317.149,
+     990.986
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "メトロノーム",
+   "reading": "",
+   "v1": {
+    "sha256": "3ad1457d431c12c461603c3ee7a576bab5beb8772244302d17c998ed6c0a43b3",
+    "marks": 6,
+    "sum": [
+     3508.222,
+     4710.579,
+     1256.82
+    ]
+   },
+   "v2c": {
+    "sha256": "3ad1457d431c12c461603c3ee7a576bab5beb8772244302d17c998ed6c0a43b3",
+    "marks": 6,
+    "sum": [
+     3508.222,
+     4710.579,
+     1256.82
+    ]
+   },
+   "v3": {
+    "sha256": "dd21636e6d94027d97949d62c3dcdae8db56797f42cb4d33ff7fdc06a3cab41b",
+    "marks": 11,
+    "sum": [
+     5918.022,
+     6968.253,
+     778.454
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "ロロロ",
+   "reading": "",
+   "v1": {
+    "sha256": "528e3bed970d5fe74caa9580caffdfc900071a9a1f389dc954e4bbd58ea4910a",
+    "marks": 377,
+    "sum": [
+     185789.474,
+     177368.421,
+     19048.421
+    ]
+   },
+   "v2c": {
+    "sha256": "30a2ea598608ef450fdeda7dfdbd5a0a52ff0d92cfc75dab914db70a29a10b6e",
+    "marks": 377,
+    "sum": [
+     185789.474,
+     177368.421,
+     19048.421
+    ]
+   },
+   "v3": {
+    "sha256": "a9dd60de56ca175094b3e55f2c98df70ece1eea11993850f2ba80ba3e5544dab",
+    "marks": 20,
+    "sum": [
+     8756.067,
+     8521.573,
+     924.026
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "眠る",
+   "reading": "",
+   "v1": {
+    "sha256": "e8a74c18e5b19f8a745818f016457542e9df7fa14a97335cb92a0ac198725d09",
+    "marks": 2,
+    "sum": [
+     1517.795,
+     1047.849,
+     285.838
+    ]
+   },
+   "v2c": {
+    "sha256": "5ccb80c0f5ffc8b4b92292e02da0eb937731abbbc5e9bb36937adec06c4838ca",
+    "marks": 18,
+    "sum": [
+     13820.585,
+     5424.668,
+     721.033
+    ]
+   },
+   "v3": {
+    "sha256": "329712e7f43d46e5ea991a0853ebc94d3a56b9c4221a2a9d9239b110c8104120",
+    "marks": 2,
+    "sum": [
+     694.738,
+     924.229,
+     324.707
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "書け",
+   "reading": "",
+   "v1": {
+    "sha256": "3f04ecff19e1bfc304ee167dd49d08af40d095657868bd9701d45b35d6557c42",
+    "marks": 2,
+    "sum": [
+     629.386,
+     616.887,
+     400.716
+    ]
+   },
+   "v2c": {
+    "sha256": "3f04ecff19e1bfc304ee167dd49d08af40d095657868bd9701d45b35d6557c42",
+    "marks": 2,
+    "sum": [
+     629.386,
+     616.887,
+     400.716
+    ]
+   },
+   "v3": {
+    "sha256": "625e13ad9eee4b99720d5c7b3520b203c312691edeb580218b505b31f560f8ae",
+    "marks": 2,
+    "sum": [
+     1297.599,
+     863.991,
+     318.475
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "遠くない",
+   "reading": "",
+   "v1": {
+    "sha256": "504f7cece94dbed7ace461baba096e735e059b94297cc26b6e29f74719583bae",
+    "marks": 2,
+    "sum": [
+     500.942,
+     477.778,
+     366.933
+    ]
+   },
+   "v2c": {
+    "sha256": "d7d7198707577d5ed50a0e30ef16713e0ac7adf434539d496b7a227d8581b870",
+    "marks": 20,
+    "sum": [
+     5074.989,
+     12583.35,
+     831.022
+    ]
+   },
+   "v3": {
+    "sha256": "ff6ec5e1ee6e5f3d75b28ff21cc5fe8c7e3578178326570a3a0eab89312db689",
+    "marks": 17,
+    "sum": [
+     9414.627,
+     3625.998,
+     659.771
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "忘れない",
+   "reading": "",
+   "v1": {
+    "sha256": "d85c948966556afe9e3dcc095220af33b748e69cc165754b8588e7cb12538ef5",
+    "marks": 2,
+    "sum": [
+     1601.748,
+     477.778,
+     366.933
+    ]
+   },
+   "v2c": {
+    "sha256": "dab0c34eff04a3274c7c0048d6baad81b974bb661ec6918cd1b17ecf7b02e932",
+    "marks": 28,
+    "sum": [
+     22821.534,
+     18126.177,
+     1009.887
+    ]
+   },
+   "v3": {
+    "sha256": "cabf9186ad8c93002d8605e45d5ecfb27b46231317de9653d8573ca73ff0155b",
+    "marks": 7,
+    "sum": [
+     4918.098,
+     1277.485,
+     310.608
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "歩きながら",
+   "reading": "",
+   "v1": {
+    "sha256": "2f8e2b7343e9a02a2ddef877aa89d6ad018b395a16d6db5915dd8abadf12da0f",
+    "marks": 5,
+    "sum": [
+     3417.816,
+     2617.273,
+     750.545
+    ]
+   },
+   "v2c": {
+    "sha256": "2f8e2b7343e9a02a2ddef877aa89d6ad018b395a16d6db5915dd8abadf12da0f",
+    "marks": 5,
+    "sum": [
+     3417.816,
+     2617.273,
+     750.545
+    ]
+   },
+   "v3": {
+    "sha256": "c206f9d1e626d9969ec8343694637a1985a8757870dab2f96423d2a00defb0dd",
+    "marks": 5,
+    "sum": [
+     2224.861,
+     2703.323,
+     559.458
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "ない",
+   "reading": "",
+   "v1": {
+    "sha256": "c388e707c803c9124cf1c0339cbf67d22f083719ed4ba70b28beedfd98a67e42",
+    "marks": 2,
+    "sum": [
+     1708.224,
+     409.369,
+     240.027
+    ]
+   },
+   "v2c": {
+    "sha256": "c388e707c803c9124cf1c0339cbf67d22f083719ed4ba70b28beedfd98a67e42",
+    "marks": 2,
+    "sum": [
+     1708.224,
+     409.369,
+     240.027
+    ]
+   },
+   "v3": {
+    "sha256": "8ebaee35db7ef541212f441dd9153a522326d5e2456c897a9a3855ea7a1ac8b2",
+    "marks": 2,
+    "sum": [
+     593.996,
+     577.724,
+     246.339
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "見ない",
+   "reading": "",
+   "v1": {
+    "sha256": "cbea0f1adb86de4a5fd5526577e5187278e295886918e5a708948e3cdf1cee49",
+    "marks": 1,
+    "sum": [
+     699.005,
+     192.857,
+     235.886
+    ]
+   },
+   "v2c": {
+    "sha256": "14bfda0e2161481da5361aa3a6ba4ee412d9682303576c42e96251ac9d905057",
+    "marks": 49,
+    "sum": [
+     34284.105,
+     33007.899,
+     1315.071
+    ]
+   },
+   "v3": {
+    "sha256": "147720345bd62958997aa22498a62d5339752d67f48e51e9b27878054bd1f4b3",
+    "marks": 5,
+    "sum": [
+     1521.624,
+     1240.183,
+     201.206
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "窓の外",
+   "reading": "",
+   "v1": {
+    "sha256": "24300653d38446e20d19c06800379448726b104a13f595438a97b4fe318c0ae6",
+    "marks": 7,
+    "sum": [
+     5993.95,
+     665.301,
+     446.703
+    ]
+   },
+   "v2c": {
+    "sha256": "06d23b6b60e7aed74f7d581aad41fbb06dc72735337db857a9d0241af9b542f5",
+    "marks": 64,
+    "sum": [
+     26937.94,
+     22982.86,
+     2662.972
+    ]
+   },
+   "v3": {
+    "sha256": "d2d17ed932d5c7f028623a14c0236e2923c7ae8d65544bbf0dfc579acf144e4b",
+    "marks": 16,
+    "sum": [
+     8992.427,
+     5901.815,
+     1609.55
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "鳥の声",
+   "reading": "",
+   "v1": {
+    "sha256": "125d47684e8cfb0a596f6cbe53ca6f82ce2a5a6a9c6c83207ce57c3656f5bba2",
+    "marks": 5,
+    "sum": [
+     4145.114,
+     550.285,
+     354.975
+    ]
+   },
+   "v2c": {
+    "sha256": "5632d2bdb188395b5106fb8c5504917c1ed7e9658910b35649affccc685d9f0e",
+    "marks": 68,
+    "sum": [
+     27988.374,
+     19994.026,
+     2676.484
+    ]
+   },
+   "v3": {
+    "sha256": "2d18aedfa0ae9de4a5670276c0a60fd1aafde129e5bea3fcc8cb92fa43c9df4a",
+    "marks": 21,
+    "sum": [
+     9705.515,
+     9140.04,
+     1804.8
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "風が吹く",
+   "reading": "",
+   "v1": {
+    "sha256": "dff034e214262fc27722d1e4e2ea9deba9fdf96477aca231eba88d85a003dfa8",
+    "marks": 3,
+    "sum": [
+     612.179,
+     1547.778,
+     458.667
+    ]
+   },
+   "v2c": {
+    "sha256": "92ecda15f1577a60fecbb4480366398fd061ee2dcba7c6750a1e5d7e39658db2",
+    "marks": 5,
+    "sum": [
+     1007.942,
+     2248.755,
+     506.504
+    ]
+   },
+   "v3": {
+    "sha256": "88b75eaa2c1c7a0e53fc57ec71c7c4677a57dd57eab2c139bd05afaa8ff4dc7c",
+    "marks": 10,
+    "sum": [
+     5606.36,
+     4952.067,
+     832.672
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "水を飲む",
+   "reading": "",
+   "v1": {
+    "sha256": "2e1e8ce9471d86adc096502ddd8137bdfc0f33f96aa26bb98eeb9b02d2d078cd",
+    "marks": 3,
+    "sum": [
+     2365.675,
+     1547.778,
+     458.667
+    ]
+   },
+   "v2c": {
+    "sha256": "3de3ea118965d4a8aa75d78d0c9744027d2c83a5694b2733678b38841d236657",
+    "marks": 5,
+    "sum": [
+     3951.311,
+     2269.631,
+     516.352
+    ]
+   },
+   "v3": {
+    "sha256": "77f4cf8b2359010eaa74c1e2019dcd48c41163d7143a018667cb9340154f5766",
+    "marks": 10,
+    "sum": [
+     5814.969,
+     4602.861,
+     827.347
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "今日は晴れ",
+   "reading": "",
+   "v1": {
+    "sha256": "2b915851b0990f5378cc28797aed5d18fc7a8a8be6438e1407ae2e51518c8efa",
+    "marks": 4,
+    "sum": [
+     2671.028,
+     1921.818,
+     450.327
+    ]
+   },
+   "v2c": {
+    "sha256": "516be0d22b0761625d974db9212553ebb2af8e55385616013177ceb5cbbb2de2",
+    "marks": 6,
+    "sum": [
+     4017.003,
+     2854.098,
+     499.172
+    ]
+   },
+   "v3": {
+    "sha256": "b3d6e11a3ba00cf080cc45a4e45599090b6c7367f5f060ff8fd0194c36cc75e7",
+    "marks": 11,
+    "sum": [
+     6693.478,
+     6149.866,
+     733.644
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "春はあけぼの",
+   "reading": "",
+   "v1": {
+    "sha256": "3a06a9d6631d8b5b5845f298530f23ebc0df52675630cf442522236eae228144",
+    "marks": 5,
+    "sum": [
+     2430.887,
+     2828.605,
+     779
+    ]
+   },
+   "v2c": {
+    "sha256": "3a06a9d6631d8b5b5845f298530f23ebc0df52675630cf442522236eae228144",
+    "marks": 5,
+    "sum": [
+     2430.887,
+     2828.605,
+     779
+    ]
+   },
+   "v3": {
+    "sha256": "a471cfdfe35f34c81af7dd626258d9f649ee29a490ce30246f4aa18819c7e2f9",
+    "marks": 19,
+    "sum": [
+     10950.56,
+     11736.346,
+     1386.652
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "手と足",
+   "reading": "",
+   "v1": {
+    "sha256": "9d198a0ff885d8d0e8954e6c96ff97ae378ef8b35edfea78833dc2aa862843e3",
+    "marks": 2,
+    "sum": [
+     670.58,
+     999.264,
+     255.98
+    ]
+   },
+   "v2c": {
+    "sha256": "9d198a0ff885d8d0e8954e6c96ff97ae378ef8b35edfea78833dc2aa862843e3",
+    "marks": 2,
+    "sum": [
+     670.58,
+     999.264,
+     255.98
+    ]
+   },
+   "v3": {
+    "sha256": "948497884ac25ec7af0745b8ac08da01a6f152eabdcbe3be220c2b36cedabfbf",
+    "marks": 12,
+    "sum": [
+     5638.397,
+     5814.904,
+     892.06
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "雪または霧",
+   "reading": "",
+   "v1": {
+    "sha256": "ec29e943bd1c43c60a3fcb6f228919553ad5774aebd38100b98981c99d503467",
+    "marks": 7,
+    "sum": [
+     1837.847,
+     1640.855,
+     841.569
+    ]
+   },
+   "v2c": {
+    "sha256": "ec29e943bd1c43c60a3fcb6f228919553ad5774aebd38100b98981c99d503467",
+    "marks": 7,
+    "sum": [
+     1837.847,
+     1640.855,
+     841.569
+    ]
+   },
+   "v3": {
+    "sha256": "5b2c89fb1a51c26aa7fac2ec0c4406dae3e83226bcb0aee9df6fb836bb1175fb",
+    "marks": 14,
+    "sum": [
+     5834.144,
+     4000.8,
+     1294.699
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "大と太",
+   "reading": "",
+   "v1": {
+    "sha256": "35ee4fb46037d1bbb26e2b30510e6c3a27c6668958f93821ef3de0da83f7ff8a",
+    "marks": 3,
+    "sum": [
+     1039.211,
+     1811.959,
+     672.924
+    ]
+   },
+   "v2c": {
+    "sha256": "105e1575fd369dbd33c28f5a093915a9adfffb2c0af339305d82aec224b9d161",
+    "marks": 44,
+    "sum": [
+     15241.765,
+     22929.311,
+     1786.726
+    ]
+   },
+   "v3": {
+    "sha256": "3afd6a2ad63af6d9b72e7ef0355cd73a8c9ebb301852712076439d55ca50ad5f",
+    "marks": 9,
+    "sum": [
+     3528.925,
+     4344.648,
+     945.565
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "木と本",
+   "reading": "",
+   "v1": {
+    "sha256": "aea854c1509ef7c8a6e061a457bcf6a8207cb72ba5e19c9ddfbe8b8e228aa0cb",
+    "marks": 3,
+    "sum": [
+     1007.465,
+     1836.595,
+     658.976
+    ]
+   },
+   "v2c": {
+    "sha256": "ee0bf9112808cfdc774ec7434c9b75420a7b0181cb8730462d618eb3d97d386e",
+    "marks": 50,
+    "sum": [
+     16791.076,
+     26771.967,
+     1707.699
+    ]
+   },
+   "v3": {
+    "sha256": "c11d415c3c286f40f12a98ad2fceaf622d6736f2b11b04755bc426614bc4b3f3",
+    "marks": 8,
+    "sum": [
+     3655.935,
+     4236.101,
+     749.571
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "土と士",
+   "reading": "",
+   "v1": {
+    "sha256": "cfe747fabb447678e07a2b7b384565ef4cdbba3a150865c29234109c25e27287",
+    "marks": 3,
+    "sum": [
+     836.931,
+     1818.777,
+     662.655
+    ]
+   },
+   "v2c": {
+    "sha256": "1ca8c35744b9fe4d1a4bfe2f337d7d34f598b026684a4b6fb32df68c64edf74c",
+    "marks": 50,
+    "sum": [
+     13948.852,
+     26040.881,
+     1917.953
+    ]
+   },
+   "v3": {
+    "sha256": "bd57dcd7e848b7248745273b1383074318a6fe18a2bba391b7ccc47fffc8e1bb",
+    "marks": 9,
+    "sum": [
+     4105.295,
+     4757.664,
+     739.063
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "王と玉",
+   "reading": "",
+   "v1": {
+    "sha256": "c2678d8dfb70d5754c4a49f34581ce3f194c285ccd5fba99cb469389b0b80f12",
+    "marks": 3,
+    "sum": [
+     1701.067,
+     1989.075,
+     661.761
+    ]
+   },
+   "v2c": {
+    "sha256": "25374b9ff54c41cc5ef305a855353241b9495b9743c78c4b012fe63d82c8b583",
+    "marks": 53,
+    "sum": [
+     24633.763,
+     35140.33,
+     1796.272
+    ]
+   },
+   "v3": {
+    "sha256": "e83ec02ee196763e93881a99ad63572328cd27cbfed6db9edf71404d2ab346ad",
+    "marks": 9,
+    "sum": [
+     3638.549,
+     5066.795,
+     1145.714
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "え？",
+   "reading": "",
+   "v1": {
+    "sha256": "340b34cc7cf1a5189652beb7f54a70604352f3870e445e931fcb10099ebc31b9",
+    "marks": 2,
+    "sum": [
+     1767.71,
+     1121.867,
+     118.596
+    ]
+   },
+   "v2c": {
+    "sha256": "340b34cc7cf1a5189652beb7f54a70604352f3870e445e931fcb10099ebc31b9",
+    "marks": 2,
+    "sum": [
+     1767.71,
+     1121.867,
+     118.596
+    ]
+   },
+   "v3": {
+    "sha256": "140e4cb7fe439a6badc4dd47842bbe5a4b7d6316ca71f1916089b120d1579b18",
+    "marks": 2,
+    "sum": [
+     676.094,
+     674.805,
+     209.332
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "待って！",
+   "reading": "",
+   "v1": {
+    "sha256": "a17bba451f43a1ea0958549ef84b35650358eadc0b9da53f54716e7fd68bd6b7",
+    "marks": 3,
+    "sum": [
+     2410.697,
+     1433.333,
+     458.667
+    ]
+   },
+   "v2c": {
+    "sha256": "f5c40696182c82acc70152c39f24971077b6703324db24759a46e99c26c78d29",
+    "marks": 4,
+    "sum": [
+     3214.262,
+     1829.76,
+     591.105
+    ]
+   },
+   "v3": {
+    "sha256": "08ba31f5534dccd2e35355e2f4781048a24001cc669658ce3d7dd87646fdf4c1",
+    "marks": 4,
+    "sum": [
+     2347.178,
+     1967.852,
+     457.212
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "「声」",
+   "reading": "",
+   "v1": {
+    "sha256": "1af8b2571e00d76a2078924d09f3fd0a6a826ad079304d599b2c02e815856674",
+    "marks": 3,
+    "sum": [
+     386.106,
+     570.183,
+     184.077
+    ]
+   },
+   "v2c": {
+    "sha256": "1af8b2571e00d76a2078924d09f3fd0a6a826ad079304d599b2c02e815856674",
+    "marks": 3,
+    "sum": [
+     386.106,
+     570.183,
+     184.077
+    ]
+   },
+   "v3": {
+    "sha256": "a29990c14ce11c7a419532285c065e2002e6664b5460971cbdcc2de41dafb60a",
+    "marks": 7,
+    "sum": [
+     3731.259,
+     3256.486,
+     848.909
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "一、二、三",
+   "reading": "",
+   "v1": {
+    "sha256": "b2d6ab7a5412b4d560d5c09e237baa1bffd88833c4c2820276946f37de296f19",
+    "marks": 6,
+    "sum": [
+     4932.925,
+     1654.65,
+     1076.058
+    ]
+   },
+   "v2c": {
+    "sha256": "b2d6ab7a5412b4d560d5c09e237baa1bffd88833c4c2820276946f37de296f19",
+    "marks": 6,
+    "sum": [
+     4932.925,
+     1654.65,
+     1076.058
+    ]
+   },
+   "v3": {
+    "sha256": "39887df762c0e6dab06b182eb876734a04c587a97aa7c3bf6cfdc772f97201f0",
+    "marks": 75,
+    "sum": [
+     37139.852,
+     38270.975,
+     1899.346
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "青い 空",
+   "reading": "",
+   "v1": {
+    "sha256": "2ac52df53cd6a48dfc508c3c6324c11b63c91c169138f25efbaa2b3482bb96d1",
+    "marks": 3,
+    "sum": [
+     713.827,
+     1452.222,
+     458.667
+    ]
+   },
+   "v2c": {
+    "sha256": "2ac52df53cd6a48dfc508c3c6324c11b63c91c169138f25efbaa2b3482bb96d1",
+    "marks": 3,
+    "sum": [
+     713.827,
+     1452.222,
+     458.667
+    ]
+   },
+   "v3": {
+    "sha256": "61e7892c197a726de32ca9b6aec3a7b4972fc7127528512ed76d4bec96e9a5c5",
+    "marks": 3,
+    "sum": [
+     1403.53,
+     1758.598,
+     426.227
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "風 と 光",
+   "reading": "",
+   "v1": {
+    "sha256": "c18180244b76d2361921387acaae54f7a4c017976613f271b9d4f6a33481681c",
+    "marks": 3,
+    "sum": [
+     1568.314,
+     1500,
+     600
+    ]
+   },
+   "v2c": {
+    "sha256": "c18180244b76d2361921387acaae54f7a4c017976613f271b9d4f6a33481681c",
+    "marks": 3,
+    "sum": [
+     1568.314,
+     1500,
+     600
+    ]
+   },
+   "v3": {
+    "sha256": "ceb169337eae7de3a85e63bac5afb930e1d02b68ca207d016a42afb55c70e794",
+    "marks": 3,
+    "sum": [
+     1415.405,
+     1623.46,
+     455.132
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "3月",
+   "reading": "",
+   "v1": {
+    "sha256": "4dc1868b0f0aeae71554de63d195e695add38877aa57e8bb9d990c9cb2b7aa53",
+    "marks": 2,
+    "sum": [
+     985.376,
+     909.46,
+     1147.65
+    ]
+   },
+   "v2c": {
+    "sha256": "6b11cbdde59cec9b0ec0e29456f42453b3ad2ec7059edd803dcfc8ebe0dc4217",
+    "marks": 109,
+    "sum": [
+     55942.741,
+     59487.4,
+     4942.923
+    ]
+   },
+   "v3": {
+    "sha256": "912070a71380256a3f3ff63cbaf53c880bb8936990771fb1acc4b4780b05b976",
+    "marks": 2,
+    "sum": [
+     1162.916,
+     993.419,
+     638.015
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "100年",
+   "reading": "",
+   "v1": {
+    "sha256": "db015c4f34a76c2a6ee913d8a56ff49550414a6749f69b64e5a499135bb266b3",
+    "marks": 4,
+    "sum": [
+     1280.023,
+     2053.016,
+     1098.46
+    ]
+   },
+   "v2c": {
+    "sha256": "55592f97c4d516e709de6f73a4bb1ea70a7a4b076c9c185eba00208390994731",
+    "marks": 33,
+    "sum": [
+     14546.389,
+     14989.88,
+     1788.174
+    ]
+   },
+   "v3": {
+    "sha256": "cd15f009e7fa28559ed2aed7ad8a3f0f4f7a333d1a8b9a3574118526e28f2090",
+    "marks": 24,
+    "sum": [
+     15506.782,
+     10786.598,
+     1407.639
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "holdout",
+   "text": "1 2 3",
+   "reading": "",
+   "v1": {
+    "sha256": "07d80b0eee2ca5b0dc4a8bf3b5d4d9e5f787913f9f577cb1d15c7857d01cb9e2",
+    "marks": 3,
+    "sum": [
+     1603.373,
+     1500,
+     600
+    ]
+   },
+   "v2c": {
+    "sha256": "07d80b0eee2ca5b0dc4a8bf3b5d4d9e5f787913f9f577cb1d15c7857d01cb9e2",
+    "marks": 3,
+    "sum": [
+     1603.373,
+     1500,
+     600
+    ]
+   },
+   "v3": {
+    "sha256": "cd0ad439a47ef3f41fb6a0a07a16a4f1ed72fb73e544a07bd667f684230375c3",
+    "marks": 3,
+    "sum": [
+     1336.369,
+     1385.286,
+     393.621
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "口",
+   "reading": "",
+   "v1": {
+    "sha256": "d3fdbc4cbc35d0eee2b204f2edb760ebe1c46c8cce8d2a971964f0589de7de58",
+    "marks": 1,
+    "sum": [
+     914.89,
+     422.576,
+     61.803
+    ]
+   },
+   "v2c": {
+    "sha256": "d3fdbc4cbc35d0eee2b204f2edb760ebe1c46c8cce8d2a971964f0589de7de58",
+    "marks": 1,
+    "sum": [
+     914.89,
+     422.576,
+     61.803
+    ]
+   },
+   "v3": {
+    "sha256": "33323fe85d6faaf78b4f79cf556a7debf2931888c23cc8517b6e60c08d16b6a5",
+    "marks": 1,
+    "sum": [
+     294.321,
+     261.755,
+     167.242
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "回",
+   "reading": "",
+   "v1": {
+    "sha256": "f15c1ffb21778069e3d14983c8ed66b10c3a98e38556d9068e533ec77800b21a",
+    "marks": 3,
+    "sum": [
+     1931.776,
+     598.139,
+     154.9
+    ]
+   },
+   "v2c": {
+    "sha256": "f15c1ffb21778069e3d14983c8ed66b10c3a98e38556d9068e533ec77800b21a",
+    "marks": 3,
+    "sum": [
+     1931.776,
+     598.139,
+     154.9
+    ]
+   },
+   "v3": {
+    "sha256": "b607337fb85e7ef8fc4559ba19efd6483074bcd0ef7d1147379c7afe4c77ec92",
+    "marks": 1,
+    "sum": [
+     443.441,
+     429.301,
+     989.734
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "日",
+   "reading": "",
+   "v1": {
+    "sha256": "8f2a6554cf9c4ee4e65a3f2485f55c3b76400ff346145c9db02a0fd9c680686e",
+    "marks": 1,
+    "sum": [
+     83.408,
+     860.997,
+     55.595
+    ]
+   },
+   "v2c": {
+    "sha256": "8f2a6554cf9c4ee4e65a3f2485f55c3b76400ff346145c9db02a0fd9c680686e",
+    "marks": 1,
+    "sum": [
+     83.408,
+     860.997,
+     55.595
+    ]
+   },
+   "v3": {
+    "sha256": "716dc7050953506c76e3510f5c0395049128eb553073274be8103998e1930a66",
+    "marks": 1,
+    "sum": [
+     693.573,
+     175.765,
+     145.538
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "目",
+   "reading": "",
+   "v1": {
+    "sha256": "97e4949c1ee471f8c95153bf5f6eff1bf60582388a3269ef6c47564124f8ed6a",
+    "marks": 1,
+    "sum": [
+     931.708,
+     68.292,
+     51.71
+    ]
+   },
+   "v2c": {
+    "sha256": "97e4949c1ee471f8c95153bf5f6eff1bf60582388a3269ef6c47564124f8ed6a",
+    "marks": 1,
+    "sum": [
+     931.708,
+     68.292,
+     51.71
+    ]
+   },
+   "v3": {
+    "sha256": "8f2e4ff30ccdf6b2322ab0b6a77812b613fe5cf1201957d9db144efd5dad635a",
+    "marks": 1,
+    "sum": [
+     257.463,
+     194.808,
+     146.798
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "田",
+   "reading": "",
+   "v1": {
+    "sha256": "2cf013bcb026afcdc10014c0a865d304bb8fcc0a1b9a780fcd50f801fb94dc18",
+    "marks": 3,
+    "sum": [
+     944.289,
+     1792.698,
+     795.759
+    ]
+   },
+   "v2c": {
+    "sha256": "2cf013bcb026afcdc10014c0a865d304bb8fcc0a1b9a780fcd50f801fb94dc18",
+    "marks": 3,
+    "sum": [
+     944.289,
+     1792.698,
+     795.759
+    ]
+   },
+   "v3": {
+    "sha256": "30c4079f52a5f660a77ced2035fdae9adaa13737de53747bea0284727d7d7525",
+    "marks": 1,
+    "sum": [
+     464.07,
+     441.314,
+     1150
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "品",
+   "reading": "",
+   "v1": {
+    "sha256": "d44402aec6c8ce52e4934bd080024e8c82946158b7c685508410d42f968f9c24",
+    "marks": 4,
+    "sum": [
+     1129.41,
+     2569.395,
+     1436.265
+    ]
+   },
+   "v2c": {
+    "sha256": "9bf9ea96debcc8b9a8e3b6bd7c89ca53874997140a969a834a659addebb170cd",
+    "marks": 47,
+    "sum": [
+     13729.919,
+     32486.064,
+     1712.979
+    ]
+   },
+   "v3": {
+    "sha256": "c013f2565eda456beb053d2feaeb94c863b66a165c8cb9fcfa8cc5aee0ab02ff",
+    "marks": 41,
+    "sum": [
+     20802.297,
+     20296.578,
+     1775.516
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "羽",
+   "reading": "",
+   "v1": {
+    "sha256": "c5b7618da4df66e56e172c43b57a08163b39d186cf1bc12ad126a98e55bc0040",
+    "marks": 6,
+    "sum": [
+     4586.779,
+     3814.298,
+     1127.505
+    ]
+   },
+   "v2c": {
+    "sha256": "c5b7618da4df66e56e172c43b57a08163b39d186cf1bc12ad126a98e55bc0040",
+    "marks": 6,
+    "sum": [
+     4586.779,
+     3814.298,
+     1127.505
+    ]
+   },
+   "v3": {
+    "sha256": "821fb261c579df19990faf7638e964e26be696f68db2cd2e664f2a8ff7f6ef16",
+    "marks": 12,
+    "sum": [
+     5971.873,
+     5830.822,
+     2656.729
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "入口",
+   "reading": "いりぐち",
+   "v1": {
+    "sha256": "ee5c15d6317dae891a80a05dcc0eb7f16d9817b3183af0bbc1e7f69b574bc455",
+    "marks": 2,
+    "sum": [
+     984.191,
+     999.234,
+     1391.775
+    ]
+   },
+   "v2c": {
+    "sha256": "775b273c9b9b9bc4fc51f58413317e1ffb809e80eb74df1d9fe3b5862a60f367",
+    "marks": 81,
+    "sum": [
+     40953.228,
+     39897.654,
+     4101.775
+    ]
+   },
+   "v3": {
+    "sha256": "30f42265a23cc030c7baf8fe9847118108c9b5f1b24280a1fdd2f162ee2d8eac",
+    "marks": 2,
+    "sum": [
+     890.173,
+     946.369,
+     513.489
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "休日",
+   "reading": "きゅうじつ",
+   "v1": {
+    "sha256": "4dc54743f7edb5c92a5a9e3002deefbc4381178019579944836123d0ac7f71f4",
+    "marks": 2,
+    "sum": [
+     847.126,
+     1202.109,
+     1216.005
+    ]
+   },
+   "v2c": {
+    "sha256": "3eddc7a746314e8d194265e3917b59a37149886e35a832d48221126493a2fc5c",
+    "marks": 84,
+    "sum": [
+     39735.886,
+     40315.93,
+     4067.005
+    ]
+   },
+   "v3": {
+    "sha256": "2dcbca9836e2f258f55320caefa39a0bb5a4e81c8cab3ae41f5b34731e4c37bb",
+    "marks": 2,
+    "sum": [
+     691.249,
+     1252.43,
+     643.982
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "田園",
+   "reading": "でんえん",
+   "v1": {
+    "sha256": "34ab04698eb209971eb01bdb6b852f3b905046dc423c800deb00c2a5405c38a1",
+    "marks": 4,
+    "sum": [
+     1673.462,
+     1732.648,
+     1074.443
+    ]
+   },
+   "v2c": {
+    "sha256": "34ab04698eb209971eb01bdb6b852f3b905046dc423c800deb00c2a5405c38a1",
+    "marks": 4,
+    "sum": [
+     1673.462,
+     1732.648,
+     1074.443
+    ]
+   },
+   "v3": {
+    "sha256": "5c601884c903397a4b0ef6c0316d3c84dd3d00d777f06bb2c2fc460d8f592772",
+    "marks": 2,
+    "sum": [
+     1060.669,
+     1048.048,
+     903.203
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "商品",
+   "reading": "しょうひん",
+   "v1": {
+    "sha256": "0f262c53fa5d135eaa21b3171f6e738cd0cadc83c75431289c32deb215298dfe",
+    "marks": 5,
+    "sum": [
+     1946.986,
+     3484.3,
+     1418.474
+    ]
+   },
+   "v2c": {
+    "sha256": "a67f875f834143fb0b7007738677d223152a02d522702f312dda829abd93a709",
+    "marks": 50,
+    "sum": [
+     19038.205,
+     36649.753,
+     1621.165
+    ]
+   },
+   "v3": {
+    "sha256": "1c5e2a3d3d05b69f570c04568fef381f7447f3d06372527d3c2c99b90da08dc9",
+    "marks": 49,
+    "sum": [
+     33377.71,
+     24415.546,
+     1336.81
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "probe",
+   "text": "羽音",
+   "reading": "はおと",
+   "v1": {
+    "sha256": "8c229f3bccf4da1f66474a005e75c556b1a32af20e43d3cf28df06d7a03aa53a",
+    "marks": 4,
+    "sum": [
+     2781.191,
+     2714.397,
+     1011.473
+    ]
+   },
+   "v2c": {
+    "sha256": "0bfa388db716b8c5d0b4d69b12373b93768b31efcc716b2981173c4123cfdc56",
+    "marks": 35,
+    "sum": [
+     20120.528,
+     26695.336,
+     1271.091
+    ]
+   },
+   "v3": {
+    "sha256": "c8b1c971c777ea86f7f95d77e26ca06e5340b3a91984cae294f3337e0797012b",
+    "marks": 11,
+    "sum": [
+     6591.785,
+     4966.782,
+     910.792
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "孤独",
+   "reading": "",
+   "v1": {
+    "sha256": "821c7874b6930ccac9f514c4b53d5f78b3e890c5d686adf7cd61d5042bd0cd7f",
+    "marks": 2,
+    "sum": [
+     1852.952,
+     1138.981,
+     115.663
+    ]
+   },
+   "v2c": {
+    "sha256": "821c7874b6930ccac9f514c4b53d5f78b3e890c5d686adf7cd61d5042bd0cd7f",
+    "marks": 2,
+    "sum": [
+     1852.952,
+     1138.981,
+     115.663
+    ]
+   },
+   "v3": {
+    "sha256": "b24191de8f81c9418912da321c49ca1bdbe7f7356b711fc3625a956aab142e27",
+    "marks": 2,
+    "sum": [
+     875.366,
+     858.014,
+     265.695
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "記憶",
+   "reading": "",
+   "v1": {
+    "sha256": "6b2ebe1f8f0b9ab22871b26f1c087325bb8f5db160d4f1eef9897716b4b17dae",
+    "marks": 7,
+    "sum": [
+     612.849,
+     650.458,
+     263.268
+    ]
+   },
+   "v2c": {
+    "sha256": "6b2ebe1f8f0b9ab22871b26f1c087325bb8f5db160d4f1eef9897716b4b17dae",
+    "marks": 7,
+    "sum": [
+     612.849,
+     650.458,
+     263.268
+    ]
+   },
+   "v3": {
+    "sha256": "0fa8292ad20b52c53dd9a8356cc8400702a2bda21126e2f96e38e91691dad630",
+    "marks": 7,
+    "sum": [
+     1452.397,
+     1129.061,
+     881.853
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "風景",
+   "reading": "",
+   "v1": {
+    "sha256": "72dbf4dd9399b2863c532a696990a8b1a9c7a1909bf51401690ae173700ae8e4",
+    "marks": 2,
+    "sum": [
+     168.204,
+     1656.551,
+     116.83
+    ]
+   },
+   "v2c": {
+    "sha256": "72dbf4dd9399b2863c532a696990a8b1a9c7a1909bf51401690ae173700ae8e4",
+    "marks": 2,
+    "sum": [
+     168.204,
+     1656.551,
+     116.83
+    ]
+   },
+   "v3": {
+    "sha256": "7e08009af488e8f4813d5e8e6a1e08070b8618e55ca78fc447285be40609737f",
+    "marks": 5,
+    "sum": [
+     2861.702,
+     2052.509,
+     506.705
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "静寂",
+   "reading": "",
+   "v1": {
+    "sha256": "cd7e07e501677b019674bd31cda81f2d536ad04a5902abfc9f9f63bab709b12d",
+    "marks": 4,
+    "sum": [
+     403.849,
+     2662.565,
+     258.229
+    ]
+   },
+   "v2c": {
+    "sha256": "cd7e07e501677b019674bd31cda81f2d536ad04a5902abfc9f9f63bab709b12d",
+    "marks": 4,
+    "sum": [
+     403.849,
+     2662.565,
+     258.229
+    ]
+   },
+   "v3": {
+    "sha256": "4c3352d110d1a218d4fa51fcd12e2c49f5e676c2b29a25c2b8fc263d7bca9c8a",
+    "marks": 2,
+    "sum": [
+     1085.716,
+     989.204,
+     653.13
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "祭り",
+   "reading": "",
+   "v1": {
+    "sha256": "dddb0ed3f797c8a7569930d92696fa162198b14cce07fa0a8f71249bca60c0d8",
+    "marks": 2,
+    "sum": [
+     1547.154,
+     1047.436,
+     297.577
+    ]
+   },
+   "v2c": {
+    "sha256": "2e3d6867f9d6c6baa1609dd99b1456df251833132a69a0b7690029a77d5f79e7",
+    "marks": 18,
+    "sum": [
+     14062.751,
+     5541.66,
+     669.109
+    ]
+   },
+   "v3": {
+    "sha256": "3c242b3263e95096ec5c0dccf1b1dface69f0cada770c02ed8ca849ad09a6307",
+    "marks": 6,
+    "sum": [
+     3088.826,
+     2720.011,
+     758.84
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "都市",
+   "reading": "",
+   "v1": {
+    "sha256": "e7247e8fb77a98eb962949c866768505ca0c4ad84ef8de33e23e7243c2742590",
+    "marks": 4,
+    "sum": [
+     437.921,
+     962.338,
+     254.303
+    ]
+   },
+   "v2c": {
+    "sha256": "e7247e8fb77a98eb962949c866768505ca0c4ad84ef8de33e23e7243c2742590",
+    "marks": 4,
+    "sum": [
+     437.921,
+     962.338,
+     254.303
+    ]
+   },
+   "v3": {
+    "sha256": "d4cad3934ffe1b4ea5d27899f59012de428e07fe2091c04b2895856824eb6391",
+    "marks": 2,
+    "sum": [
+     878.863,
+     993.97,
+     637.847
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "現実",
+   "reading": "",
+   "v1": {
+    "sha256": "f49a1ef7b2ae0b0fb54c1cf47907d5c43fa9caafc638f9b4318e2813d37d8dd7",
+    "marks": 2,
+    "sum": [
+     254.957,
+     1623.584,
+     80.973
+    ]
+   },
+   "v2c": {
+    "sha256": "f49a1ef7b2ae0b0fb54c1cf47907d5c43fa9caafc638f9b4318e2813d37d8dd7",
+    "marks": 2,
+    "sum": [
+     254.957,
+     1623.584,
+     80.973
+    ]
+   },
+   "v3": {
+    "sha256": "21da3572416eb26c3818baa581f7ab022ff5bec6d67452a499bb0f3e19041eb1",
+    "marks": 3,
+    "sum": [
+     2290.488,
+     1114.86,
+     475.494
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "断絶",
+   "reading": "",
+   "v1": {
+    "sha256": "82afa332e9aa1729085377dc68c5678bf14ccc3521572b179b51a605f3c140d4",
+    "marks": 2,
+    "sum": [
+     1764.726,
+     272.993,
+     75.437
+    ]
+   },
+   "v2c": {
+    "sha256": "82afa332e9aa1729085377dc68c5678bf14ccc3521572b179b51a605f3c140d4",
+    "marks": 2,
+    "sum": [
+     1764.726,
+     272.993,
+     75.437
+    ]
+   },
+   "v3": {
+    "sha256": "5b1ce0d0556dada3c5ca0ba5fe41f59edf80cdc2c6cbe6cff1ba56ee2745665d",
+    "marks": 2,
+    "sum": [
+     1371.453,
+     1000.638,
+     429.501
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "温度",
+   "reading": "",
+   "v1": {
+    "sha256": "0538a009fb3e814653c749e18ee7dc9fd5df05f7ace25ef2ee742ed36ff8ddc1",
+    "marks": 5,
+    "sum": [
+     4693.743,
+     3304.28,
+     256.363
+    ]
+   },
+   "v2c": {
+    "sha256": "0538a009fb3e814653c749e18ee7dc9fd5df05f7ace25ef2ee742ed36ff8ddc1",
+    "marks": 5,
+    "sum": [
+     4693.743,
+     3304.28,
+     256.363
+    ]
+   },
+   "v3": {
+    "sha256": "12c683ae3610c0f672bce8f48481bede00287beaf4d8cb504e3c7940e5be6f30",
+    "marks": 3,
+    "sum": [
+     1119.638,
+     1877.996,
+     1718.196
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "希望",
+   "reading": "",
+   "v1": {
+    "sha256": "6050cf575348713a1fc8c686d1e3bc79d6b845e9a5bcada4e8e1f878db8897bc",
+    "marks": 2,
+    "sum": [
+     220.792,
+     270.578,
+     99.573
+    ]
+   },
+   "v2c": {
+    "sha256": "6050cf575348713a1fc8c686d1e3bc79d6b845e9a5bcada4e8e1f878db8897bc",
+    "marks": 2,
+    "sum": [
+     220.792,
+     270.578,
+     99.573
+    ]
+   },
+   "v3": {
+    "sha256": "d02491bbd6eddf7c17162e636a42b23b6c00e232bb6d4fae842908673c6bf9bb",
+    "marks": 2,
+    "sum": [
+     974.66,
+     455.765,
+     223.702
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "秘密",
+   "reading": "",
+   "v1": {
+    "sha256": "7c06060fab03071a317d317aea8942ae0931780152d818278fc38f27be62fc84",
+    "marks": 7,
+    "sum": [
+     6380.372,
+     916.241,
+     346.049
+    ]
+   },
+   "v2c": {
+    "sha256": "7c06060fab03071a317d317aea8942ae0931780152d818278fc38f27be62fc84",
+    "marks": 7,
+    "sum": [
+     6380.372,
+     916.241,
+     346.049
+    ]
+   },
+   "v3": {
+    "sha256": "705f60f915525a0d62d9fc9c01eb3ae8311de4e6f41ab9d657fa3fd6c3be231f",
+    "marks": 7,
+    "sum": [
+     1405.005,
+     5598.221,
+     1173.234
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "群衆",
+   "reading": "",
+   "v1": {
+    "sha256": "a9cd60d2459a8e952c388420e2a7de5423a95629e65a53b4e5d1b8ce40179bdc",
+    "marks": 2,
+    "sum": [
+     1809.289,
+     917.193,
+     104.017
+    ]
+   },
+   "v2c": {
+    "sha256": "a9cd60d2459a8e952c388420e2a7de5423a95629e65a53b4e5d1b8ce40179bdc",
+    "marks": 2,
+    "sum": [
+     1809.289,
+     917.193,
+     104.017
+    ]
+   },
+   "v3": {
+    "sha256": "dff50d18eff2f83a3f8fdfea8cc2e83195e7bc9f6a20d889428e4cd0b421d5c3",
+    "marks": 6,
+    "sum": [
+     3606.681,
+     2326.373,
+     607.008
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "眠り",
+   "reading": "",
+   "v1": {
+    "sha256": "e0eb489cfec6299bf493b1ef52839c1f0176556d207d89185ecd226bf9ad97c6",
+    "marks": 2,
+    "sum": [
+     707.03,
+     1047.134,
+     285.809
+    ]
+   },
+   "v2c": {
+    "sha256": "c443a49ceaf62354a0b37729e29fe95aae2251f348c543d93aeb699d2d426fbe",
+    "marks": 20,
+    "sum": [
+     7218.218,
+     6070.183,
+     690.171
+    ]
+   },
+   "v3": {
+    "sha256": "7ace0ec8461b058757abaa8b9de0056be92abbb44642993f3c197e87f45163e0",
+    "marks": 2,
+    "sum": [
+     1108.186,
+     1216.029,
+     247.562
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "不安",
+   "reading": "",
+   "v1": {
+    "sha256": "a7e4d9aeba4cc1a8cb25550ccf00150dd516d163797d1481b18d7bc62a6c97ed",
+    "marks": 1,
+    "sum": [
+     808.857,
+     871.642,
+     100.608
+    ]
+   },
+   "v2c": {
+    "sha256": "a7e4d9aeba4cc1a8cb25550ccf00150dd516d163797d1481b18d7bc62a6c97ed",
+    "marks": 1,
+    "sum": [
+     808.857,
+     871.642,
+     100.608
+    ]
+   },
+   "v3": {
+    "sha256": "819b5c8b488a1f32716f04ba707d00edb45bafd234ae31b040cb48eb4538a122",
+    "marks": 1,
+    "sum": [
+     203.294,
+     506.964,
+     104.069
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "自由",
+   "reading": "",
+   "v1": {
+    "sha256": "441d88de9b4d78df11a374bd7aa848cc3777df234945eda43e2139aa0b4c789f",
+    "marks": 4,
+    "sum": [
+     2221.357,
+     2328.752,
+     1057.693
+    ]
+   },
+   "v2c": {
+    "sha256": "441d88de9b4d78df11a374bd7aa848cc3777df234945eda43e2139aa0b4c789f",
+    "marks": 4,
+    "sum": [
+     2221.357,
+     2328.752,
+     1057.693
+    ]
+   },
+   "v3": {
+    "sha256": "ef2036f2a5a67e8f52f5fdba23500dd81ba9ba59f4d45261c1517341a6dbd507",
+    "marks": 2,
+    "sum": [
+     634.468,
+     1354.962,
+     1089.95
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "境界",
+   "reading": "",
+   "v1": {
+    "sha256": "1e3cb1f0bc82f409ef652c0d44f7f3470c854661e67a67f0dcb9282ae17f077e",
+    "marks": 2,
+    "sum": [
+     1873.844,
+     834.976,
+     136.415
+    ]
+   },
+   "v2c": {
+    "sha256": "1e3cb1f0bc82f409ef652c0d44f7f3470c854661e67a67f0dcb9282ae17f077e",
+    "marks": 2,
+    "sum": [
+     1873.844,
+     834.976,
+     136.415
+    ]
+   },
+   "v3": {
+    "sha256": "cca7ab6f7c451ebc868a7a4a97caa074ec1a4187804d0048e2023699f14acdf7",
+    "marks": 3,
+    "sum": [
+     850.812,
+     1120.679,
+     558.117
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "沈黙",
+   "reading": "",
+   "v1": {
+    "sha256": "616b85bdfb0e06740c790529bf75d42ac6ebe2c1c5a6d4d1be9372b9ff8a1bb8",
+    "marks": 7,
+    "sum": [
+     609.767,
+     977.308,
+     428.797
+    ]
+   },
+   "v2c": {
+    "sha256": "616b85bdfb0e06740c790529bf75d42ac6ebe2c1c5a6d4d1be9372b9ff8a1bb8",
+    "marks": 7,
+    "sum": [
+     609.767,
+     977.308,
+     428.797
+    ]
+   },
+   "v3": {
+    "sha256": "aca7524396681a5bd09adbdae846c4b10b2e4d84a7139a6a5f3a1620052d3e56",
+    "marks": 3,
+    "sum": [
+     1706.842,
+     1141.852,
+     575.217
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "距離",
+   "reading": "",
+   "v1": {
+    "sha256": "16db98cd10c0de19273dee73965125060d5b8075e008783af9a1794d217644fe",
+    "marks": 2,
+    "sum": [
+     261.828,
+     320.578,
+     117.499
+    ]
+   },
+   "v2c": {
+    "sha256": "16db98cd10c0de19273dee73965125060d5b8075e008783af9a1794d217644fe",
+    "marks": 2,
+    "sum": [
+     261.828,
+     320.578,
+     117.499
+    ]
+   },
+   "v3": {
+    "sha256": "341c407cbe4d7e7ff0c888c7f7883618380c268cdf4eed844c0dfea6a53f85df",
+    "marks": 3,
+    "sum": [
+     1481.128,
+     696.41,
+     528.685
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "永遠",
+   "reading": "",
+   "v1": {
+    "sha256": "49904e6028caf94f27d188a7149b434efbca5cbd8c092c15a681a66890d2aa60",
+    "marks": 2,
+    "sum": [
+     1814.909,
+     797.733,
+     101.555
+    ]
+   },
+   "v2c": {
+    "sha256": "49904e6028caf94f27d188a7149b434efbca5cbd8c092c15a681a66890d2aa60",
+    "marks": 2,
+    "sum": [
+     1814.909,
+     797.733,
+     101.555
+    ]
+   },
+   "v3": {
+    "sha256": "4137d2abe6b08053cd9f40ca6a833f77eba0be46393b0f222dcb12d2ed8aae68",
+    "marks": 2,
+    "sum": [
+     805.165,
+     1204.718,
+     258.899
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "喪失",
+   "reading": "",
+   "v1": {
+    "sha256": "fa35e20b2d7a0da417dacb367ff0904218b8c083b8ee927f1f484fe9e200ab15",
+    "marks": 4,
+    "sum": [
+     2286.332,
+     2537.596,
+     1600.134
+    ]
+   },
+   "v2c": {
+    "sha256": "fa35e20b2d7a0da417dacb367ff0904218b8c083b8ee927f1f484fe9e200ab15",
+    "marks": 4,
+    "sum": [
+     2286.332,
+     2537.596,
+     1600.134
+    ]
+   },
+   "v3": {
+    "sha256": "d18b8abcda8c0ff098d861c1ae6ca7c03cf46aa6f03e80435621bfddf701c67c",
+    "marks": 3,
+    "sum": [
+     1293.271,
+     1215.429,
+     1066.262
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "約束",
+   "reading": "",
+   "v1": {
+    "sha256": "b5ebed48d23b9c55dfa4ef15004d2674435e15da04514261da47df91fac14479",
+    "marks": 4,
+    "sum": [
+     427.842,
+     3527.835,
+     207.739
+    ]
+   },
+   "v2c": {
+    "sha256": "b5ebed48d23b9c55dfa4ef15004d2674435e15da04514261da47df91fac14479",
+    "marks": 4,
+    "sum": [
+     427.842,
+     3527.835,
+     207.739
+    ]
+   },
+   "v3": {
+    "sha256": "e5b517139f0ed1f6fe06f2ffb4fc0388e1dc0b50de3253e499cabb4be80a94af",
+    "marks": 2,
+    "sum": [
+     1315.887,
+     1342.572,
+     848.002
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "夜明け",
+   "reading": "",
+   "v1": {
+    "sha256": "c31444056e5031e1909fd8bdd21cc8bf6403bd26b0e42c92f6e80a7477674c64",
+    "marks": 3,
+    "sum": [
+     1066.641,
+     1438.571,
+     707.657
+    ]
+   },
+   "v2c": {
+    "sha256": "c31444056e5031e1909fd8bdd21cc8bf6403bd26b0e42c92f6e80a7477674c64",
+    "marks": 3,
+    "sum": [
+     1066.641,
+     1438.571,
+     707.657
+    ]
+   },
+   "v3": {
+    "sha256": "163c7d66989023d524587cee205aaf046b98d986ee1abcf1af85794830166061",
+    "marks": 37,
+    "sum": [
+     27977.6,
+     14675.732,
+     1284.864
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "迷路",
+   "reading": "",
+   "v1": {
+    "sha256": "8f9b9cf0c29c2758a759bb383734349059ac06767402de19e1774377a1ee9db1",
+    "marks": 6,
+    "sum": [
+     718.945,
+     758.022,
+     234.465
+    ]
+   },
+   "v2c": {
+    "sha256": "8f9b9cf0c29c2758a759bb383734349059ac06767402de19e1774377a1ee9db1",
+    "marks": 6,
+    "sum": [
+     718.945,
+     758.022,
+     234.465
+    ]
+   },
+   "v3": {
+    "sha256": "edfc38dad7d1c20350a9799be8344cd4d51ae80adc3a46494116882c93a259ee",
+    "marks": 33,
+    "sum": [
+     18895.316,
+     13530.683,
+     1852.018
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "words",
+   "text": "余白",
+   "reading": "",
+   "v1": {
+    "sha256": "c54f77d2367996bbc86d55f1aa95a64dfdab397b153559ed0ee72977a4d0b0a9",
+    "marks": 5,
+    "sum": [
+     1862.515,
+     1360.194,
+     1489.849
+    ]
+   },
+   "v2c": {
+    "sha256": "130d19d84e77bf1e4ed3815482b0f1852ee46d3151a26020c4c786da51acad3b",
+    "marks": 49,
+    "sum": [
+     16494.144,
+     13806.039,
+     1803.648
+    ]
+   },
+   "v3": {
+    "sha256": "82208cee0b1339d809d2648af65dd38037daa31065744e0206328aa463e1f510",
+    "marks": 2,
+    "sum": [
+     671.586,
+     1363.206,
+     874.686
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "の",
+   "reading": "",
+   "v1": {
+    "sha256": "4b6333ab136a23b0ad19d23748867c8c004f7e562450226b58c8d0d017a57fca",
+    "marks": 1,
+    "sum": [
+     891.753,
+     108.247,
+     63.376
+    ]
+   },
+   "v2c": {
+    "sha256": "4b6333ab136a23b0ad19d23748867c8c004f7e562450226b58c8d0d017a57fca",
+    "marks": 1,
+    "sum": [
+     891.753,
+     108.247,
+     63.376
+    ]
+   },
+   "v3": {
+    "sha256": "909fef62bcd050e673d34118ac8fc318a52e89abbb47fdf8331e010595f868e6",
+    "marks": 1,
+    "sum": [
+     748.653,
+     189.184,
+     111.454
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "愛",
+   "reading": "",
+   "v1": {
+    "sha256": "897c9002841dcc47d3e017f7fd0553a402de7dace9c3041510b44a8bd2714a32",
+    "marks": 3,
+    "sum": [
+     271.645,
+     271.645,
+     205.878
+    ]
+   },
+   "v2c": {
+    "sha256": "897c9002841dcc47d3e017f7fd0553a402de7dace9c3041510b44a8bd2714a32",
+    "marks": 3,
+    "sum": [
+     271.645,
+     271.645,
+     205.878
+    ]
+   },
+   "v3": {
+    "sha256": "4c3f148d3e41e4742c4ab327eea59c00dcdbc31efe44b1d3bdf2b1ef0120985c",
+    "marks": 3,
+    "sum": [
+     749.467,
+     493.034,
+     400.316
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "ざわざわ",
+   "reading": "",
+   "v1": {
+    "sha256": "f01d15e22ff5c3f6128920f81a91214e42460f63a9b8789051f2690ac764a34a",
+    "marks": 4,
+    "sum": [
+     2000,
+     2000,
+     1513.6
+    ]
+   },
+   "v2c": {
+    "sha256": "aa4ba9835d258d30bd53841a09750895d4bbe195c732862c2019977caeb56f90",
+    "marks": 6,
+    "sum": [
+     3000,
+     3503.096,
+     1630.157
+    ]
+   },
+   "v3": {
+    "sha256": "2906c9a0fdfd81d69c09f7176ca9cc6d96877c7ac3970dec7ba314bd4e23cc46",
+    "marks": 32,
+    "sum": [
+     18466.121,
+     14914.194,
+     1239.558
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "カタカナ語",
+   "reading": "",
+   "v1": {
+    "sha256": "7d690c2dafa470cbbb7367f5c091ddc63afe39688203442ca0f96577f42d7272",
+    "marks": 5,
+    "sum": [
+     2782.422,
+     3769.017,
+     1168.46
+    ]
+   },
+   "v2c": {
+    "sha256": "c815328a03358e8fc092f4e137c7ec7706d981a03ef44f6b631843fa601fa7b7",
+    "marks": 16,
+    "sum": [
+     9436.48,
+     11306.993,
+     1078.491
+    ]
+   },
+   "v3": {
+    "sha256": "ac9a74aff41594bab5199ccb4ad4ddd1f4b55596a4d809de07d38130779a336b",
+    "marks": 65,
+    "sum": [
+     35361.27,
+     35457.01,
+     2549.102
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "Good morning!",
+   "reading": "",
+   "v1": {
+    "sha256": "8ce2c72fce88613da673e4392cd902845fdbe88e6248d83a519d74fffae5005e",
+    "marks": 12,
+    "sum": [
+     10079.981,
+     5775.784,
+     1658.46
+    ]
+   },
+   "v2c": {
+    "sha256": "8ce2c72fce88613da673e4392cd902845fdbe88e6248d83a519d74fffae5005e",
+    "marks": 12,
+    "sum": [
+     10079.981,
+     5775.784,
+     1658.46
+    ]
+   },
+   "v3": {
+    "sha256": "2834beddf183beefd99f30477e269ead573e24266598e75b4ed96322ec4f62eb",
+    "marks": 32,
+    "sum": [
+     7152.72,
+     15571.662,
+     1164.913
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "zzzzzzz",
+   "reading": "",
+   "v1": {
+    "sha256": "958a7d15da8c9356599b0a8cf591d36e2294103479b0919b9a6c65919e3bb201",
+    "marks": 13,
+    "sum": [
+     10472.941,
+     6500,
+     960
+    ]
+   },
+   "v2c": {
+    "sha256": "115c5af2f8db1b655a4746be12491ed79f54d0566de69e5da1f125fdb98cc7d3",
+    "marks": 13,
+    "sum": [
+     10472.941,
+     6500,
+     618.53
+    ]
+   },
+   "v3": {
+    "sha256": "864df3fce2b91dc985de07e0dbe15c3d295171d968e287c565b4b655b95d656b",
+    "marks": 23,
+    "sum": [
+     13677.994,
+     8261.422,
+     814.236
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "2026",
+   "reading": "",
+   "v1": {
+    "sha256": "7e15ee4a5e02c38d3acef7d6405bca2ee95d036c65b59fb54a500d2441c04294",
+    "marks": 24,
+    "sum": [
+     18177.569,
+     12000,
+     960
+    ]
+   },
+   "v2c": {
+    "sha256": "8a802e2e4be573eb03c42838826653327bb5e51882516d50ceafd2212a86b407",
+    "marks": 24,
+    "sum": [
+     18177.569,
+     12000,
+     820.543
+    ]
+   },
+   "v3": {
+    "sha256": "a2f43167110b2f0afb97557415945e424f91c2d919ec0336268c41b2a982c027",
+    "marks": 16,
+    "sum": [
+     8958.955,
+     7388.012,
+     925.069
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "……",
+   "reading": "",
+   "v1": {
+    "sha256": "f215d5fb3ff082ac63d8aa0b9fc62343ff59c96c31c359b6d1a0b3fb7f9e0349",
+    "marks": 2,
+    "sum": [
+     1761.841,
+     295.092,
+     113.866
+    ]
+   },
+   "v2c": {
+    "sha256": "f215d5fb3ff082ac63d8aa0b9fc62343ff59c96c31c359b6d1a0b3fb7f9e0349",
+    "marks": 2,
+    "sum": [
+     1761.841,
+     295.092,
+     113.866
+    ]
+   },
+   "v3": {
+    "sha256": "fc50f052cafa369f37848394ad81baa66e222f522cea03ecba8f8b3e06e804f7",
+    "marks": 2,
+    "sum": [
+     1323.906,
+     674.805,
+     203.52
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "！？",
+   "reading": "",
+   "v1": {
+    "sha256": "37b7c2395f63726a45265defb3626c616b0078f5d41ba29e23ebe2937c3203f9",
+    "marks": 2,
+    "sum": [
+     1338.7,
+     301.437,
+     86.047
+    ]
+   },
+   "v2c": {
+    "sha256": "37b7c2395f63726a45265defb3626c616b0078f5d41ba29e23ebe2937c3203f9",
+    "marks": 2,
+    "sum": [
+     1338.7,
+     301.437,
+     86.047
+    ]
+   },
+   "v3": {
+    "sha256": "aa48bc793f4d489a34b7d35c3e52a3944d305184a94afbf9d27f32101d64c5ba",
+    "marks": 2,
+    "sum": [
+     1323.906,
+     674.805,
+     211.439
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "私の影を踏まないでください！",
+   "reading": "",
+   "v1": {
+    "sha256": "a6fa30410b1eed128a82289237a24a87014e1b99703afead766a0f7989e904d2",
+    "marks": 12,
+    "sum": [
+     5347.38,
+     7233.861,
+     719.077
+    ]
+   },
+   "v2c": {
+    "sha256": "a6fa30410b1eed128a82289237a24a87014e1b99703afead766a0f7989e904d2",
+    "marks": 12,
+    "sum": [
+     5347.38,
+     7233.861,
+     719.077
+    ]
+   },
+   "v3": {
+    "sha256": "b731906d5c9d96eef374b4eb0b6001569daba7be1170cd5225abbc224ec07609",
+    "marks": 39,
+    "sum": [
+     15815.063,
+     18982.974,
+     1231.198
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "今日も明日も雨が降るでしょう",
+   "reading": "",
+   "v1": {
+    "sha256": "7f0c19088bf55398c32e6d935f0e971ec80ddd01fba64e557c4eee3b44304385",
+    "marks": 11,
+    "sum": [
+     4751.446,
+     6682.442,
+     702.377
+    ]
+   },
+   "v2c": {
+    "sha256": "7f0c19088bf55398c32e6d935f0e971ec80ddd01fba64e557c4eee3b44304385",
+    "marks": 11,
+    "sum": [
+     4751.446,
+     6682.442,
+     702.377
+    ]
+   },
+   "v3": {
+    "sha256": "8d6e4c1636dad094c52a82ab88373fc7b6b60e7b8f34498660db5d54c14c6cc7",
+    "marks": 36,
+    "sum": [
+     17115.602,
+     18986.432,
+     990
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "子供の城",
+   "reading": "こどものしろ",
+   "v1": {
+    "sha256": "38b073b5144dc8dda0807e87365e501a261c74e0db517b0db6667f0b7a1798d7",
+    "marks": 3,
+    "sum": [
+     2226.373,
+     502.005,
+     244.867
+    ]
+   },
+   "v2c": {
+    "sha256": "36dd0c3bbd3240da1055af4efdcef77214229e9093acbf1ec629bc64c09b001a",
+    "marks": 89,
+    "sum": [
+     35531.191,
+     33406.203,
+     3582.882
+    ]
+   },
+   "v3": {
+    "sha256": "ac84c8968b3d47c2c0b7476688e0c89eec38d1328bd7024fb47e7288b0c3fb0d",
+    "marks": 14,
+    "sum": [
+     6230.782,
+     6577.265,
+     1009.624
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "東京",
+   "reading": "とうきょう",
+   "v1": {
+    "sha256": "1e46ec5c7d100da171b96d1d725f526869e6ba5894d1490bbcf951b0ca94b7af",
+    "marks": 4,
+    "sum": [
+     2317.641,
+     789.648,
+     229.613
+    ]
+   },
+   "v2c": {
+    "sha256": "1e46ec5c7d100da171b96d1d725f526869e6ba5894d1490bbcf951b0ca94b7af",
+    "marks": 4,
+    "sum": [
+     2317.641,
+     789.648,
+     229.613
+    ]
+   },
+   "v3": {
+    "sha256": "46c64b401e9c8f90bc95b5b949854a4c9a5b585a0ee1fdb71b57734b0c4acd08",
+    "marks": 2,
+    "sum": [
+     1034.908,
+     990.775,
+     639.694
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  },
+  {
+   "set": "edges",
+   "text": "A to Z",
+   "reading": "",
+   "v1": {
+    "sha256": "40a9a53682211764dfb13d9f2b9e84a617d226965045eb54a5f08f647f4a84cd",
+    "marks": 4,
+    "sum": [
+     2228.164,
+     1800,
+     800
+    ]
+   },
+   "v2c": {
+    "sha256": "40a9a53682211764dfb13d9f2b9e84a617d226965045eb54a5f08f647f4a84cd",
+    "marks": 4,
+    "sum": [
+     2228.164,
+     1800,
+     800
+    ]
+   },
+   "v3": {
+    "sha256": "99c801752c40663d65f4d16281e07463b06dfc8308bee6df5a0466800f20712b",
+    "marks": 4,
+    "sum": [
+     1663.942,
+     2264.23,
+     576.459
+    ],
+    "invariants": {
+     "lost": 0,
+     "disordered": 0,
+     "overlaps": 0,
+     "inkHits": 0,
+     "crowded": 0,
+     "infinite": 0
+    }
+   }
+  }
+ ]
+}

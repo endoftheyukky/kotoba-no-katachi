@@ -82,7 +82,7 @@ await putSecret('SESSION_SECRET', sessionSecret())
 console.log('Both secrets are set on Cloudflare.')
 
 if (!existsSync('dist/admin/index.html') || !existsSync('dist/_routes.json')) {
-  console.log('No build in dist/. Build and deploy (docs/archive.md) for the password to take effect.')
+  console.log('No build in dist/. Build and deploy (docs/site.md) for the password to take effect.')
   process.exit(0)
 }
 const yes = (await ask('Redeploy the current build now so the password takes effect? [Y/n] ')).trim().toLowerCase()

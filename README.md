@@ -1,6 +1,6 @@
 # ことばのかたち
 
-入力されたことばを、文字の形、音、語や文の構造、文字どうし・語どうしの関係、意味などから読み取り、一枚の視覚詩に変換するWeb作品です。
+入力されたことばを、文字の形、音、語や文の構造、文字どうし・語どうしの関係、意味から読み取り、一枚の視覚詩に変換するWeb作品です。コンクリート・ポエトリー、とくに新國誠一の視覚詩を参照しています。
 
 **[作品を見る → kotoba-no-katachi.pages.dev](https://kotoba-no-katachi.pages.dev/)**
 
@@ -15,136 +15,88 @@
 
 ---
 
-## 作品について
+## システムの概要
 
-言葉には、意味のほかに文字の形や音、配置、反復、欠落、距離、余白があります。ふだん文章を読むときには、こうした性質はあまり意識されません。
+このリポジトリは作品のソースコードです。作品の一般向けの説明はサイトの About にあります。ここでは仕組みを説明します。
 
-この作品では、入力された短いことば（単語、題のような句、短い呼びかけなど）を、意味に加えて字の形、音、語の構造、字と字の関係から読み取り、その結果を紙面として表示します。
+- 題（最大16字）と任意の読み、版（`v`）から、決定的に一枚の紙面（`Draft`：字の位置・大きさ・角度・切り取りの列）を生成し、SVG と PNG に描きます。サーバー側の生成も、実行時の機械学習モデルもありません。すべてブラウザ内で計算します。
+- 読み取るのは次のものです。
+  - **言語**：規則による分かち書き、かな・モーラ・音韻特徴、反復・対・係り受け・否定などの関係
+  - **字形**：同梱フォントの字を canvas に描いて測った墨の量・継ぎ目・部品、字どうしの包含と類似
+  - **意味**（v3 のみ）：chiVe から一度だけ作った固定の9軸の表
+- v3 の紙面は、v1 から続く operation layer（提案・特徴の降下・主操作・修飾）の出力である `Material` を、パラメトリックな生成器が配置したものです。生成器は、図（一本の曲線と行数）、紙面（大きさ・位置・向き）、互いに競合する行為（間・離れ・摩耗・傾き・分割）、素材（字自身の小さな複製）、韻（構造が共通する題どうしを近づける引力）からなります。
+- 乱数の種は題・読み・variant から作ります。v3 でこの種が決めるのは、曲線が曲がる向きの一つだけです。
+- 公開した版（v1・v2c・v3）は変更しません。131題の公開 fixture で、3つの版すべての出力が一致することを検証できます。
 
-紙面は、入力されたことばから読み取った特徴をもとに組み立てます。読み取った特徴は、繰り返す、離す、分ける、欠けさせる、傾ける、集める、余白をあける、といったことばそのものへの操作として実行され、その結果が紙面になります。紙面に現れるのは、入力された字と、その字の中に見つかる形（森の中の木など）だけです。意味は絵として描かず、操作の強さや向きを決める値として使っています。
+## 全体の流れ
 
-### コンクリート・ポエトリーと新國誠一
-
-本作は、コンクリート・ポエトリー、特に新國誠一による視覚詩の実践を参照しています。参照しているのは、言葉を、意味を伝える手段であると同時に、文字の形、音、配置、反復、空白を含む素材として扱う考え方と、白い紙に黒い文字を置き、反復や余白、字の切り取りや分解によって紙面を構成する方法です。本作ではそれを踏まえ、字形の計測、語や文字の関係の解析、意味の読み取りを通して、現在の計算環境で別の方法を試みています。
-
-### コンピュータの役割
-
-本作では、コンピュータをことばを読むための装置として使っています。システムがことばを読み、その結果を紙面として返します。読み方は人間とは異なり、字の墨の量や重心、字の中にある別の字、音の繰り返し、語と語のつながりなど、ふだん気に留めない性質を拾います。
-
-### 決定的な生成
-
-生成AIでは、同じ入力から異なる出力が得られる場合があります。本作では独自の決定的なアルゴリズムを使い、同じ入力と版には必ず同じ紙面を対応させています。生成し直したり、候補から選んだりする機能はありません。紙面の違いは、入力されたことばの違いから生じます。
-
----
-
-## 使い方
-
-- 紙の下の入力欄にことばを入れ、Enter を押します。16字まで入力できます。
-- 読みを指定するときは「子供の城（こどものしろ）」のように括弧で添えます。
-- 紙面ごとに固有のアドレスがあります（例：`/?title=孤独&v=3`）。共有されたアドレスは、いつ開いても同じ紙面を表示します。
-- 操作は、保存（PNG）、共有（X・その他・コピー）、別のことばで試す、の三つです。
-
----
-
-## しくみ
-
-以下は、読み取りと生成の仕組みについての説明です。
-
-### 流れ
-
-```
-ことば（題・読み・版）
-  │
-  ├─ 言語の読み   字・かな・語・モーラ・音の特徴、反復・対・入れ子・否定・係り受け
-  ├─ 字形の読み   同梱フォントの字を実際に描いて測る：墨の量・重心・部品・余白、
-  │               字の中にある別の字（森の中の木）
-  └─ 意味の読み   固定の表から9つの軸の値を引く（群れ・動揺・囲い・断絶・消失・
-                  距離・重さ・下降・抽象）
-  ↓
-競い合う操作（acts）   間があく／ひとつの字が離れる／字が自分の部品で欠けていく
-                       ／傾く／字の継ぎ目で割れる。いちばん強い読みが紙面を主導し、
-                       他の操作は弱まる
-  ↓
-図（figure）   ことばを一本の線に沿って書く：直線 → 弧 → 環、角・枝分かれ、
-               何行書くか
-紙（paper）    どれだけ大きく、どこに置き、端で切るか
-素材（material） ことば自身の字からできた小さな印（主導する操作に譲る）
-韻（motif）    反復・対・入れ子・欠落などの構造が、似た紙面どうしを近づける
-  ↓
-SVG（画面） / canvas → PNG（保存・共有）
+```mermaid
+flowchart LR
+  IN["title · reading · v"] --> NT["normalize"]
+  NT --> LA["language analysis"]
+  NT --> GL["glyph measurement<br/>and relations"]
+  NT -->|v3| SE["meaning<br/>(axes-1 table)"]
+  LA --> OP["operation layer<br/>→ Material"]
+  GL --> OP
+  OP --> V2["v1 / v2c:<br/>spatial composition<br/>+ mark grammar"]
+  OP --> V3["v3: motifs · figure ·<br/>page · acts · material"]
+  LA --> V3
+  GL --> V3
+  SE --> V3
+  V2 --> D["Draft (marks)"]
+  V3 --> D
+  D --> R["SVG / PNG"]
 ```
 
-- どの操作が起きるかは、すべての読みの強さを合わせて決まります。どの字が離れるか、どこで割れるか、どちら側が欠けるか、どちらへ傾くかは、字形・音・構造から決まります。意味が影響するのは、操作の強さ、紙の上での大きさと位置、素材の量で、図として描かれることはありません。
-- 偶然に見える部分は、題と読みから計算した種（seed）による擬似乱数です。同じ題・読み・版なら、同じ数列と同じ紙面になります。
-- 紙面に書かれるのは、入力された字と、字形の読みがその中に見つけた部品だけです。関連語や記号は足しません（`docs/research/v3-notes.md` の実験で検討し、採用しなかった方法です）。
-- 紙面は次の条件を満たします：字が失われない、読む順が崩れない、字どうしが重ならない、字でないものが字の墨に乗らない（`src/poem/form/invariants.ts`）。
+## 技術ドキュメント
 
-### 意味の扱い
-
-- 意味の読み取りには、あらかじめ作成した固定の表を使っています。
-- 表は、日本語の単語ベクトル [chiVe](https://github.com/WorksApplications/chiVe)（v1.3 mc90、Works Applications、Apache License 2.0）から一度だけ導いたもので、リポジトリに同梱しています。62,653語（頻出6万語とすべての単漢字）× 9軸で、各値は6ビットです。先頭の字によって64の断片に分けてあり、題に必要な断片だけを読み込みます（`public/semantic/axes-1/`、各8–17 KB）。
-- 9つの軸は、それぞれ両端を表す二組の名詞で定義しています（検討に使った題の語は含めていません）。ベクトル空間の共通成分を取り除いたうえで軸どうしを直交させ、一般的な2〜3字の熟語を基準に標準化しています。題は長い語から順に表と照合し、表にない語は漢字ごとに読みます（群衆 → 群・衆）。
-- 表は `tools/semantic/axes.py` と `shard.py` を使い、同じ元ファイルからビット単位で同一に作り直せます。各断片の sha256 は `meta.json` に記録しています。
-- 詳しくは `docs/release-v3.md` を参照してください。
-
-### 版と再現性
-
-| アドレス | 版 |
+| 文書 | 内容 |
 | --- | --- |
-| `/?title=…&v=3` | v3。現在、新しく書かれる紙面（2026-09-24 JST 公開） |
-| `/?title=…`（版なし） | v2c。v3 以前に共有されたアドレス |
-| `/?title=…&v=1` | v1 |
+| [docs/architecture.md](docs/architecture.md) | 1ページができるまでの全体像、各段階とモジュール、データ型、版ごとに何が実行され何が捨てられるか、描画（SVG / PNG） |
+| [docs/reading.md](docs/reading.md) | 入力とアドレス、正規化、分かち書き、読みの対応づけ、モーラと音韻、関係、書字方向、字形の計測・部品・判読・包含と類似・内部の白 |
+| [docs/semantics.md](docs/semantics.md) | 意味の表の作り方（all-but-the-top、軸の定義、抽象軸に対する直交化、正規化、int8 と 6 bit の量子化、64 分割）と実行時の読み方、極への変換 |
+| [docs/composition.md](docs/composition.md) | v3 生成器：operation layer、韻（motif と chord）、図・行・紙面のパラメータ、行為の競合（economy）、配置と切り取り、素材、書体 |
+| [docs/reproducibility.md](docs/reproducibility.md) | 種の役割、紙面が依存するもの、版と凍結範囲、検証（fixture と不変条件の監査）、制約と失敗時の挙動 |
+| [docs/site.md](docs/site.md) | ビルドと公開、リンクプレビューとアイコン、匿名の生成記録（Cloudflare Pages Functions + D1）と /admin |
 
-- 公開した版は変更しません。v3 の出力を変える変更は v4 として扱います（`src/poem/generators.ts`）。
-- v3 の紙面は、コード、同梱フォント（Noto Sans JP / Noto Serif JP。npm の版は `package-lock.json` で固定）、意味表 `axes-1` の三つで決まります。
-- 回帰検査では、v3 の170題の紙面（字の位置・大きさ・角度・切り取りまで）が公開時と完全に一致すること、v1 と v2c が公開当時のコードと同じ紙面を描くことを確認しています（`tools/form/`、`docs/release-v3.md`）。
-- 字形の計測は、ブラウザが同梱フォントを canvas に描いて行います。検査には Chromium を使っています。
-
-### 構成
-
-```
-index.html, src/main.ts, src/style.css   公開ページ（紙・一行・作例・About）
-src/title.ts                             題の正規化と種
-src/language/                            言語の読み（規則による分かち書き、かな・モーラ・音）
-src/language/semantic/                   意味の表の読み込みと照合
-src/glyph/                               字形の計測・部品・字どうしの関係
-src/poem/generators.ts                   版ごとの生成器の固定（v1 / v2c / v3）
-src/poem/compose.ts                      読みから紙面へ
-src/poem/parametric/                     v3：acts・trace（図）・paper・material・motif
-src/poem/form/invariants.ts              紙面が満たすべき条件
-src/render/                              SVG と PNG
-functions/, server/, migrations/          匿名の生成記録（Cloudflare Pages Functions + D1）
-tools/                                   検査・シート・意味表の再構築・作例の描画
-docs/                                    版ごとの記録、研究の過程（docs/research/）
-```
-
-`study.html` と `review.html` は開発用のシートで、公開ページには含まれません。
-
----
-
-## 開発
+## 再現と開発
 
 ```bash
 npm ci
-npm run dev        # http://localhost:5173
-npm run build      # 型検査 + dist/
+npm run dev          # http://localhost:5173
+npm run build        # 型検査 + dist/
+npm run verify       # 公開 fixture の検証：v1 / v2c / v3 × 131題が tools/verify/expected.json と一致するか
 ```
 
-- 作例のサムネイルとリンク画像は、`tools/examples/make.mjs` が公開版の生成器で描きます。`CHECK=1` を付けて実行すると、実際の出力と一致するかを確認できます。
-- 生成の記録（`functions/`）は `npm run dev:archive`（wrangler pages dev、ローカルDB）で動きます。先に `wrangler.example.toml` を `wrangler.toml` にコピーし、自分の D1 の id を入れてください。記録の内容と扱いは `docs/archive.md` にあります。
-- 公開手順と巻き戻しの方法は `docs/release.md` と `docs/release-v3.md` にあります。
+- `npm run verify` は Vite と headless Chrome を起動します。Chrome の場所は環境変数 `CHROME` で指定できます。どれか一つでも違えば終了コード 1 になります。
+- v3 の出力は次のものに固定されています。
+  - コード（タグ `v3.0.0`）
+  - フォント（`@fontsource/noto-sans-jp` と `noto-serif-jp` の 5.3.0。`package-lock.json` で固定）
+  - 意味の表 `public/semantic/axes-1/`（各断片の sha256 を `meta.json` に記録）
+- 字形はブラウザの canvas で測るため、出力は描画エンジンに依存します。fixture は Chromium で作成・検証しています（[制約](docs/reproducibility.md#limitations-and-failure-modes)）。
+- 意味の表は、同じ chiVe のファイルから `tools/semantic/axes.py` と `shard.py` でビット単位で同一に作り直せます。
+- 生成記録をローカルで動かすには、`wrangler.example.toml` を `wrangler.toml` にコピーして自分の D1 の id を入れ、`npm run dev:archive` を実行します。
 
----
+```
+src/            ページ、生成器（language / glyph / poem）、描画、記録のクライアント側
+src/study/      検証用の公開タイトルセット（サイトで入力された題は含みません）
+functions/, server/, migrations/   生成記録（Pages Functions + D1）
+tools/verify/   検証：headless Chrome ドライバ、fixture、expected.json
+tools/semantic/ 意味の表の作成スクリプト
+tools/examples/, tools/icons/      作例・OGP 画像・アイコンの描画
+public/         意味の表、作例、OGP 画像、アイコン
+docs/           技術ドキュメント
+```
 
 ## ライセンスと出典
 
 - **ソースコード**：MIT License（`LICENSE`）
-- **作品**：作品名「ことばのかたち」、作品についての文章、作例・OGP・コンタクトシートなどの画像は、権利を留保しています（`LICENSE-ASSETS.md`）。ご自身で開いた、またはつくった作品の画像は、作品名とその作品の URL を添えて、個人の SNS などで共有できます。
+- **作品**：作品名「ことばのかたち」、作品についての文章、作例・OGP・アイコンなどの画像は、権利を留保しています（`LICENSE-ASSETS.md`）。ご自身で開いた、またはつくった作品の画像は、作品名とその作品の URL を添えて、個人の SNS などで共有できます。
 
 同梱・派生しているもの：
 
 - 字体：Noto Sans JP / Noto Serif JP（SIL Open Font License 1.1。npm の `@fontsource/noto-sans-jp`、`@fontsource/noto-serif-jp` から配布）
 - 意味の表 `public/semantic/axes-1/`：chiVe v1.3 mc90（Copyright (c) 2024 Works Applications Co., Ltd.）から導いた表。Apache License 2.0（同じディレクトリの `LICENSE-chiVe.txt`、`NOTICE.txt`）
-- 研究用の近傍表 `src/language/semantic/data/`：青空文庫（パブリックドメイン）のコーパス `globis-university/aozorabunko-clean`（CC BY 4.0）と chiVe から導いた統計。公開ページでは使っていません（`NOTICE.md`）
+- 研究用の近傍表 `src/language/semantic/data/`：青空文庫（パブリックドメイン）のコーパス `globis-university/aozorabunko-clean`（CC BY 4.0）と chiVe から導いた統計。どの公開版でも使っていません（`NOTICE.md`）
 
 制作：Yuki Sunaga
