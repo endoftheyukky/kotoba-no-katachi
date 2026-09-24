@@ -281,6 +281,11 @@ dialog button {
   padding: 0 10px;
 }
 
+/* 保存 · 共有 · 別のことばで試す: a little darker than the other quiet words, so that they are found */
+#actions > button {
+  color: #6b6963;
+}
+
 #actions button:hover,
 #actions a:hover,
 #about-open:hover,
