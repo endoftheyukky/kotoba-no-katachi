@@ -15,8 +15,8 @@ const text = (t = 'あ', x = '500') => `<text x="${x}" y="500" font-size="120">$
 const page = (body: string, defs = '') => `${HEAD}${defs ? `<defs>${defs}</defs>` : ''}${body}</svg>`
 
 describe('snapshot check', () => {
-  test('the largest real pages of each generator pass (tools/verify/snapshots.mjs wrote them)', () => {
-    assert.ok(pages.length >= 3, 'fixtures present')
+  test('the largest real page of each published version passes (tools/verify/snapshots.mjs wrote them)', () => {
+    assert.ok(pages.length >= 1, 'fixtures present')
     for (const p of pages) {
       assert.equal(canonicalSVG(p.svg), p.svg, `${p.name} is canonical`)
       assert.equal(checkSVG(p.svg), true, p.name)

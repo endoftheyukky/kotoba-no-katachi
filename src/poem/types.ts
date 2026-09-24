@@ -1,12 +1,11 @@
 /**
  * Title → relations → poetic operations (what is done to the words)
  *       → material (the words as they will be written)
- *       → spatial composition (how the page holds them) → marks.
+ *       → the page (poem/parametric: how the page holds them) → marks.
  *
- * Operations and spatial compositions are separate layers. Each is chosen
- * from the relations found in the title; the seed is used only for plastic
- * (造形) decisions inside the rules: margins, small offsets, how far a form
- * leaves the page, permitted ranges of proportion.
+ * Operations and the page are separate layers. Both are read from the
+ * relations found in the title; the seed is used only for a plastic (造形)
+ * decision inside the rules: which way the figure turns.
  */
 import type { Face } from '../glyph/font'
 import type { PartReading } from '../glyph/legibility'
@@ -18,7 +17,6 @@ import type { GlyphLibrary } from '../glyph/source'
 import type { LanguageAnalysis } from '../language/analysis'
 import type { Rect } from '../render/stage'
 import type { TitleInput } from '../title'
-import type { Rng } from '../core/random'
 
 export interface Vec {
   x: number
@@ -99,7 +97,7 @@ export interface Salience {
 }
 
 /**
- * visualPotential: how far the present operations and spatial compositions
+ * visualPotential: how far the operations and the page
  * can turn this relation into a strong visual structure that keeps the
  * character of writing. Independent of how prominent the relation is.
  *   legibility  how much of what is drawn stays readable as writing
@@ -252,212 +250,10 @@ export interface PoeticOperation {
   propose(a: Analysis): Proposal[]
   /**
    * Change the units. For the primary operation most of the work is done by
-   * the spatial composition (from the focus); modifiers act here.
+   * the page (from the focus); modifiers act here.
    * Returns null when there is nothing to act on.
    */
   apply(a: Analysis, p: Proposal, tokens: Unit[][]): Unit[][] | null
-}
-
-// ---------------------------------------------------------------------------
-// space
-
-export type SpatialId = 'field' | 'band' | 'radial' | 'axis' | 'centre' | 'void' | 'scattered' | 'cluster' | 'nest' | 'grid' | 'path'
-
-export interface Fit {
-  id: SpatialId
-  /** 0–1: how strongly the title's relations call for this space */
-  score: number
-  grounds: string[]
-  /**
-   * Which of its own ways this composition will draw, when it has more than
-   * one but only one fitness: the choice is between two ways of holding the
-   * same relation, not between two relations, so it is settled here and does
-   * not compete. Compositions with a single way leave it out.
-   */
-  mode?: string
-}
-
-/**
- * One way a composition could hold this material. A composition offers as
- * many as it has: a feature and a page are not in one-to-one correspondence,
- * and a repetition may become a band, a field, a grid or a path.
- *
- *   uses        which measured properties of the feature this way takes hold
- *               of — named, so that two offers can be compared by what they
- *               actually read rather than by an opinion of the composition
- *   fitness     how far those properties meet what this way needs
- *   realisable  whether the page can hold it at a readable size: a hard gate,
- *               decided by the composition, which is the only thing that
- *               knows its own geometry
- *   demand      what it will ask of the page, before anything is drawn
- *
- * The worth of the feature itself (poeticPotential) is settled in the
- * descent and is never re-judged here.
- */
-export interface Realization {
-  id: SpatialId
-  /** which way of this composition: 'line' | 'nested' | '1xN' | … */
-  mode: string
-  /** only what this way keeps and uses on the page */
-  uses: { property: string; value: string }[]
-  /**
-   * Measured structure this way cannot keep. Recorded so that the page can be
-   * judged against what was read, and kept out of `uses` so that discarding
-   * something can never count in a composition's favour.
-   */
-  losses?: { property: string; value: string }[]
-  grounds: string[]
-  fitness: number
-  realisable: boolean
-  demand: { reach: number; spread: Spread; minSize: number; cells?: number; depth?: number }
-}
-
-/**
- * A parameter of a composition, with where its value came from.
- *   linguistic  derived from a relation in the title
- *   plastic     a decision of form, derived from measurement but not from language
- * Parameters that are not among the strongest few are returned to neutral, so
- * that one page shows one or two differences, not all of them at once.
- */
-export interface Parameter {
-  name: string
-  ground: 'linguistic' | 'plastic'
-  value: string
-  neutral: string
-  applied: boolean
-  /** 0–1: how far this feature pushes the parameter from neutral */
-  deviation: number
-  note: string
-}
-
-export interface Placed {
-  marks: Mark[]
-  /**
-   * Where the composition laid the title's seats along the reading, written
-   * or not, when it lays them in a line (v2: a grammar can use an empty seat).
-   */
-  seats?: { grapheme: number; x: number; y: number; size: number; written: boolean }[]
-  /** what the composition decided, and why (for study; never drawn) */
-  parameters?: Parameter[]
-  /** the contract this composition worked under, where it works under one */
-  contract?: Contract
-}
-
-export interface SpatialComposition {
-  id: SpatialId
-  title: string
-  rules: readonly string[]
-  /**
-   * Whether this composition may let its marks run off the page rather than
-   * shrink them when the page cannot hold the relation. A property of the
-   * composition, not a global rule: a page whose three terms must all be
-   * traceable cannot afford to lose one over the edge.
-   */
-  bleed?: boolean
-  /** which foci it can hold at all (for study; the offers decide the rest) */
-  accepts?: readonly Focus['kind'][]
-  /** every way it could hold this material. Compositions that have only one way keep `fit`. */
-  offer?(a: Analysis, m: Material): Realization[]
-  /** null when this space cannot hold this material */
-  fit(a: Analysis, m: Material): Fit | null
-  /** `r` is the way that was chosen, for compositions that offer more than one */
-  realize(a: Analysis, m: Material, rng: Rng, scale: Scale, r?: Realization): Placed
-}
-
-// ---------------------------------------------------------------------------
-// occupancy and the scale contract
-//
-// Two separate measures. Scale is how large a mark is; occupancy is how much
-// of the page the figure claims. They are independent: small marks at the two
-// edges occupy the whole page, and two large marks touching in the middle
-// occupy little of it.
-
-/**
- * micro  texture, or a mark set beside another as a witness
- * small  the unit of a line or a field: read as writing, not as a form
- * normal a word held at a distance
- * large  the letterform itself is the subject, and fills much of the page
- * macro  larger than the page can hold; only for what an operation produced
- */
-export type ScaleBand = 'micro' | 'small' | 'normal' | 'large' | 'macro'
-
-/** how the figure fills what it reaches */
-export type Spread = 'mass' | 'pair' | 'line' | 'field' | 'edge'
-
-/** a decision with the kind of ground it rests on (for study; never drawn) */
-export interface Decision {
-  name: string
-  ground: 'linguistic' | 'plastic'
-  value: string
-  note: string
-}
-
-export interface Occupancy {
-  /** 0–1.3: the longer side of the figure, as a share of the page */
-  reach: number
-  /** 0–1: how much of the reach is ink rather than the white inside the figure */
-  fill: number
-  spread: Spread
-  /** whether the figure may leave the page instead of shrinking */
-  bleed: boolean
-  decisions: Decision[]
-}
-
-/** a request to size several groups of marks that share one reach */
-export interface FitRequest {
-  /** how many glyph widths each group lays along the reach */
-  extents: number[]
-  /** the desired size of each group, relative to each other (from the language) */
-  ratios: number[]
-  /** the band the grounds ask for */
-  band: ScaleBand
-  note: string
-}
-
-export interface Fitted {
-  /** em size for each group, in page units */
-  sizes: number[]
-  /** what the grounds asked for */
-  desired: ScaleBand
-  /** what the page could hold */
-  achieved: ScaleBand
-  /** the figure leaves the page */
-  bled: boolean
-  decisions: Decision[]
-}
-
-export interface Contract {
-  occupancy: Occupancy
-  fitted: Fitted
-  /** how the rest of the title was kept, where the feature is a local one */
-  context?: Decision[]
-}
-
-// ---------------------------------------------------------------------------
-// scale
-
-/**
- * micro  text size or smaller: the units are read as texture or as asides
- * normal the size of a word held at a distance: 10–30% of the page per glyph
- * macro  larger than a hand can hold: over half the page, may leave it
- * mixed  macro and micro at once, nothing in between
- */
-export type ScaleRegime = 'micro' | 'normal' | 'macro' | 'mixed'
-
-/**
- * result  what the operation produced (a residue, parts of a glyph)
- * body    the words the composition is built from
- * aside   what stands beside them (a relation word, the title as a witness)
- */
-export type ScaleRole = 'result' | 'body' | 'aside'
-
-export interface Scale {
-  regime: ScaleRegime
-  grounds: string
-  /** the permitted em sizes for a role, in page units */
-  range(role: ScaleRole): [number, number]
-  /** 造形: a size within the role's range; `within` narrows it to a part of the range (0–1) */
-  pick(role: ScaleRole, rng: Rng, within?: [number, number]): number
 }
 
 // ---------------------------------------------------------------------------
@@ -490,9 +286,9 @@ export interface Mark {
   context?: boolean
   /** the character of the title this mark writes, when it writes one */
   grapheme?: number
-  /** what the mark is in the page's hierarchy (v2; set by a mark grammar) */
+  /** what the mark is in the page's hierarchy */
   role?: MarkRole
-  /** where a mark the title does not itself write came from (v2) */
+  /** where a mark the title does not itself write came from */
   derived?: Provenance
   /**
    * A group of derived marks that together write one character of the title
@@ -503,8 +299,7 @@ export interface Mark {
 }
 
 /**
- * What a mark is in the page's own hierarchy (v2). A spatial composition
- * decides where things go; a mark grammar decides how they behave there.
+ * What a mark is in the page's own hierarchy.
  *   nucleus    the mark the page is organised around
  *   body       the title's own characters, written
  *   context    the rest of the title beside a figure
@@ -516,28 +311,13 @@ export interface Mark {
  *   auxiliary  a mark brought from outside the title's own writing (its sound
  *              reduced to vowels, a word the lexicon relates to it): few,
  *              small, and never where the title itself is
- * How large and how many each may be is fixed in grammar/roles.ts.
  */
 export type MarkRole = 'nucleus' | 'body' | 'context' | 'satellite' | 'grain' | 'trace' | 'auxiliary'
 
-export type GrammarId =
-  | 'uniform'
-  | 'attenuation'
-  | 'field'
-  | 'silhouette'
-  | 'phase'
-  | 'orbit'
-  | 'emanation'
-  | 'branch'
-  | 'constellation'
-  | 'lattice'
-  /** v4 experiment, review only: the parametric material field (poem/parametric/material.ts) */
-  | 'material'
-
 /** where a mark the title does not itself write came from */
 export interface Provenance {
-  /** the grammar that added it */
-  grammar: GrammarId
+  /** what added it: the page's material (poem/parametric/material.ts) */
+  grammar: 'material'
   /**
    *   repeat    the title's own character again (a repetition carried further)
    *   echo      a mark's own character, fading (a decay, an afterimage)
@@ -545,7 +325,7 @@ export interface Provenance {
    *   rest      the rest of the title, used as material for a form
    *   sound     the title's reading reduced to its vowels (phonological)
    *   semantic  a character a lexicon relates to one the title writes: never
-   *             the title's own, never shown as an explanation (review first)
+   *             the title's own, never shown as an explanation
    */
   kind: 'repeat' | 'echo' | 'form' | 'rest' | 'sound' | 'semantic'
   /** the grapheme it derives from, when it derives from one */
@@ -569,11 +349,6 @@ export interface Composition {
   seed: number
   primary: Proposal
   modifiers: Proposal[]
-  spatial: Realization
-  scale: Scale
-  parameters: Parameter[]
-  /** null where the composition does not yet work under the new contract */
-  contract: Contract | null
   /** graphemes the poem writes as space, so a missing character can be explained */
   absent: number[]
   /**
@@ -587,24 +362,8 @@ export interface Composition {
   descent: { layer: number; reason: string; adopted: number; upper: number; deepest: number; held: string[] }
   /** every proposal, ranked by salience */
   proposals: Proposal[]
-  /** every way a space could hold the material, ranked */
-  fits: Realization[]
   rejected: Rejection[]
-  /** how the marks behave inside the composition (v2); 'uniform' is v1 */
-  grammar: GrammarApplied
+  /** how the page was drawn from the title (poem/parametric) */
+  parametric: import('./parametric').ParametricApplied
   draft: Draft
-  /** v3 experiment, review only: how the page was moved in the form space (poem/form) */
-  form?: import('./form').FormApplied
-  /** v4 experiment, review only: the parametric generator that drew it (poem/parametric) */
-  parametric?: import('./parametric').ParametricApplied
-}
-
-export interface GrammarApplied {
-  id: GrammarId
-  /** which of its ways the grammar drew, where it has more than one (silhouette: fill, contour, density, residue) */
-  variant?: string
-  grounds: string[]
-  uses: { property: string; value: string }[]
-  /** derived marks added, by where they came from */
-  derived: Record<string, number>
 }

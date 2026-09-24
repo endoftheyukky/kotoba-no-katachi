@@ -4,20 +4,17 @@
  */
 
 /**
- * how the words came: typed on the line (also after 別のことばで試す). `example`
- * was one of the examples chosen, until the 作例 became poems opened at their
- * own address (which are not recorded); it stays for the records that have it.
+ * how the words came: typed on the line (also after 別のことばで試す). A poem
+ * opened at its address — a shared link, a 作例 — is not recorded.
  */
-export const SOURCES = ['manual', 'example'] as const
+export const SOURCES = ['manual'] as const
 export type Source = (typeof SOURCES)[number]
 
 /**
- * which generator wrote the page (poem/generators.ts): v3 writes new words since
- * its release (?v=3), v2c every address without a version, v1 the frozen first
- * (?v=1). A snapshot is kept with the name of the generator that drew it and is
- * never redrawn by another.
+ * which generator wrote the page (poem/generators.ts). A snapshot is kept with
+ * the name of the generator that drew it and is never redrawn by another.
  */
-export const GENERATORS = ['v2c', 'v1', 'v3'] as const
+export const GENERATORS = ['v1'] as const
 export type Generator = (typeof GENERATORS)[number]
 
 export interface GenerationEvent {

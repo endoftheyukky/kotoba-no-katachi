@@ -5,10 +5,14 @@
  *   /                                   blank paper and the line
  *   /?title=見えない                     the poem first; 別のことばで試す opens the line
  *   /?title=子供の城&reading=こどものしろ  with its reading
- *   &v=3       the generator new words are written in (poem/generators.ts)
- *   &v=1       the generator as it was frozen at v1; an address with no
- *              version is v2c, as every poem shared before v3 was
+ *   &v=1       the generator that drew it (poem/generators.ts); every address
+ *              the page writes names it, and one without it is drawn by the
+ *              current generator
  *   &debug=1   why the page is as it is, in the console (never on the page)
+ *   /s?title=… the address the share buttons give: the same poem, with a head
+ *              written for it on the server (functions/s.ts), so that a link
+ *              preview shows its card. Opened, it stays /s, so that an address
+ *              copied or shared from the browser keeps its card too.
  *
  * The same words always give the same poem: there is nothing here to redraw,
  * shuffle or vary. Every poem written is a place in the browser's history, so
@@ -23,7 +27,7 @@ import './glyph/font-face'
 import type { Source } from './archive/protocol'
 import { record } from './archive/record'
 import { uncovered } from './glyph/coverage'
-import { analyze, OPERATIONS, SPACES } from './poem/compose'
+import { analyze, OPERATIONS } from './poem/compose'
 import { archiveName, CURRENT, versionOf, write, type Version } from './poem/generators'
 import type { Analysis, Composition } from './poem/types'
 import { downloadBlob, pngOf, renderCanvas } from './render/png'
@@ -50,11 +54,11 @@ const aboutOpen = document.getElementById('about-open') as HTMLButtonElement
 const params = new URLSearchParams(location.search)
 const debug = params.has('debug')
 /**
- * The generator new words are written in: v1 on the frozen first site (?v=1),
- * otherwise the one published now. A poem's own address says which generator
- * drew it, and that one draws it again (poem/generators.ts).
+ * The generator new words are written in: the one published now. A poem's own
+ * address says which generator drew it, and that one draws it again
+ * (poem/generators.ts).
  */
-const writing: Version = params.get('v') === '1' ? 1 : CURRENT
+const writing: Version = CURRENT
 
 let current: {
   input: TitleInput
@@ -104,30 +108,38 @@ function read(text: string, reading: string): TitleInput | string {
 
 /**
  * The address of a poem: its words, its reading, and the generator that drew
- * it — nothing that could vary it. v2c keeps the address it always had (no
- * version), so that every poem shared before v3 opens as it was shared.
+ * it — nothing that could vary it. The version is always written, so that the
+ * address keeps its page when another version is published.
  */
 function addressOf(input: TitleInput | null, v: Version = writing): string {
-  if (!input) return writing === 1 ? '?v=1' : location.pathname
+  if (!input) return location.pathname
   const q = new URLSearchParams({ title: input.text })
   if (input.reading) q.set('reading', input.reading)
-  if (v !== 2) q.set('v', String(v))
+  q.set('v', String(v))
   return `?${q}`
 }
 
 const same = (a: TitleInput | null, b: TitleInput | null) => !!a && !!b && a.text === b.text && (a.reading ?? '') === (b.reading ?? '')
 
-/** the poem's canonical address: the site's own, wherever the page was opened from */
+/**
+ * the address a poem is shared at: /s with its words, reading and version, on
+ * the site's own address wherever the page was opened from. /s shows the same
+ * poem, and tells a link preview which card is its own (functions/s.ts).
+ */
 function sharedURL(input: TitleInput, v: Version): string {
-  return new URL(addressOf(input, v), __SITE__.url ? `${__SITE__.url}/` : location.href).href
+  return new URL(`/s${addressOf(input, v)}`, __SITE__.url ? `${__SITE__.url}/` : location.href).href
 }
 
+/** the work's own tag, the only one ever added */
+const TAG = '#KotobaNoKatachi'
+
 /**
- * what is shared, by every way of sharing, on three lines: the name, the
- * poem's title (the words alone; a reading stays in the address), its address
+ * what is shared, by every way of sharing, on four lines: the name, the
+ * poem's title (the words alone; a reading stays in the address), the tag,
+ * its address
  */
 function sharedText(input: TitleInput, v: Version): string {
-  return `${__SITE__.title}\n「${input.text}」\n${sharedURL(input, v)}`
+  return `${__SITE__.title}\n「${input.text}」\n${TAG}\n${sharedURL(input, v)}`
 }
 
 /** the file name of the paper: the words, with what a file system will not take made plain */
@@ -139,7 +151,7 @@ const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void>; 
 function shareRow(open: boolean, refocus = false): void {
   if (open && !current) return
   if (open && current) {
-    // X is asked to write the three lines itself: a link card alone would drop the name and the title
+    // X is asked to write the four lines itself: a link card alone would drop the name, the title and the tag
     shareX.href = `https://x.com/intent/post?text=${encodeURIComponent(sharedText(current.input, current.version))}`
     shareOther.hidden = typeof nav.share !== 'function'
     say('')
@@ -247,33 +259,18 @@ async function show(input: TitleInput, history: 'push' | 'replace' | 'none', ver
 
 /** Why the page is as it is — for study, in the console, only with ?debug. */
 function report(a: Analysis, c: Composition): void {
-  if (c.parametric) {
-    console.groupCollapsed(`題「${a.input.text}」 — v3`)
-    if (c.parametric.meaning) console.log('meaning', c.parametric.meaning.axes, 'read', c.parametric.meaning.read)
-    c.parametric.grounds.forEach((g) => console.log('根拠:', g))
-    console.groupEnd()
-    return
-  }
   const ops = [c.primary, ...c.modifiers]
-  console.groupCollapsed(`題「${a.input.text}」${a.input.reading ? `（${a.input.reading}）` : ''} — ${ops.map((p) => p.op).join(' + ')} / ${c.spatial.id}`)
+  console.groupCollapsed(`題「${a.input.text}」${a.input.reading ? `（${a.input.reading}）` : ''} — ${ops.map((p) => p.op).join(' + ')}`)
   console.log('tokens', a.tokens.map((t) => `${t.surface}/${t.pos}${t.reading ? `(${t.reading})` : ''}`).join(' '))
   console.log('morae', a.morae.map((m) => m.text).join('・'))
   for (const p of ops) {
     const op = OPERATIONS.find((o) => o.id === p.op)!
     console.group(`${op.title}${p === c.primary ? '（主）' : '（修飾）'}`)
     p.evidence.forEach((e) => console.log('根拠:', e))
-    op.rules.forEach((r) => console.log('規則:', r))
     console.groupEnd()
   }
-  const space = SPACES.find((s) => s.id === c.spatial.id)!
-  console.group(`${space.title}（${c.spatial.mode}）`)
-  c.spatial.grounds.forEach((g) => console.log('根拠:', g))
-  space.rules.forEach((r) => console.log('規則:', r))
-  console.groupEnd()
-  console.group(`字の振る舞い: ${c.grammar.id}${c.grammar.variant ? ` / ${c.grammar.variant}` : ''}`)
-  c.grammar.grounds.forEach((g) => console.log('根拠:', g))
-  Object.entries(c.grammar.derived).forEach(([k, n]) => console.log('派生:', k, n))
-  console.groupEnd()
+  if (c.parametric.meaning) console.log('meaning', c.parametric.meaning.axes, 'read', c.parametric.meaning.read)
+  c.parametric.grounds.forEach((g) => console.log('根拠:', g))
   console.groupEnd()
 }
 
@@ -367,16 +364,41 @@ save.addEventListener('click', async () => {
   downloadBlob(blob, name)
 })
 
-// 共有 opens (or closes) the row: X · その他 · コピー. Every one of them shares
-// the same three lines — the name, the title and the address of the poem on the paper.
-share.addEventListener('click', () => shareRow(shareMenu.hidden !== false))
+/**
+ * On a phone, 共有 hands the paper and the four lines to the system's share
+ * sheet at once, where it can take them: a PNG file (the same image 保存
+ * gives) with the text. The address is in the text, not given separately, so
+ * it is there whichever parts an app keeps — which is the app's own choice.
+ * Returns null where this cannot be done; then 共有 opens the row.
+ */
+function paperShare(): Promise<void> | null {
+  if (!touch || !current?.file || typeof nav.share !== 'function' || typeof nav.canShare !== 'function') return null
+  const data: ShareData = { title: __SITE__.title, text: sharedText(current.input, current.version), files: [current.file] }
+  if (!nav.canShare(data)) return null
+  return nav.share(data)
+}
+
+// 共有: on a phone, the share sheet with the paper (above); elsewhere, or where
+// the sheet will not take the paper, the row: X · その他 · コピー. Every one of
+// them shares the same four lines — the name, the title, the tag and the address.
+share.addEventListener('click', () => {
+  if (shareMenu.hidden !== false) {
+    const sent = paperShare()
+    if (sent) {
+      // closed: nothing to say; failed: the row, to share another way
+      sent.catch((e: unknown) => (e as DOMException)?.name !== 'AbortError' && shareRow(true))
+      return
+    }
+  }
+  shareRow(shareMenu.hidden !== false)
+})
 
 // X: its own post screen in a new tab (the link does the opening), the text written in
 shareX.addEventListener('click', () => {
   window.setTimeout(() => shareRow(false, true))
 })
 
-// その他: the system's share sheet. The three lines go as the text, and the
+// その他: the system's share sheet. The four lines go as the text, and the
 // address is not given again separately, so it cannot appear twice. Where the
 // system takes a file with text (iOS, Android, Safari, Edge / Chrome on
 // Windows), the paper goes with them as a PNG — the same image 保存 gives;

@@ -1,11 +1,9 @@
 /**
- * v4 — the trace: one parametric curve that contains a line, an arc and a ring.
+ * The trace: one parametric curve that contains a line, an arc and a ring.
  *
- * v1–v2c hold a sequence in several separate compositions — a band (a straight
- * row), a joint line, a path (a line that turns at the language's breaks), an
- * orbit ring (a closed circle of copies) — and a title belongs to one of them.
- * Here they are one generator with continuous parameters, and a title takes a
- * place in it:
+ * A straight row, a line that turns at the language's breaks, an arc, a closed
+ * ring of copies: these are not separate compositions but places in one
+ * generator with continuous parameters, and a title takes a place in it:
  *
  *   closure 0                    a straight row          (band, joint line)
  *   closure 0.1–0.4, corners 1   a line that turns at its word boundaries (path)
@@ -19,13 +17,13 @@
  * where it is spread over every step the curve bends smoothly. Eccentricity
  * swells the curve toward its heaviest character; branches leave it at a
  * coordination. Nothing here is random: every parameter is derived in
- * parametric/params.ts, and the plastic choices are the same ones the v1
- * compositions make (which side, where on the page).
+ * parametric/params.ts, and the plastic choices are few and fixed (which side,
+ * where on the page).
  */
 import { EM } from '../../glyph/font'
 import { PAGE } from '../../render/stage'
 import type { Analysis, Mark, Unit, Vec } from '../types'
-import { directions, isWritten, unitMarks } from '../spatial/common'
+import { directions, isWritten, unitMarks } from '../units'
 import { CENTRED, fit, type PaperParams } from './paper'
 import type { Acts } from './acts'
 import type { Rect } from '../../render/stage'
@@ -54,7 +52,7 @@ export interface TraceParams {
   /**
    * How many times the title is written, each time a row of its own. 1 is a
    * single trace; 2.5 writes it twice and half again; at many rows with no
-   * turning the figure is v1's grid, and with turning it is a warped lattice.
+   * turning the figure is a grid, and with turning it is a warped lattice.
    * There is no threshold between the two: a lattice of one row is a trace.
    */
   rows: number
@@ -72,8 +70,8 @@ export interface TraceParams {
 
 /**
  * The longest a trace may reach across the page, and the smallest and largest a
- * character may be. The range is v2c's own (poem/scale.ts): micro 3.5 %, macro
- * up to 110 % — a character larger than the page, which the edge then cuts.
+ * character may be: from 3.5 % of the page up to 110 % — a character larger
+ * than the page, which the edge then cuts.
  */
 const REACH = 0.86
 const MIN_SIZE = 0.035
@@ -81,7 +79,7 @@ const MAX_SIZE = 1.15
 
 export interface Traced {
   marks: Mark[]
-  /** where each unit went, for the study sheet */
+  /** where each unit went */
   put: { grapheme: number; x: number; y: number; size: number; rotate: number }[]
 }
 
@@ -128,7 +126,7 @@ function walk(steps: Step[], p: TraceParams, base: number): { at: Vec[]; heading
 /**
  * How far from the page's edge a character's middle must stay, as a share of
  * its size. A large character may be cut by the edge — up to half of it off the
- * page, v2c's macro — and the cut reads as intended. A small character cut by
+ * page — and the cut reads as intended. A small character cut by
  * the edge reads as a mistake (a word in a corner losing its top), and may
  * change into another character (愛 cut at the top reads as 受): it stays wholly
  * on the page, with a little room. Continuous in size.

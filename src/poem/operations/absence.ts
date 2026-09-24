@@ -28,11 +28,9 @@ function interiors(a: Analysis): Proposal[] {
     const d = 0.45 + 0.35 * clamp((biggest - 0.08) / 0.3)
     const carried = content.filter((o) => o.char === g.char).length
     // Detecting the white and being able to do something with it are two
-    // things. What the present compositions can do with a counter is put the
-    // rest of the title inside it; with nothing to put there, the page would
-    // be the character enlarged and no more. The feature is still read and
-    // recorded — a later grammar that opens the counters themselves as voids
-    // can lift this condition.
+    // things. What the page can do with a counter is put the rest of the
+    // title inside it; with nothing to put there, the page would be the
+    // character enlarged and no more. The feature is still read and recorded.
     const placeable = content.filter((o) => o.index !== g.index).length
     out.push({
       op: 'absence',

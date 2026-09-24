@@ -42,7 +42,7 @@ export interface Meaning {
   axes: Record<SemanticAxis, number>
   /** how much of the title the table could read, 0 … 1 */
   coverage: number
-  /** what was read, and how (review only, never drawn) */
+  /** what was read, and how (never drawn) */
   read: { text: string; how: 'word' | 'kanji' }[]
   /** the table the meaning came from */
   table: string

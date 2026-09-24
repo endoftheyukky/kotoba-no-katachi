@@ -35,6 +35,19 @@ interface Env {
   ADMIN_PASSWORD_HASH?: string
   /** random, ≥ 32 bytes, base64: signs the admin session cookie */
   SESSION_SECRET?: string
+  /** the project's static files (functions/s.ts reads index.html through it) */
+  ASSETS: { fetch(request: Request): Promise<Response> }
+}
+
+/** the part of Cloudflare's HTMLRewriter the functions use (functions/s.ts) */
+interface RewriterElement {
+  setAttribute(name: string, value: string): RewriterElement
+  setInnerContent(content: string, options?: { html?: boolean }): RewriterElement
+}
+
+declare class HTMLRewriter {
+  on(selector: string, handlers: { element?(element: RewriterElement): void | Promise<void> }): HTMLRewriter
+  transform(response: Response): Response
 }
 
 interface EventContext<E, P extends string, D> {

@@ -1,12 +1,12 @@
 // The archive's snapshot limits (src/archive/svg.ts) against real pages: every
-// published generator (v1, v2c, v3) drawn for every title of the public title
-// sets, rendered as the page renders it, made canonical as the page sends it,
-// and checked with checkSVG as the server checks it. Prints the largest
-// measure of each kind, so the limits can be read against what the work draws.
+// published generator version drawn for every title of the public title sets,
+// rendered as the page renders it, made canonical as the page sends it, and
+// checked with checkSVG as the server checks it. Prints the largest measure of
+// each kind, so the limits can be read against what the work draws.
 //
 // Run through tools/verify/run.mjs (npm run verify:snapshots). Exit 1 if any
 // real page is refused. SAMPLES=<dir> also writes the largest page of each
-// generator among the public titles there (the unit tests use them).
+// version among the public titles there (the unit tests use them).
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -27,7 +27,7 @@ export default async function ({ evaluate, load }) {
       'さかさまのさかさまのさかさまの森', '雨雨雨雨雨雨雨雨雨雨雨雨雨雨雨雨', '鬱鬱鬱鬱鬱鬱鬱鬱鬱鬱鬱鬱鬱鬱鬱鬱', 'あいうえおかきくけこさしすせそた',
       '見えない見えない見えない見えない', '一 二 三 四 五 六 七 八', '欠けた月の欠けた月の欠けた月の欠', '々々々々々々々々々々々々々々々々',
       '顳顬顳顬顳顬顳顬顳顬顳顬顳顬顳顬', '走れ走れ走れ走れ走れ走れ走れ走れ', 'ころころころころころころころころ', '白い犬と黒い犬と白い犬と黒い犬と',
-      // the largest pages found (v3): a kanji written sixteen times
+      // the largest pages found: a kanji written sixteen times
       '絵絵絵絵絵絵絵絵絵絵絵絵絵絵絵絵', '夜夜夜夜夜夜夜夜夜夜夜夜夜夜夜夜', '感感感感感感感感感感感感感感感感',
     ].map((text) => ({ text, longest: true }))
     const titles = [T.STUDY_TITLES, H.HOLDOUT_TITLES, P.PROBE_TITLES, D.DIFFICULT_WORDS, D.EDGE_TITLES, longest].flat()
@@ -39,7 +39,7 @@ export default async function ({ evaluate, load }) {
     for (const t of titles) {
       const input = N.normalizeTitle({ text: t.text, reading: t.reading })
       if (typeof input === 'string') { errors.push(t.text + ': ' + input); continue }
-      for (const version of [1, 2, 3]) {
+      for (const version of G.VERSIONS) {
         try {
           const a = await C.analyze(input)
           const c = await G.write(a, version)
@@ -74,7 +74,7 @@ export default async function ({ evaluate, load }) {
   }
   if (process.env.SAMPLES) {
     mkdirSync(process.env.SAMPLES, { recursive: true })
-    for (const v of [1, 2, 3]) {
+    for (const v of new Set(drawn.pages.map((p) => p.version))) {
       const top = drawn.pages.filter((p) => p.version === v && !p.longest).reduce((a, b) => (b.svg.length > a.svg.length ? b : a))
       writeFileSync(join(process.env.SAMPLES, `largest-v${v}.svg`), top.svg)
     }

@@ -1,12 +1,12 @@
-# Composition: the v3 generator
+# Composition: the generator
 
-How v3 turns an `Analysis` (see [reading.md](reading.md)) and a `Meaning` (see
+How the generator turns an `Analysis` (see [reading.md](reading.md)) and a `Meaning` (see
 [semantics.md](semantics.md)) into a `Draft`. Every constant below is the one
 in the code; file references are to `src/poem/`. `clip(x, lo, hi)` clamps
 (default 0…1); `lean(key, x)` is the motif pull of [§3](#3-motifs-and-rhyme).
 
 ```
-compose(a, { parametric: 'auto', meaning })
+compose(a, meaning)
   ├─ §1  operation layer → Material (units, primary, modifiers)
   └─ parametricPage(a, material, rng.fork('parametric'), meaning)       parametric/index.ts
        ├─ §3  motifs = readMotifs(a, material)
@@ -19,9 +19,9 @@ compose(a, { parametric: 'auto', meaning })
 
 ## 1. The operation layer
 
-v3 is built on the first half of `compose()`, the operation layer that v1
-introduced (`compose.ts`, `operations/*`, `salience.ts`, `potential.ts`). Its
-output, the `Material`, is what v3 draws.
+The first half of `compose()` is the operation layer (`compose.ts`,
+`operations/*`, `salience.ts`, `potential.ts`). Its output, the `Material`,
+is what the rest of the generator draws.
 
 **Proposals.** Four operations each propose readings of the title
 (`propose(a)`); each proposal has a `focus`, a `level` (1 = between words and
@@ -78,7 +78,7 @@ them) and one *subtractive* modifier (absence). Its `apply()` rewrites units:
 | decomposition | no change to units | `parts`: the character written as its parts, slightly apart |
 | transformation | no change to units | `minus`: every occurrence of the outer glyph written with the inner glyph removed |
 
-**What v3 takes from it:**
+**What the page takes from it:**
 
 - `units` = the material's units in reading order, with `absent`, `parts` and
   `minus` as the operation layer set them;
@@ -88,10 +88,7 @@ them) and one *subtractive* modifier (absence). Its `apply()` rewrites units:
   names the page's subject (§5), feeds the `nesting` motif (§3), and decides
   which marks are written in the reading face (§9).
 
-The spatial compositions and mark grammars that follow in `compose()` are
-computed for every version but used only by v1 / v2c.
-
-## 2. What v3 reads per unit
+## 2. What is read per unit
 
 With `n` the number of non-space graphemes:
 
@@ -164,7 +161,7 @@ opening      = directed ? lean(clip(directed · clip((closure − 0.35) / 0.5) �
 tangency     = lean(clip(1.4 · closure − 0.2))                                how far marks turn with the curve
 branch       = at a coordination: one group of units per term (the marker joins the term before it),
                forking at the first term's first unit, fan = clip(0.08 + 0.03 · groups, 0, 0.25) turns
-side         = rng.next() < 0.5 ? +1 : −1                                     the only random draw of v3
+side         = rng.next() < 0.5 ? +1 : −1                                     the only random draw of the page
 
 strength     = repeatShare · (0.4 + 0.6 · loops)
 rows         = clip(lean(1 + 7 · strength + 4.2 · kept.crowd), 1, 8)          not rounded: 2.4 = twice and 40 %
@@ -283,7 +280,7 @@ edgeKeep(size) = 0.62 + (0.26 − 0.62) · clip((size / PAGE − 0.12) / 0.28)
 ```
 
 — a character up to 12 % of the page stays wholly on it with a margin; from
-40 % up, up to about half of it may be cut by the edge (v2c's macro). If no
+40 % up, up to about half of it may be cut by the edge. If no
 centre satisfies every character, the figure is drawn 0.85× smaller, and so
 on (down to 6 %); if the characters would fall below `0.035 · PAGE`, rows
 are given up half a row at a time instead. Mark size is

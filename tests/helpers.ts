@@ -33,7 +33,7 @@ export async function generation(
     title: 'あ',
     reading: '',
     source: 'manual',
-    generator_version: 'v3',
+    generator_version: 'v1',
     output_hash: await sha256(svg),
     svg,
     client_created_at: Date.now(),

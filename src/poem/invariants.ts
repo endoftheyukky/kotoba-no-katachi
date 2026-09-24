@@ -1,28 +1,24 @@
 /**
- * v3 — what a deformation may never break (the structure that holds the form
- * in place). The same checks the v2 audits ran over every page, as one
- * function the composition-space solver can ask while it moves marks:
+ * What a page may never break: the structure that holds the title on it.
+ * Checked for every page of the public title sets (tools/verify/fixture.mjs):
  *
  *   lost        every character of the title stays on the page: written by a
  *               mark of which at least half is on the page, stood for by a
  *               form of small marks, or written as space by the poem
  *   order       characters the title writes once keep their reading order
- *               along the writing direction. A repetition page is exempt (as
- *               in the audits), and so is a figure that is read along itself:
- *               where the page is a curve that closes, the order is the
- *               curve's own, and the writing direction says nothing about it.
+ *               along the writing direction. A repetition page is exempt, and
+ *               so is a figure that is read along itself: where the page is a
+ *               curve that closes, the order is the curve's own, and the
+ *               writing direction says nothing about it.
  *   overlap     no two of the title's own marks of comparable size cover each
  *               other by more than a quarter
  *   inkHit      derived marks do not stand on the title's own ink
  *   crowd       derived marks do not cover each other
  *   finite      every coordinate is a number
- *
- * A deformation is allowed to go only as far as the page it produces is no
- * worse, on any of these, than the page it started from.
  */
-import { EM } from '../../glyph/font'
-import { PAGE } from '../../render/stage'
-import type { Analysis, Mark } from '../types'
+import { EM } from '../glyph/font'
+import { PAGE } from '../render/stage'
+import type { Analysis, Mark } from './types'
 
 export interface Soundness {
   lost: number
@@ -151,49 +147,3 @@ export function soundness(
   const infinite = marks.filter((k) => ![k.x, k.y, k.size, k.rotate ?? 0].every(Number.isFinite)).length
   return { lost, disordered, overlaps, inkHits, crowded, infinite }
 }
-
-/** a page no worse than the one it started from, on every count */
-export const noWorse = (s: Soundness, base: Soundness) =>
-  s.infinite === 0 &&
-  s.lost <= base.lost &&
-  s.disordered <= base.disordered &&
-  s.overlaps <= base.overlaps &&
-  s.inkHits <= base.inkHits &&
-  s.crowded <= base.crowded
-
-/**
- * Coherence: a deformation must be smooth at the scale of a texture. Where
- * neighbouring small marks move closer together or further apart unevenly —
- * by more than a share of the distance between them — the figure does not
- * bend, it jitters, and reads as noise however well grounded the field that
- * moved it. Measured on texture only (derived marks; the copies of a
- * repetition page): the title's few characters are placed by the composition
- * and may move against each other. A whole-figure turn or bend changes no
- * distance between neighbours and costs nothing. The 95th percentile, over
- * each texture mark and its three nearest comparable neighbours, of
- * |change in their distance| / |their distance|. Only between two states of
- * the same marks (a step that leaves marks out is not measured).
- */
-export function strain(before: Mark[], after: Mark[], texture: (k: Mark) => boolean): number {
-  if (before.length !== after.length) return 0
-  const idx = before.map((k, i) => (texture(k) ? i : -1)).filter((i) => i >= 0)
-  if (idx.length < 4) return 0
-  const step = Math.max(1, Math.floor(idx.length / 400))
-  const values: number[] = []
-  for (let n = 0; n < idx.length; n += step) {
-    const i = idx[n]
-    const p = before[i]
-    const near = idx
-      .map((j) => ({ j, d: Math.hypot(before[j].x - p.x, before[j].y - p.y) }))
-      .filter(({ j, d }) => j !== i && d > 0 && Math.max(before[j].size, p.size) <= 2 * Math.min(before[j].size, p.size))
-      .sort((x, y) => x.d - y.d)
-      .slice(0, 3)
-    for (const { j, d } of near) values.push(Math.abs(Math.hypot(after[i].x - after[j].x, after[i].y - after[j].y) - d) / d)
-  }
-  if (!values.length) return 0
-  values.sort((x, y) => x - y)
-  return values[Math.floor(0.95 * (values.length - 1))]
-}
-
-/** the most a step may strain a texture (see strain) */
-export const MAX_STRAIN = 0.22

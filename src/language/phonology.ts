@@ -14,7 +14,7 @@
  *   echo     the same mora, vowel or consonant returning — but only when it
  *            is marked enough not to be an accident of a short title.
  *
- * Thresholds here are v1 heuristics, chosen to keep coincidences out, not
+ * Thresholds here are heuristics, chosen to keep coincidences out, not
  * measured facts about Japanese.
  */
 import { toHiragana } from './kana'
@@ -58,7 +58,7 @@ export type PhonologicalFeature =
 /** roughly how many distinct units each level offers — five vowels repeat by themselves */
 const ALPHABET = { mora: 100, onset: 15, vowel: 5 }
 
-/** v1: how marked a repetition must be to count, per level */
+/** how marked a repetition must be to count, per level */
 const ECHO = {
   /** a repeated mora is already unusual */
   mora: { members: 2, share: 0 },

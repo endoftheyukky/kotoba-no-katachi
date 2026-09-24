@@ -8,11 +8,11 @@ flowchart TD
   A["address: title · reading · v"] --> N["normalizeTitle → text, reading, variant = 0"]
   N --> S["seed = cyrb53(text + ' ' + reading + ' ' + variant)"]
   S --> R["Rng(seed).fork('parametric') → one draw: side (which way the curve turns)"]
-  A --> V["versionOf(v): 1 → v1 · 3 → v3 · otherwise → v2c"]
-  V --> W["compose(analysis, fixed Force of that version)"]
+  A --> V["versionOf(v): 1 → v1 · none or unpublished → the current version (v1)"]
+  V --> W["write(analysis, version) → compose(analysis, meaning)"]
   N --> W
   R --> W
-  P["fixed with the release: the code (tag v3.0.0) · the fonts (@fontsource 5.3.0, package-lock.json)<br/>· the table axes-1 (sha256 in meta.json) · the page's canvas rasterisation (Chromium)"] --> W
+  P["fixed with the release: the code (tag v1.0.0) · the fonts (@fontsource 5.3.0, package-lock.json)<br/>· the table axes-1 (sha256 in meta.json) · the page's canvas rasterisation (Chromium)"] --> W
   W --> D["Draft (marks) → the same SVG and PNG"]
 ```
 
@@ -24,25 +24,23 @@ where `hash` is cyrb53 folded to 32 bits and the generator is mulberry32
 `Rng(hash(seed + ":" + label))`, so one rule's draws never shift another's.
 
 - **The version is not part of the seed.** `v` chooses which generator runs;
-  the three generators of one title start from the same seed.
+  every version of one title starts from the same seed.
 - **The reading is.** Giving a reading changes the seed as well as the sound
   analysis.
-- **In v3 the seed decides exactly one thing**: `side`, the direction the
+- **The seed decides exactly one thing**: `side`, the direction the
   curve turns (`rng.next() < 0.5 ? +1 : −1`, `parametric/params.ts`). Every
-  other value of a v3 page is a deterministic function of the readings. The
+  other value of a page is a deterministic function of the readings. The
   material's placement uses a fixed ordered dither and a fixed integer hash of
   lattice coordinates, not the random generator.
-- `compose()` also forks streams for the spatial composition and the mark
-  grammar; they shape v1 / v2c pages, and in v3 their results are discarded.
 
 ## What a page depends on
 
 1. The normalised input (text, reading) and the version.
-2. The code of the published generators. `write()` (`src/poem/generators.ts`)
-   calls the same `compose()` for every version with a fixed `Force`.
+2. The code of the published generator: `write()` (`src/poem/generators.ts`)
+   and everything `compose()` reads.
 3. The fonts: glyph measurements are made from Noto Sans JP 500 and Noto
    Serif JP 300 as bundled from `@fontsource` 5.3.0.
-4. For v3, the meaning table `axes-1`, whose shards are pinned by the sha256
+4. The meaning table `axes-1`, whose shards are pinned by the sha256
    values in `public/semantic/axes-1/meta.json`.
 5. The browser's text rasterisation (see [Limitations](#limitations-and-failure-modes)).
 
@@ -52,27 +50,30 @@ service other than the site's own files.
 
 ## Versions and the frozen boundary
 
-| version | address | `Force` |
+| version | address | call |
 | --- | --- | --- |
-| v1 | `?v=1` | `{}` |
-| v2c | no `v` | `{ grammar: 'auto' }` |
-| v3 | `?v=3` | `{ parametric: 'auto', meaning }` |
+| v1 | `?v=1` | `compose(analysis, await readMeaning(text))` |
 
-A published version is never edited: a change to what any of them writes is a
-new version (v4) with its own `v` value, and `CURRENT` in
-`src/poem/generators.ts` says which version new words are written in.
+The site writes the version into every address it makes (`&v=1`). An address
+with no `v`, or with a version that was never published, is drawn by the
+current one (`CURRENT` in `src/poem/generators.ts`).
 
-Because the three versions share `compose()`, **the frozen code is not only
-`src/poem/parametric/`**. Changing any of these can change v1, v2c or v3:
-`src/title.ts`, `src/core/`, `src/language/` (including `semantic/` and
-`lexicon/`), `src/glyph/`, `src/poem/` (operations, scores, spatial
-compositions, grammars, face, parametric), and the fonts and table they read.
-Rendering (`src/render/`) does not change the `Draft` but changes what is
-drawn from it. `tools/verify` is how to find out.
+A published version is never edited: a change to what it writes is a new
+version with its own `v` value, added to `VERSIONS` beside it (and to the copy
+in `server/share.ts`, `GENERATORS` in `src/archive/protocol.ts` and the
+verification fixture), and `CURRENT` says which version new words are written
+in. Addresses that name the older version keep drawing it.
 
-The tag `v3.0.0` marks the source as v3 was published (2026-09-24 JST).
-Later commits on `main` change only the site around the generators (About,
-sharing, icons, documentation); the verification below must stay identical.
+**The frozen code is not only `src/poem/parametric/`**. Changing any of these
+can change what v1 writes: `src/title.ts`, `src/core/`, `src/language/`
+(including `semantic/` and `lexicon/`), `src/glyph/`, `src/poem/`
+(operations, scores, units, face, parametric), and the fonts and table they
+read. Rendering (`src/render/`) does not change the `Draft` but changes what
+is drawn from it. `tools/verify` is how to find out.
+
+The tag `v1.0.0` marks the source as v1 was published. Later commits on
+`main` may change the site around the generator (About, sharing, icons,
+documentation); the verification below must stay identical.
 
 ## Verification
 
@@ -90,31 +91,30 @@ npm run verify
 1. For every title of the public title sets in `src/study/` — 34 development
    titles, 47 held-out titles, 12 probes, 24 ordinary words and 14 edge cases,
    131 in all, none of them typed on the site by a visitor — it normalises the
-   title, analyses it afresh, and runs `write()` for v1, v2c and v3.
+   title, analyses it afresh, and runs `write()` for every published version.
 2. Each page is reduced to `sha256(JSON.stringify(draft.marks))` — the whole
    output of the generator, every coordinate at full double precision —
    with the number of marks and the sums of x, y and size as a readable
    summary.
-3. For v3 it runs the invariant audit (below).
+3. It runs the invariant audit (below) on every page.
 4. It compares everything with `tools/verify/expected.json`, prints the result
    as JSON, and exits 1 on any difference, any missing page or any invariant
    failure.
 
 `npm run verify:write` rewrites `expected.json`. It is for a new published
-version only; for v1, v2c and v3 the file must not change.
+version only; for a published version the file must not change.
 
 ### What `expected.json` was checked against
 
-When the fixture was made, it was cross-checked in three ways:
+When the fixture was made, it was cross-checked in two ways:
 
-- v1 and v2c: all 131 titles hash identically when drawn by the code that
-  first published v2c (the `compose()` of that release, called directly).
-- v3: all 131 titles hash identically when drawn by the source deployed as v3.
-- v3: 128 of the titles were also in the audit taken when v3 was frozen; their
-  pages agree mark for mark (the other three are edge cases written later to
-  replace titles that had come from the site's own input).
+- All 131 titles hash identically when drawn by the source deployed on the
+  site, and every page's canonical SVG is byte-for-byte the same.
+- 128 of the titles were also in the audit taken when the generator was
+  frozen; their pages agree mark for mark (the other three are edge cases
+  written later to replace titles that had come from the site's own input).
 
-### The invariant audit (`src/poem/form/invariants.ts`)
+### The invariant audit (`src/poem/invariants.ts`)
 
 `soundness(a, marks, o)` counts, on a finished page:
 
@@ -129,7 +129,7 @@ When the fixture was made, it was cross-checked in three ways:
 
 For every title of the fixture every count is 0.
 
-**These checks do not run on the site.** v3 does not audit a page before
+**These checks do not run on the site.** The generator does not audit a page before
 showing it; its rules hold by construction ([composition.md §11](composition.md#11-what-holds-by-construction)),
 and the audit is how that is checked offline.
 
@@ -166,15 +166,14 @@ and the audit is how that is checked offline.
 - **If the fonts cannot be loaded, no page is drawn.** `GlyphLibrary.prepare`
   throws; the site says 「紙面をつくれませんでした。もう一度お試しください。」
   and draws nothing.
-- **If the meaning table cannot be read, no v3 page is drawn.** A shard that
+- **If the meaning table cannot be read, no page is drawn.** A shard that
   fails to load makes `readMeaning` throw; the page shows the same message.
-  The failure is not cached, so trying again fetches the shard again. v1 and
-  v2c do not read the table.
+  The failure is not cached, so trying again fetches the shard again.
 - **Meaning ignores the reading** and reads only characters the table covers
   (Japanese words up to 8 characters, single kanji); titles in other scripts
   have coverage 0 and are read from their writing alone.
 - **The fixture covers the public title sets**, not every possible title. A
   change that affects only titles outside them would pass it; the sets were
-  chosen to cover the structures the generators read (repetition, pairs,
+  chosen to cover the structures the generator reads (repetition, pairs,
   nesting, negation, readings, long titles, Latin letters, digits,
   punctuation).

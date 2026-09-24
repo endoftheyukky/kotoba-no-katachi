@@ -15,7 +15,7 @@
  * nineteen characters sampled score above 0.9, so it distinguishes nothing.
  * Where two halves are both separable and alike, that is already an echoForm.
  *
- * Thresholds are v1 heuristics chosen to keep coincidences out.
+ * Thresholds are heuristics chosen to keep coincidences out.
  */
 import { EM } from './font'
 import type { GlyphMetrics } from './metrics'

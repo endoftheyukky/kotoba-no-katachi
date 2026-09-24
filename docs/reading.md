@@ -1,8 +1,7 @@
 # Reading a title
 
 What the system reads before it composes anything: the input, the language,
-and the letterforms. Everything here is shared by v1, v2c and v3. The meaning
-table, read by v3 only, is in [semantics.md](semantics.md).
+and the letterforms. The meaning table is in [semantics.md](semantics.md).
 
 ## 1. Input
 
@@ -12,9 +11,11 @@ A poem is addressed by `?title=…&reading=…&v=…` (`src/main.ts`):
 
 - `title` — the words.
 - `reading` — optional, the reading of the whole title in kana.
-- `v` — the generator: `1` → v1, `3` → v3, anything else or absent → v2c
-  (`versionOf`, `src/poem/generators.ts`). New words typed on the site are
-  written in v3 and get `&v=3`; v2c keeps the addresses it had.
+- `v` — the version of the generator that draws it: `1`. A version that was
+  never published, or none, is the current one (`versionOf`,
+  `src/poem/generators.ts`). The site always writes the version into the
+  address (`&v=1`), so an address keeps the page it was given even after a
+  later version is published.
 
 On the input line a reading may follow the words in brackets:
 `子供の城（こどものしろ）`. The line is split by
@@ -124,7 +125,7 @@ There is **no morphological analyser and no dictionary**. The rule segmenter
 
 Horizontal when the title has more katakana than hiragana and kanji together;
 otherwise vertical. It sets the reading direction of every layout
-(`directions()`, `src/poem/spatial/common.ts`) and turns ー 〜 … and similar
+(`directions()`, `src/poem/units.ts`) and turns ー 〜 … and similar
 marks by 90° in vertical writing; small kana sit in a corner of their cell
 (`src/glyph/layout.ts`).
 
@@ -244,9 +245,9 @@ Voicing: for each voiced kana, `relate(base, voiced)` must reach containment
   pair has IoU ≥ 0.8 (品's three 口).
 - Left–right symmetry is measured but used nowhere.
 
-### What each generator reads from this
+### What the generator reads from this
 
-v3 uses: glyph `density` (ink weight of each step, which character withdraws,
+The generator uses: glyph `density` (ink weight of each step, which character withdraws,
 material fineness), `cols` (which way a character leans), `rows`/`cols` (its
 thinnest side, for wear), `seam` (where a character is cut),
 `structuralParts` (wear and cut by components; forms repeated inside a

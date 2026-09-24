@@ -20,9 +20,9 @@
 /**
  * The limits of a snapshot, set from the pages the work draws. `npm run
  * verify:snapshots` draws every title of the public sets and the longest
- * titles with every generator and measures them. At this version the largest
- * page found — among those and 300 kanji written sixteen times — is ≈ 237 000
- * characters (絵 sixteen times, v3), with ≈ 3 500 elements; at most 25 masks and
+ * titles with every published version and measures them. The largest page
+ * found — among those and 300 kanji written sixteen times — is ≈ 237 000
+ * characters (絵 sixteen times), with ≈ 3 500 elements; at most 25 masks and
  * 25 references, 7 levels, one character in each <text>, and numbers of at most
  * 20 characters. Each limit leaves room above that; none
  * lets a snapshot carry what the renderer never writes: long text, long

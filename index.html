@@ -4,19 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <!--site-meta-->
-    <link rel="icon" href="/favicon.ico?v=3" sizes="32x32" />
-    <link rel="icon" href="/favicon.svg?v=3" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
+    <link rel="icon" href="/favicon.ico?v=1" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg?v=1" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=1" />
   </head>
   <body data-mode="write" data-state="idle">
     <main id="work">
-      <!-- the name, small, above the paper: always ことばのかたち, in three words (see style.css) -->
-      <h1 id="name">
-        <span class="hidden">ことばのかたち</span>
-        <span aria-hidden="true">ことば</span>
-        <span aria-hidden="true">の</span>
-        <span aria-hidden="true">かたち</span>
-      </h1>
+      <!-- the name, small, above the paper, on one line -->
+      <h1 id="name">ことばのかたち</h1>
 
       <!-- the paper: the work, and nothing else -->
       <div id="stage" role="img" aria-label="白い紙面"></div>
@@ -54,7 +49,7 @@
       </div>
 
       <!--
-        作例: nine poems, as small sheets of paper. Each is the v3 page of its
+        作例: nine poems, as small sheets of paper. Each is the page of its
         words, drawn ahead of time by the site's own renderer
         (tools/examples/make.mjs, checked against tools/examples/manifest.json);
         its link opens that page. Shown only while the paper waits for words.
@@ -63,31 +58,31 @@
         <h2 id="examples-name">作例</h2>
         <ul>
           <li>
-            <a href="?title=%E6%A3%AE&v=3"><img src="/examples/v3/mori.png" width="360" height="360" alt="「森」の紙面" loading="lazy" decoding="async" /><span>森</span></a>
+            <a href="?title=%E6%A3%AE&v=1"><img src="/examples/v1/mori.png" width="360" height="360" alt="「森」の紙面" loading="lazy" decoding="async" /><span>森</span></a>
           </li>
           <li>
-            <a href="?title=%E5%AD%A4%E7%8B%AC&v=3"><img src="/examples/v3/kodoku.png" width="360" height="360" alt="「孤独」の紙面" loading="lazy" decoding="async" /><span>孤独</span></a>
+            <a href="?title=%E5%AD%A4%E7%8B%AC&v=1"><img src="/examples/v1/kodoku.png" width="360" height="360" alt="「孤独」の紙面" loading="lazy" decoding="async" /><span>孤独</span></a>
           </li>
           <li>
-            <a href="?title=%E9%9B%A8%E3%81%AE%E4%B8%AD%E3%81%AE%E9%9B%A8&v=3"><img src="/examples/v3/ame-no-naka-no-ame.png" width="360" height="360" alt="「雨の中の雨」の紙面" loading="lazy" decoding="async" /><span>雨の中の雨</span></a>
+            <a href="?title=%E9%9B%A8%E3%81%AE%E4%B8%AD%E3%81%AE%E9%9B%A8&v=1"><img src="/examples/v1/ame-no-naka-no-ame.png" width="360" height="360" alt="「雨の中の雨」の紙面" loading="lazy" decoding="async" /><span>雨の中の雨</span></a>
           </li>
           <li>
-            <a href="?title=%E4%BD%99%E7%99%BD&v=3"><img src="/examples/v3/yohaku.png" width="360" height="360" alt="「余白」の紙面" loading="lazy" decoding="async" /><span>余白</span></a>
+            <a href="?title=%E4%BD%99%E7%99%BD&v=1"><img src="/examples/v1/yohaku.png" width="360" height="360" alt="「余白」の紙面" loading="lazy" decoding="async" /><span>余白</span></a>
           </li>
           <li>
-            <a href="?title=%E8%A6%8B%E3%81%88%E3%81%AA%E3%81%84&v=3"><img src="/examples/v3/mienai.png" width="360" height="360" alt="「見えない」の紙面" loading="lazy" decoding="async" /><span>見えない</span></a>
+            <a href="?title=%E8%A6%8B%E3%81%88%E3%81%AA%E3%81%84&v=1"><img src="/examples/v1/mienai.png" width="360" height="360" alt="「見えない」の紙面" loading="lazy" decoding="async" /><span>見えない</span></a>
           </li>
           <li>
-            <a href="?title=%E7%BE%A4%E8%A1%86&v=3"><img src="/examples/v3/gunshu.png" width="360" height="360" alt="「群衆」の紙面" loading="lazy" decoding="async" /><span>群衆</span></a>
+            <a href="?title=%E7%BE%A4%E8%A1%86&v=1"><img src="/examples/v1/gunshu.png" width="360" height="360" alt="「群衆」の紙面" loading="lazy" decoding="async" /><span>群衆</span></a>
           </li>
           <li>
-            <a href="?title=%E3%81%95%E3%81%95%E3%82%84%E3%81%8D&v=3"><img src="/examples/v3/sasayaki.png" width="360" height="360" alt="「ささやき」の紙面" loading="lazy" decoding="async" /><span>ささやき</span></a>
+            <a href="?title=%E3%81%95%E3%81%95%E3%82%84%E3%81%8D&v=1"><img src="/examples/v1/sasayaki.png" width="360" height="360" alt="「ささやき」の紙面" loading="lazy" decoding="async" /><span>ささやき</span></a>
           </li>
           <li>
-            <a href="?title=%E5%A2%83%E7%95%8C&v=3"><img src="/examples/v3/kyokai.png" width="360" height="360" alt="「境界」の紙面" loading="lazy" decoding="async" /><span>境界</span></a>
+            <a href="?title=%E5%A2%83%E7%95%8C&v=1"><img src="/examples/v1/kyokai.png" width="360" height="360" alt="「境界」の紙面" loading="lazy" decoding="async" /><span>境界</span></a>
           </li>
           <li>
-            <a href="?title=%E8%A8%98%E6%86%B6&v=3"><img src="/examples/v3/kioku.png" width="360" height="360" alt="「記憶」の紙面" loading="lazy" decoding="async" /><span>記憶</span></a>
+            <a href="?title=%E8%A8%98%E6%86%B6&v=1"><img src="/examples/v1/kioku.png" width="360" height="360" alt="「記憶」の紙面" loading="lazy" decoding="async" /><span>記憶</span></a>
           </li>
         </ul>
       </section>

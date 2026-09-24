@@ -19,5 +19,5 @@ CREATE TABLE limits (
   expires     INTEGER NOT NULL             -- ms since 1970: when the row may be deleted
 ) WITHOUT ROWID;
 
--- admin_throttle (0001) is no longer read or written: server/limits.ts replaces it.
+-- admin_throttle (0001) is not read or written: server/limits.ts uses this table.
 -- It is left in place so that the site keeps working between this migration and the next deploy.
