@@ -10,8 +10,11 @@
   </head>
   <body data-mode="write" data-state="idle">
     <main id="work">
-      <!-- the name, small, above the paper, on one line -->
-      <h1 id="name">ことばのかたち</h1>
+      <!-- the name, small, above the paper, on one line; About at the paper's right edge on the same line -->
+      <header id="head">
+        <h1 id="name">ことばのかたち</h1>
+        <button type="button" id="about-open" aria-haspopup="dialog">About</button>
+      </header>
 
       <!-- the paper: the work, and nothing else -->
       <div id="stage" role="img" aria-label="白い紙面"></div>
@@ -88,8 +91,6 @@
       </section>
     </main>
 
-    <button type="button" id="about-open" aria-haspopup="dialog">About</button>
-
     <!-- About: the only text about the work, kept here in one place -->
     <dialog id="about" aria-label="About">
       <!-- stays at the top while the text scrolls under it -->
@@ -121,13 +122,13 @@
       </dl>
       <!-- what the archive keeps (src/archive/record.ts, migrations/0001_archive.sql, migrations/0002_limits.sql):
            keep them in agreement; the details are in docs/site.md, not here -->
-      <details class="record">
-        <summary>記録について</summary>
+      <section class="record" aria-labelledby="record-name">
+        <h2 id="record-name">記録について</h2>
         <p>ことばを入れて詩をつくると、そのことばと紙面が日時とともに記録されます。共有されたアドレスや作例を開いただけでは記録されません。</p>
         <p>同じブラウザからの記録と、一度の訪問のなかでの順序がわかるよう、このブラウザに匿名のIDを保存します。記録には、名前・メールアドレス・位置情報は含まれません。</p>
         <p>IPアドレスそのものは保存しません。不正な大量送信を防ぐため、IPアドレスから作った識別用の値を一時的に保持します。</p>
         <p>記録は、この作品の運用と改善のためにのみ使います。仕組みの詳細は <a href="https://github.com/endoftheyukky/kotoba-no-katachi/blob/main/docs/site.md" target="_blank" rel="noopener">GitHub の技術文書</a>にあります。</p>
-      </details>
+      </section>
     </dialog>
 
     <script type="module" src="/src/main.ts"></script>

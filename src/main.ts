@@ -455,8 +455,7 @@ tryOwn.addEventListener('click', () => {
 // About closes with ×, Escape (the dialog's own), or a click outside it; the
 // focus goes back to About.
 aboutOpen.addEventListener('click', () => {
-  // opens at its first line, however far it was read last time, and 記録について folded
-  about.querySelector('details')?.removeAttribute('open')
+  // opens at its first line, however far it was read last time
   about.showModal()
   about.scrollTop = 0
 })
