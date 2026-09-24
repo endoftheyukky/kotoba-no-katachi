@@ -62,10 +62,18 @@ body {
   padding: calc(var(--top) + env(safe-area-inset-top)) var(--gutter) calc(var(--gutter) + env(safe-area-inset-bottom));
 }
 
+/* the line above the paper: the name in its middle, About at the paper's right edge */
+#head {
+  flex: none;
+  position: relative;
+  width: var(--sheet);
+  margin: 0 0 var(--name-gap);
+  text-align: center;
+}
+
 /* the name: ことばのかたち, small, on one line above the paper, as quiet as the 作例 heading */
 #name {
-  flex: none;
-  margin: 0 0 var(--name-gap);
+  margin: 0;
   font-size: var(--name-size);
   font-weight: 400;
   line-height: var(--name-line);
@@ -386,12 +394,13 @@ body[data-state="working"] #stage svg {
 }
 
 #about-open {
-  position: fixed;
-  right: calc(var(--gutter) + env(safe-area-inset-right));
-  bottom: calc(var(--gutter) + env(safe-area-inset-bottom));
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   font-size: 12px;
   letter-spacing: 0.1em;
-  padding: 8px 4px;
+  padding: 8px 0 8px 12px;
 }
 
 dialog {
@@ -454,46 +463,19 @@ dialog dd a:focus-visible {
   outline-offset: 2px;
 }
 
-/* 記録について: the last line of About, folded; opened, it reads as quietly as the colophon */
+/* 記録について: the last lines of About, open to read, as quiet as the colophon */
 dialog .record {
-  margin: 16px 0 0;
+  margin: 22px 0 0;
   font-size: 12px;
   line-height: 1.8;
   color: var(--mute);
 }
 
-dialog .record summary {
-  display: inline-block;
-  padding: 6px 0;
-  list-style: none;
-  cursor: pointer;
-}
-
-dialog .record summary::-webkit-details-marker {
-  display: none;
-}
-
-/* ＋ / − as the only mark, not read aloud (the element says itself whether it is open) */
-dialog .record summary::after {
-  content: '＋';
-  content: '＋' / '';
-  margin-left: 0.5em;
-}
-
-dialog .record[open] summary::after {
-  content: '−';
-  content: '−' / '';
-}
-
-dialog .record summary:hover,
-dialog .record summary:focus-visible {
-  color: var(--ink);
-  outline: none;
-}
-
-dialog .record summary:focus-visible {
-  outline: 1px solid var(--ink);
-  outline-offset: 2px;
+dialog .record h2 {
+  margin: 0 0 6px;
+  font-size: inherit;
+  font-weight: 400;
+  letter-spacing: 0.1em;
 }
 
 dialog .record p {
@@ -559,25 +541,6 @@ dialog .record a:focus-visible {
     padding-bottom: 18px;
     font-size: 13.5px;
     line-height: 1.95;
-  }
-}
-
-/*
- * Where the 作例 reach the corner About stands in (narrow screens), About
- * leaves the corner of the window for the foot of the page, under the last
- * sheet, so that it never lies on a poem while they are scrolled past.
- */
-@media (max-width: 720px) {
-  body[data-mode="write"][data-state="idle"] {
-    position: relative;
-  }
-
-  body[data-mode="write"][data-state="idle"] #about-open {
-    position: absolute;
-  }
-
-  #examples {
-    margin-bottom: calc(4.5 * var(--gutter) + env(safe-area-inset-bottom));
   }
 }
 
