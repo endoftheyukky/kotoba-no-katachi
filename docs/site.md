@@ -28,14 +28,26 @@ npx wrangler@4 pages deploy dist --project-name <project> --branch <production b
 
 ## Link previews and icons
 
-- Every address carries the same card: `og:image` / `twitter:image` =
-  `/ogp.png?v=3` (1200 × 630), the v3 page of the title 「ことばのかたち」 on the
-  ground, drawn by the site's renderer (`tools/examples/make.mjs`). The query
-  string changes when the card does, so link previews fetch it again.
-- A per-poem card would need a Pages Function in front of `/` (the poem cannot
-  be drawn on a server: its glyph measurements come from a browser canvas).
-  That is not deployed. `public/og/v3/` holds 1200 × 630 cards of the nine
-  作例, ready for it.
+- The share buttons give a poem's address as `/s?title=…&reading=…&v=…`
+  (the tag `#KotobaNoKatachi` in the text, and nothing else added). `/s` is the
+  only page path that runs a Function (`public/_routes.json`): `functions/s.ts`
+  reads the static `index.html` through `env.ASSETS` and, with HTMLRewriter,
+  writes the poem into its head — `og:title` / `twitter:title`
+  (「孤独」 — ことばのかたち), `og:image` / `twitter:image`, `og:url` (the `/s`
+  address, as the page writes it) and `<link rel="canonical">` (the poem's own
+  `/?title=…` address). A link preview reads this without running any script
+  (`server/share.ts`). Nothing is recorded: `/s` never touches the archive.
+- Opened in a browser, `/s` draws the same poem as `/?title=…` and keeps its
+  own address, so that an address copied from the browser, or shared by the
+  browser's own share, carries the poem's card too. Reloading it runs the
+  Function again.
+- A 作例 (v3, no reading) has its own card, `public/og/v3/<file>` (1200 × 630),
+  mapped by its words through `tools/examples/manifest.json`; every other
+  poem, for now, carries the site's card `/ogp.png?v=3` (the v3 page of
+  「ことばのかたち」 on the ground, drawn by `tools/examples/make.mjs`). The
+  query string changes when that card does, so link previews fetch it again.
+- `/` itself stays a static file: its head is the site's own card, and it
+  keeps working if the Functions quota runs out.
 - The 作例 thumbnails in `public/examples/v3/` are drawn by
   `tools/examples/make.mjs` with the published v3 generator; `CHECK=1` draws
   them again and compares them with `tools/examples/manifest.json`.

@@ -15,11 +15,11 @@
   --gutter: 16px;
   /* the room under the paper: one line, one row of words, one quiet note */
   --under: 148px;
-  /* the room above it: the name in three short lines, then a clear gap */
+  /* the room above it: the name on one line, then a clear gap */
   --name-size: 12px;
   --name-line: 20px;
   --name-gap: 36px;
-  --head: calc(3 * var(--name-line) + var(--name-gap));
+  --head: calc(var(--name-line) + var(--name-gap));
 }
 
 * {
@@ -62,37 +62,16 @@ body {
   padding: calc(var(--top) + env(safe-area-inset-top)) var(--gutter) calc(var(--gutter) + env(safe-area-inset-bottom));
 }
 
-/*
- * The name: ことば / の / かたち, three words on three lines, fixed.
- *   input      the name itself, always the same: a noun, the particle の, a noun
- *   rule       の hangs under the last kana of ことば, the word it follows;
- *              かたち starts one kana in, so that の also stands over its middle
- *   output     a small block, centred as a whole; each line sits a few pixels
- *              off the centre (half a kana, ≈ 7px). No rotation, no motion.
- */
+/* the name: ことばのかたち, small, on one line above the paper, as quiet as the 作例 heading */
 #name {
-  --kana: calc(1em + 0.16em);
   flex: none;
   margin: 0 0 var(--name-gap);
   font-size: var(--name-size);
   font-weight: 400;
   line-height: var(--name-line);
   letter-spacing: 0.16em;
-  text-align: left;
-  color: var(--mute);
-}
-
-#name span {
-  display: block;
   white-space: nowrap;
-}
-
-#name span:nth-child(3) {
-  padding-left: calc(2 * var(--kana));
-}
-
-#name span:nth-child(4) {
-  padding-left: var(--kana);
+  color: var(--mute);
 }
 
 /* the paper: always square, as large as the room allows */

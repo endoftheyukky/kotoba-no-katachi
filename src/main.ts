@@ -9,6 +9,10 @@
  *   &v=1       the generator as it was frozen at v1; an address with no
  *              version is v2c, as every poem shared before v3 was
  *   &debug=1   why the page is as it is, in the console (never on the page)
+ *   /s?title=… the address the share buttons give: the same poem, with a head
+ *              written for it on the server (functions/s.ts), so that a link
+ *              preview shows its card. Opened, it stays /s, so that an address
+ *              copied or shared from the browser keeps its card too.
  *
  * The same words always give the same poem: there is nothing here to redraw,
  * shuffle or vary. Every poem written is a place in the browser's history, so
@@ -117,17 +121,25 @@ function addressOf(input: TitleInput | null, v: Version = writing): string {
 
 const same = (a: TitleInput | null, b: TitleInput | null) => !!a && !!b && a.text === b.text && (a.reading ?? '') === (b.reading ?? '')
 
-/** the poem's canonical address: the site's own, wherever the page was opened from */
+/**
+ * the address a poem is shared at: /s with its words, reading and version, on
+ * the site's own address wherever the page was opened from. /s shows the same
+ * poem, and tells a link preview which card is its own (functions/s.ts).
+ */
 function sharedURL(input: TitleInput, v: Version): string {
-  return new URL(addressOf(input, v), __SITE__.url ? `${__SITE__.url}/` : location.href).href
+  return new URL(`/s${addressOf(input, v)}`, __SITE__.url ? `${__SITE__.url}/` : location.href).href
 }
 
+/** the work's own tag, the only one ever added */
+const TAG = '#KotobaNoKatachi'
+
 /**
- * what is shared, by every way of sharing, on three lines: the name, the
- * poem's title (the words alone; a reading stays in the address), its address
+ * what is shared, by every way of sharing, on four lines: the name, the
+ * poem's title (the words alone; a reading stays in the address), the tag,
+ * its address
  */
 function sharedText(input: TitleInput, v: Version): string {
-  return `${__SITE__.title}\n「${input.text}」\n${sharedURL(input, v)}`
+  return `${__SITE__.title}\n「${input.text}」\n${TAG}\n${sharedURL(input, v)}`
 }
 
 /** the file name of the paper: the words, with what a file system will not take made plain */
@@ -139,7 +151,7 @@ const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void>; 
 function shareRow(open: boolean, refocus = false): void {
   if (open && !current) return
   if (open && current) {
-    // X is asked to write the three lines itself: a link card alone would drop the name and the title
+    // X is asked to write the four lines itself: a link card alone would drop the name, the title and the tag
     shareX.href = `https://x.com/intent/post?text=${encodeURIComponent(sharedText(current.input, current.version))}`
     shareOther.hidden = typeof nav.share !== 'function'
     say('')
@@ -367,16 +379,41 @@ save.addEventListener('click', async () => {
   downloadBlob(blob, name)
 })
 
-// 共有 opens (or closes) the row: X · その他 · コピー. Every one of them shares
-// the same three lines — the name, the title and the address of the poem on the paper.
-share.addEventListener('click', () => shareRow(shareMenu.hidden !== false))
+/**
+ * On a phone, 共有 hands the paper and the four lines to the system's share
+ * sheet at once, where it can take them: a PNG file (the same image 保存
+ * gives) with the text. The address is in the text, not given separately, so
+ * it is there whichever parts an app keeps — which is the app's own choice.
+ * Returns null where this cannot be done; then 共有 opens the row.
+ */
+function paperShare(): Promise<void> | null {
+  if (!touch || !current?.file || typeof nav.share !== 'function' || typeof nav.canShare !== 'function') return null
+  const data: ShareData = { title: __SITE__.title, text: sharedText(current.input, current.version), files: [current.file] }
+  if (!nav.canShare(data)) return null
+  return nav.share(data)
+}
+
+// 共有: on a phone, the share sheet with the paper (above); elsewhere, or where
+// the sheet will not take the paper, the row: X · その他 · コピー. Every one of
+// them shares the same four lines — the name, the title, the tag and the address.
+share.addEventListener('click', () => {
+  if (shareMenu.hidden !== false) {
+    const sent = paperShare()
+    if (sent) {
+      // closed: nothing to say; failed: the row, to share another way
+      sent.catch((e: unknown) => (e as DOMException)?.name !== 'AbortError' && shareRow(true))
+      return
+    }
+  }
+  shareRow(shareMenu.hidden !== false)
+})
 
 // X: its own post screen in a new tab (the link does the opening), the text written in
 shareX.addEventListener('click', () => {
   window.setTimeout(() => shareRow(false, true))
 })
 
-// その他: the system's share sheet. The three lines go as the text, and the
+// その他: the system's share sheet. The four lines go as the text, and the
 // address is not given again separately, so it cannot appear twice. Where the
 // system takes a file with text (iOS, Android, Safari, Edge / Chrome on
 // Windows), the paper goes with them as a PNG — the same image 保存 gives;
