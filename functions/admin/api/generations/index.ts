@@ -1,5 +1,6 @@
 // GET /admin/api/generations — a page of records, newest (or oldest) first.
 //   order=newest|oldest  visitor=<uuid>  session=<uuid>  source=manual
+//   exclude=<uuid>: every browser but this one (the viewer's own)
 //   q=<part of a title>  cursor=<created_at>:<id>  limit=1..100 (40)
 // Snapshots are not included: each is fetched on its own, when it is seen.
 import { SOURCES, UUID } from '../../../../src/archive/protocol'
@@ -29,6 +30,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   if (session) {
     if (!UUID.test(session)) return json({ error: 'session' }, 400)
     add('session_id = ?', session)
+  }
+  const exclude = q.get('exclude')
+  if (exclude) {
+    if (!UUID.test(exclude)) return json({ error: 'exclude' }, 400)
+    add('visitor_id != ?', exclude)
   }
   const source = q.get('source')
   if (source) {

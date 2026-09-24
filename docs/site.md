@@ -203,7 +203,17 @@ records will be refused.
 Views: `/admin/` (grid; newest/oldest, title search, 40 at
 a time with “more”), `?visitor=` (its visits in order, each with its pages),
 `?session=` (one visit, numbered, with the time between pages), `&id=` (one
-page large, all fields, a link to the public page).
+page large, all fields, a link to the public page; ‹ › or the arrow keys go
+to the page before and after it in the list). Above the grid, the overview
+(`/admin/api/overview`): pages and browsers for each of the last fourteen days
+(in the viewer's time zone), and the twenty words written by the most browsers
+(a word opens its search). A browser that has written on the work itself reads
+its own `kotoba:visitor` id: its records are marked “you”, and `hide mine`
+(`&hide=mine`, the API's `exclude=`) leaves them out of the grid and the
+overview. `refresh` reads the totals, the overview and the list again. The
+fourteen days read only their own rows; the words read every record each
+time the overview is loaded (the free plan reads 5,000,000 rows a day: at
+100,000 records, fifty loads a day).
 
 ### Operations
 
