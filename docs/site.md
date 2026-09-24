@@ -1,6 +1,6 @@
 # The published site
 
-Everything around the generators: how the site is built and deployed, what a
+Everything around the generator: how the site is built and deployed, what a
 shared link shows, and the anonymous generation log with its admin view. None
 of it changes what a poem is.
 
@@ -20,7 +20,7 @@ npx wrangler@4 pages deploy dist --project-name <project> --branch <production b
 - `wrangler.toml` holds the project name, the output directory and the D1
   binding. The published project's own file is not in the repository (it
   carries the database id); `wrangler.example.toml` is the template.
-- `public/_routes.json` sends only `/api/*`, `/admin` and `/admin/*` to
+- `public/_routes.json` sends only `/s`, `/api/*`, `/admin` and `/admin/*` to
   Functions; every other request is a static file, so the page keeps working
   if the Functions quota runs out.
 - The page's metadata (title, description, card image, address) comes from
@@ -41,15 +41,16 @@ npx wrangler@4 pages deploy dist --project-name <project> --branch <production b
   own address, so that an address copied from the browser, or shared by the
   browser's own share, carries the poem's card too. Reloading it runs the
   Function again.
-- A 作例 (v3, no reading) has its own card, `public/og/v3/<file>` (1200 × 630),
-  mapped by its words through `tools/examples/manifest.json`; every other
-  poem, for now, carries the site's card `/ogp.png?v=3` (the v3 page of
-  「ことばのかたち」 on the ground, drawn by `tools/examples/make.mjs`). The
-  query string changes when that card does, so link previews fetch it again.
+- A 作例 (v1, no reading) has its own card, `public/og/v1/<file>` (1200 × 630),
+  mapped by its words and version through `tools/examples/manifest.json`;
+  every other poem, for now, carries the site's card `/ogp.png?v=1` (the
+  page of 「ことばのかたち」 on the ground, drawn by `tools/examples/make.mjs`).
+  The query string changes when that card does, so link previews fetch it
+  again.
 - `/` itself stays a static file: its head is the site's own card, and it
   keeps working if the Functions quota runs out.
-- The 作例 thumbnails in `public/examples/v3/` are drawn by
-  `tools/examples/make.mjs` with the published v3 generator; `CHECK=1` draws
+- The 作例 thumbnails in `public/examples/v1/` are drawn by
+  `tools/examples/make.mjs` with the published generator; `CHECK=1` draws
   them again and compares them with `tools/examples/manifest.json`.
 - Icons: `public/favicon.svg` (こ, as a path taken from Noto Sans JP 500, so
   it needs no font), and `favicon.ico` (16 / 32 / 48 px) and
@@ -57,14 +58,9 @@ npx wrangler@4 pages deploy dist --project-name <project> --branch <production b
 
 ## The archive (anonymous generation log and /admin)
 
-> `generator_version` is `v2c`, `v1` or — since the v3 release — `v3`
-> (`src/archive/protocol.ts`). The column has no constraint, so no migration
-> was needed (the comment in `migrations/0001_archive.sql` predates v3); a
-> snapshot always keeps the name of the generator that drew it.
-
 When someone writes a poem, the page records what was written, and an admin
 sheet at `/admin/` shows the pages people wrote — newest first, per browser,
-per visit. The generators are untouched; the page does not wait for the record.
+per visit. The generator is untouched; the page does not wait for the record.
 
 ### Architecture
 
@@ -97,11 +93,11 @@ Exactly when someone newly writes a poem:
 | 保存, 共有 (X · その他 · コピー), About | no |
 | `npm run dev` (Vite) | no (nothing is sent) |
 
-Records with `source = example` come from before the 作例: the root then
-offered three words (「たとえば…」) that wrote a poem when chosen. The 作例 are
-existing poems opened at their own address, and are not recorded.
+The 作例 are existing poems opened at their own address, and are not
+recorded. The site sends only `source = manual`; the column's constraint
+(0001) also admits `example`, which nothing sends.
 
-`show(input, 'push', version, source)` in `src/main.ts` is the only call site; it calls
+`show(input, 'push', writing, 'manual')` in `src/main.ts` is the only call site that records; it calls
 `record()` after the page is on the paper. `record()` returns at once; the
 snapshot is read, hashed and sent in a later task, with a 10 s timeout, and
 nothing is sent while the browser says it is offline. Every failure is silent.
@@ -111,7 +107,7 @@ nothing is sent while the browser says it is offline. Every failure is silent.
 `generations`: `id` (server UUID), `created_at` (server clock, ms — the
 archive's time), `client_created_at` (browser clock, kept only within 7 days
 of the server's), `visitor_id`, `session_id`, `title`, `reading`, `source`,
-`generator_version` (`v1`, `v2c` or `v3`), `output_hash` (SHA-256 of the canonical
+`generator_version` (`v1`: the version that drew it, `src/archive/protocol.ts`), `output_hash` (SHA-256 of the canonical
 snapshot, computed on the server).
 
 `snapshots`: the canonical SVG, gzip (median ≈ 0.6 KB, largest seen ≈ 3 KB).
@@ -121,7 +117,7 @@ three totals and a per-day count (daily cap). `limits`
 address per day, admin password attempts per address and overall per 15
 minutes — keyed by an HMAC of the address (IPv6: its /64) and the window (made with
 `SESSION_SECRET`, cut to 16 bytes); a row is deleted once its window is over.
-`admin_throttle` (0001) is no longer used.
+`admin_throttle` (0001) is not read or written.
 
 **Not stored**: IP address, user agent, headers, referrer, location, screen,
 language, cookies, fingerprints of any kind, names, e-mail, accounts. The
@@ -169,7 +165,7 @@ records will be refused.
   `SNAPSHOT_LIMITS`: size, elements, depth, characters in one `<text>`, digits
   in one number, masks, references, no mask drawn through another). They are
   set from the pages the work draws: `npm run verify:snapshots` draws every
-  public title (and the longest titles) with every generator and fails if any
+  public title (and the longest titles) with every published version and fails if any
   is refused.
 - Every field validated: UUIDs, the title exactly as `normalizeTitle` makes
   it (≤ 16 characters, no control characters), reading in kana, known source
@@ -194,8 +190,7 @@ records will be refused.
   Without both secrets `/admin` answers 503.
 - Opens only at the site's own address (`site.config.json` `url`) or on
   localhost; a deployment's own address (`<hash>.` / `<branch>.…pages.dev`)
-  answers 404 (`server/site.ts`). Deployments made before this version still
-  open theirs: delete them in the dashboard.
+  answers 404 (`server/site.ts`).
 - Before a password is checked, an attempt is taken: 5 per connecting address
   and 30 overall in each 15 minutes (429 without checking when none is left).
   A right password gives its attempt back. Empty or overlong passwords are
@@ -205,7 +200,7 @@ records will be refused.
   onboarding with payment details, and an application covering every
   deployment subdomain.
 
-Views: `/admin/` (grid; newest/oldest, all/manual/example, title search, 40 at
+Views: `/admin/` (grid; newest/oldest, title search, 40 at
 a time with “more”), `?visitor=` (its visits in order, each with its pages),
 `?session=` (one visit, numbered, with the time between pages), `&id=` (one
 page large, all fields, a link to the public page).
@@ -221,9 +216,9 @@ npm run db:migrate:remote    # apply new migrations to production
 npm run admin:password       # set / change the admin password (hidden input), then redeploy
 ```
 
-Deploy as above; Functions and bindings go with it. A new migration
-(`migrations/0002_limits.sql`) is applied with `db:migrate:remote` before the
-deploy that needs it: the archive and the login read the new table.
+Deploy as above; Functions and bindings go with it. A new
+migration is applied with `db:migrate:remote` before the deploy that needs
+it.
 
 Deleting records: always by an explicit condition (ids), never the whole
 table; delete the snapshots with them, and adjust `visitors`, `sessions` and

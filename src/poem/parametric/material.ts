@@ -1,11 +1,9 @@
 /**
- * v4 — the material: what a page is made of, in the figure's own geometry.
+ * The material: what a page is made of, in the figure's own geometry.
  *
- * v2b–v2c keep this in separate grammars, and a page belongs to one of them:
- * silhouette (a form sampled in small marks), orbit (satellites on a ring),
- * field (dust over the page), attenuation (a trail), residue (the form is
- * what a subtraction left). Here they are one generator, and a title takes a
- * place in it.
+ * A form sampled in small marks, satellites on a ring, dust over the page, a
+ * trail, the residue a subtraction left: these are not separate kinds of page
+ * but places in one generator, and a title takes a place in it.
  *
  * Small marks stand where a density field says they may, and that field is
  * written in the figure's own coordinates (parametric/frame.ts): s along the
@@ -14,7 +12,7 @@
  *   onForm   the ink of the page's own nucleus, sampled on a lattice turned
  *            with the character itself — the form drawn in small marks
  *   onRing   the loop at a fixed distance from the reading: a circle where the
- *            page is one character (v2c's orbit), the shape of the trace where
+ *            page is one character, the shape of the trace where
  *            it is a curve, a row alongside each row of a lattice
  *   onPage   dust in the frame's own lattice: rows parallel to the reading,
  *            thinning along it and fading away from it, so a curve's dust curves
@@ -22,14 +20,13 @@
  *
  * The three are weights that sum to one: a page can be nine parts form and one
  * part dust, or half a ring and half a field. `density` says how much material
- * there is at all — at 0 the page is the figure alone, which is what a v2c page
- * with no grammar is. `fineness` runs from a few satellites to many grains of
+ * there is at all — at 0 the page is the figure alone. `fineness` runs from a few satellites to many grains of
  * dust; `spread` how far the dust strays from the reading; `cut` takes the
  * inner glyph out of the form before it is sampled (the residue); `sources`
  * mixes what the small marks are written with.
  *
  * Nothing is random: the lattices are fixed, the order in which points are
- * dropped is a fixed dither (as in v2c's field), and which character a grain
+ * dropped is a fixed dither, and which character a grain
  * carries follows the shares in order.
  */
 import { EM } from '../../glyph/font'
@@ -68,7 +65,7 @@ export interface MaterialParams {
   sources: MaterialSources
 }
 
-/** an ordered dither, as in v2c's field: the same points always go first */
+/** an ordered dither: the same points always go first */
 const BAYER = [
   [0, 8, 2, 10],
   [12, 4, 14, 6],
@@ -134,7 +131,7 @@ export interface Material {
   /** the figure's marks, with the nucleus cropped where the material took it over */
   figure: Mark[]
   grains: number
-  /** how many marks each placement asked for, before they were sifted (review) */
+  /** how many marks each placement asked for, before they were sifted */
   placed: { form: number; ring: number; dust: number }
 }
 
@@ -176,13 +173,11 @@ export function materialMarks(
   const takes = wForm * (0.4 + 0.9 * p.density)
   // A character drawn in small characters needs room: the grains have to stay
   // readable as the characters they are, so as the material takes the letterform
-  // over, the letterform grows into the page — which is what v2c's silhouette
-  // pages do. The written title stays where it is; the form is no longer
-  // written, so nothing is covered.
-  // The form takes as much of the page as the material has taken of it (v2c's
-  // silhouettes span two thirds of the page, and their grains are small
-  // characters at 3–4% of it, not dots). As it grows it also draws toward the
-  // middle, where there is room for it.
+  // over, the letterform grows into the page. The written title stays where it
+  // is; the form is no longer written, so nothing is covered.
+  // The form takes as much of the page as the material has taken of it (up to
+  // two thirds of the page, its grains small characters at 3–4% of it, not
+  // dots). As it grows it also draws toward the middle, where there is room for it.
   // the form takes as much of the page as the material has taken of it, but
   // never less than the character it stands for asked for: a page written small
   // keeps its register, and its grains are small characters at that register too
@@ -279,15 +274,15 @@ const grain = (char: string, x: number, y: number, size: number, note: string, r
  * The form: the nucleus's own ink, sampled on a lattice that is turned with the
  * character — so that on a trace whose marks follow its tangent the grains lie
  * with the letterform, not with the page. Eleven to twenty-four grains across
- * it, as in v2c's silhouette.
+ * it.
  */
 function onForm(a: Analysis, n: Mark, p: MaterialParams, w: number, order: { char: string; share: number }[]): { marks: Mark[]; cells: number } {
-  // How fine: eleven to twenty-four grains across the character, as v2c's
-  // silhouette. The grains are small characters, not dots, so the lattice does
-  // not close up to catch a thin letterform: a character whose ink is met at
-  // too few places is simply not drawn as a form (see `stands`).
+  // How fine: eleven to twenty-four grains across the character. The grains are
+  // small characters, not dots, so the lattice does not close up to catch a thin
+  // letterform: a character whose ink is met at too few places is simply not
+  // drawn as a form (see `stands`).
   const step = n.size / (11 + 13 * p.fineness)
-  // a grain is a small character, never a dot: v2c writes them at 3–4% of the page
+  // a grain is a small character, never a dot (3–4% of the page)
   const size = Math.max(step * (0.62 + 0.25 * (1 - p.fineness)), 0.014 * PAGE)
   // The residue takes the inner glyph out of the form. Where the form read
   // inside the character is as large as the character itself there is nothing
@@ -339,7 +334,7 @@ function inkCells(a: Analysis, n: Mark, step: number): number {
 
 /**
  * The ring: the loop at a fixed distance from the reading itself. Where the page
- * is a single character that loop is a circle around it — v2c's orbit; where the
+ * is a single character that loop is a circle around it; where the
  * reading is a curve the satellites follow it; where it is a lattice they run
  * alongside each row. They are walked, not sampled, so they stand evenly and
  * large enough to be read.
@@ -347,8 +342,7 @@ function inkCells(a: Analysis, n: Mark, step: number): number {
 function onRing(frame: Frame, n: Mark, p: MaterialParams, w: number, chars: Chars): Mark[] {
   // A satellite is a small character beside a written one, so its size follows
   // the page's own writing: a page written large carries larger material, a page
-  // written small carries finer. (Before this the material had one register for
-  // every page, and its marks were all the same size.)
+  // written small carries finer.
   const size = Math.min(0.09 * PAGE, Math.max(0.02 * PAGE, n.size * (0.2 + 0.16 * (1 - p.fineness))))
   const radius = Math.max(p.radius * PAGE, n.size * 0.7)
   const char = chars.chars.repeat ?? chars.chars.rest ?? chars.chars.inner ?? n.char
@@ -358,7 +352,7 @@ function onRing(frame: Frame, n: Mark, p: MaterialParams, w: number, chars: Char
     let length = 0
     for (let i = 0; i < loop.length; i++) length += Math.hypot(loop[(i + 1) % loop.length].x - loop[i].x, loop[(i + 1) % loop.length].y - loop[i].y)
     // as many as the loop holds, but satellites are counted marks, not a cloud:
-    // v2c's orbit carries a dozen or two
+    // a dozen or two
     const room = Math.min(48, Math.floor(length / (size * 1.35)))
     const count = Math.max(5, Math.round(room * (0.35 + 0.65 * p.density) * Math.min(1, w)))
     for (const q of around(loop, count)) if (inside(q.p)) out.push(grain(char, q.p.x, q.p.y, size, 'v4 material ring', 'satellite'))
@@ -369,8 +363,7 @@ function onRing(frame: Frame, n: Mark, p: MaterialParams, w: number, chars: Char
 /**
  * The dust: a lattice in the frame's own coordinates — rows parallel to the
  * reading, at an even step along it and away from it. It thins along the
- * reading (dense where the title begins, open where it ends, as v2c's field
- * does), fades away from it within `spread`, and keeps off what is written.
+ * reading (dense where the title begins, open where it ends), fades away from it within `spread`, and keeps off what is written.
  *
  * A point further from the reading than the frame says it is belongs to another
  * part of the curve — where a trace turns back on itself the bands would

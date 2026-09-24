@@ -97,22 +97,6 @@ const INVERSE: Record<LexRelation, LexRelation> = {
   whole: 'part',
 }
 
-/** the name a relation is given where it is recorded (study only) */
-export const RELATION_TITLE: Record<LexRelation, string> = {
-  'made-of': '素材',
-  part: '部分',
-  unit: '単位',
-  source: '出どころ',
-  becomes: '次の姿',
-  was: '前の姿',
-  organ: '器官',
-  with: '共にある',
-  yields: '生むもの',
-  whole: '全体',
-  use: '用いる動き',
-  opposite: '対',
-}
-
 /** the most remote relation that may give material */
 export const MAX_RANK = 2
 
@@ -154,67 +138,7 @@ export function seedLexicon(): Lexicon {
   return (seed ??= parseLexicon(SEED_LEXICON, SEED_LEXICON_VERSION))
 }
 
-export function categoriesOf(lex: Lexicon, char: string): Category[] {
-  return lex.categories.filter((c) => c.members.has(char))
-}
-
-export interface SemanticItem {
-  char: string
-  /** the title's character it is related to */
-  head: string
-  /** the grapheme of that character */
-  from: number
-  relation: LexRelation
-  rank: number
-  category: string | null
-  /** the resource and the statement it was read from */
-  source: string
-}
-
-/**
- * At most `max` characters related to the heads, nearest relations first and
- * the heads in the order given (the page's hierarchy): every head's nearest
- * before any head's next. Never a character the title writes, never one
- * already in `taken`.
- */
-export function relatedTo(
-  heads: { char: string; grapheme: number }[],
-  written: Set<string>,
-  taken: Set<string>,
-  max = 3,
-  lex: Lexicon = seedLexicon(),
-): SemanticItem[] {
-  const out: SemanticItem[] = []
-  const seen = new Set<string>()
-  const lists = heads.filter((h, i) => heads.findIndex((o) => o.char === h.char) === i).map((h) => ({ h, links: lex.links.get(h.char) ?? [] }))
-  const usable = (l: LexLink) => !written.has(l.char) && !taken.has(l.char) && !seen.has(l.char)
-  for (let rank = 0; rank <= MAX_RANK && out.length < max; rank++) {
-    // one character per head per pass, so that no single head takes all
-    for (let more = true; more && out.length < max; ) {
-      more = false
-      for (const { h, links } of lists) {
-        if (out.length >= max) break
-        const l = links.find((x) => x.rank === rank && usable(x))
-        if (!l) continue
-        more = true
-        seen.add(l.char)
-        const cat = categoriesOf(lex, l.char)[0] ?? categoriesOf(lex, h.char)[0]
-        out.push({
-          char: l.char,
-          head: h.char,
-          from: h.grapheme,
-          relation: l.relation,
-          rank: l.rank,
-          category: cat?.title ?? null,
-          source: `${lex.version}: ${h.char} —${l.relation}→ ${l.char}`,
-        })
-      }
-    }
-  }
-  return out
-}
-
-/** the vowels a reading is reduced to (grammar/material.ts, soundOf) */
+/** the vowels a reading is reduced to */
 export const VOWEL_KANA = Array.from('あいうえおん')
 
 /**

@@ -5,9 +5,9 @@
  *   /                                   blank paper and the line
  *   /?title=見えない                     the poem first; 別のことばで試す opens the line
  *   /?title=子供の城&reading=こどものしろ  with its reading
- *   &v=3       the generator new words are written in (poem/generators.ts)
- *   &v=1       the generator as it was frozen at v1; an address with no
- *              version is v2c, as every poem shared before v3 was
+ *   &v=1       the generator that drew it (poem/generators.ts); every address
+ *              the page writes names it, and one without it is drawn by the
+ *              current generator
  *   &debug=1   why the page is as it is, in the console (never on the page)
  *   /s?title=… the address the share buttons give: the same poem, with a head
  *              written for it on the server (functions/s.ts), so that a link
@@ -27,7 +27,7 @@ import './glyph/font-face'
 import type { Source } from './archive/protocol'
 import { record } from './archive/record'
 import { uncovered } from './glyph/coverage'
-import { analyze, OPERATIONS, SPACES } from './poem/compose'
+import { analyze, OPERATIONS } from './poem/compose'
 import { archiveName, CURRENT, versionOf, write, type Version } from './poem/generators'
 import type { Analysis, Composition } from './poem/types'
 import { downloadBlob, pngOf, renderCanvas } from './render/png'
@@ -54,11 +54,11 @@ const aboutOpen = document.getElementById('about-open') as HTMLButtonElement
 const params = new URLSearchParams(location.search)
 const debug = params.has('debug')
 /**
- * The generator new words are written in: v1 on the frozen first site (?v=1),
- * otherwise the one published now. A poem's own address says which generator
- * drew it, and that one draws it again (poem/generators.ts).
+ * The generator new words are written in: the one published now. A poem's own
+ * address says which generator drew it, and that one draws it again
+ * (poem/generators.ts).
  */
-const writing: Version = params.get('v') === '1' ? 1 : CURRENT
+const writing: Version = CURRENT
 
 let current: {
   input: TitleInput
@@ -108,14 +108,14 @@ function read(text: string, reading: string): TitleInput | string {
 
 /**
  * The address of a poem: its words, its reading, and the generator that drew
- * it — nothing that could vary it. v2c keeps the address it always had (no
- * version), so that every poem shared before v3 opens as it was shared.
+ * it — nothing that could vary it. The version is always written, so that the
+ * address keeps its page when another version is published.
  */
 function addressOf(input: TitleInput | null, v: Version = writing): string {
-  if (!input) return writing === 1 ? '?v=1' : location.pathname
+  if (!input) return location.pathname
   const q = new URLSearchParams({ title: input.text })
   if (input.reading) q.set('reading', input.reading)
-  if (v !== 2) q.set('v', String(v))
+  q.set('v', String(v))
   return `?${q}`
 }
 
@@ -259,33 +259,18 @@ async function show(input: TitleInput, history: 'push' | 'replace' | 'none', ver
 
 /** Why the page is as it is — for study, in the console, only with ?debug. */
 function report(a: Analysis, c: Composition): void {
-  if (c.parametric) {
-    console.groupCollapsed(`題「${a.input.text}」 — v3`)
-    if (c.parametric.meaning) console.log('meaning', c.parametric.meaning.axes, 'read', c.parametric.meaning.read)
-    c.parametric.grounds.forEach((g) => console.log('根拠:', g))
-    console.groupEnd()
-    return
-  }
   const ops = [c.primary, ...c.modifiers]
-  console.groupCollapsed(`題「${a.input.text}」${a.input.reading ? `（${a.input.reading}）` : ''} — ${ops.map((p) => p.op).join(' + ')} / ${c.spatial.id}`)
+  console.groupCollapsed(`題「${a.input.text}」${a.input.reading ? `（${a.input.reading}）` : ''} — ${ops.map((p) => p.op).join(' + ')}`)
   console.log('tokens', a.tokens.map((t) => `${t.surface}/${t.pos}${t.reading ? `(${t.reading})` : ''}`).join(' '))
   console.log('morae', a.morae.map((m) => m.text).join('・'))
   for (const p of ops) {
     const op = OPERATIONS.find((o) => o.id === p.op)!
     console.group(`${op.title}${p === c.primary ? '（主）' : '（修飾）'}`)
     p.evidence.forEach((e) => console.log('根拠:', e))
-    op.rules.forEach((r) => console.log('規則:', r))
     console.groupEnd()
   }
-  const space = SPACES.find((s) => s.id === c.spatial.id)!
-  console.group(`${space.title}（${c.spatial.mode}）`)
-  c.spatial.grounds.forEach((g) => console.log('根拠:', g))
-  space.rules.forEach((r) => console.log('規則:', r))
-  console.groupEnd()
-  console.group(`字の振る舞い: ${c.grammar.id}${c.grammar.variant ? ` / ${c.grammar.variant}` : ''}`)
-  c.grammar.grounds.forEach((g) => console.log('根拠:', g))
-  Object.entries(c.grammar.derived).forEach(([k, n]) => console.log('派生:', k, n))
-  console.groupEnd()
+  if (c.parametric.meaning) console.log('meaning', c.parametric.meaning.axes, 'read', c.parametric.meaning.read)
+  c.parametric.grounds.forEach((g) => console.log('根拠:', g))
   console.groupEnd()
 }
 

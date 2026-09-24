@@ -25,9 +25,6 @@
 - `public/semantic/axes-1/` — chiVe v1.3 mc90（Copyright (c) 2024 Works
   Applications Co., Ltd.）から導いた表。Apache License 2.0（`LICENSE-chiVe.txt`、
   `NOTICE.txt`）
-- `src/language/semantic/data/` — `globis-university/aozorabunko-clean`
-  （CC BY 4.0、青空文庫のパブリックドメインの作品）と chiVe（Apache License
-  2.0）から導いた統計（`NOTICE.md`）
 
 ---
 

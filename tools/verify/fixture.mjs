@@ -1,7 +1,7 @@
-// The public regression fixture: every published generator (v1, v2c, v3) drawn
-// for every title of the public title sets (src/study/*.ts), each page reduced
-// to the SHA-256 of its Draft — the generator's whole output, before rendering
-// — and, for v3, the invariant audit (src/poem/form/invariants.ts).
+// The public regression fixture: every published generator version drawn for
+// every title of the public title sets (src/study/*.ts), each page reduced to
+// the SHA-256 of its Draft — the generator's whole output, before rendering —
+// and the invariant audit (src/poem/invariants.ts).
 //
 // Run through tools/verify/run.mjs (npm run verify), or by hand with a dev
 // server:  node tools/verify/cdp.mjs <base-url> <profile-dir> tools/verify/fixture.mjs
@@ -13,11 +13,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 
 const EXPECTED = 'tools/verify/expected.json'
-const VERSIONS = [
-  { id: 'v1', version: 1 },
-  { id: 'v2c', version: 2 },
-  { id: 'v3', version: 3 },
-]
+const VERSIONS = [{ id: 'v1', version: 1 }]
 
 export default async function ({ evaluate, load }) {
   await load('/index.html', 1280, 800)
@@ -25,7 +21,7 @@ export default async function ({ evaluate, load }) {
     const C = await import('/src/poem/compose.ts')
     const N = await import('/src/title.ts')
     const G = await import('/src/poem/generators.ts')
-    const I = await import('/src/poem/form/invariants.ts')
+    const I = await import('/src/poem/invariants.ts')
     const T = await import('/src/study/titles.ts')
     const H = await import('/src/study/holdout.ts')
     const P = await import('/src/study/probes.ts')
@@ -54,15 +50,13 @@ export default async function ({ evaluate, load }) {
               marks: marks.length,
               sum: [r3(marks.reduce((s, k) => s + k.x, 0)), r3(marks.reduce((s, k) => s + k.y, 0)), r3(marks.reduce((s, k) => s + k.size, 0))],
             }
-            if (version === 3) {
-              const p = c.parametric
-              out.invariants = I.soundness(a, marks, {
-                repetition: c.primary.op === 'proliferation',
-                absent: c.absent,
-                alongCurve: (p.params.closure ?? 0) >= 0.35 || (p.params.rows ?? 1) > 1.05,
-                left: p.withdrawn,
-              })
-            }
+            const p = c.parametric
+            out.invariants = I.soundness(a, marks, {
+              repetition: c.primary.op === 'proliferation',
+              absent: c.absent,
+              alongCurve: (p.params.closure ?? 0) >= 0.35 || (p.params.rows ?? 1) > 1.05,
+              left: p.withdrawn,
+            })
             page[id] = out
           } catch (e) {
             errors.push(set + ' ' + t.text + ' ' + id + ': ' + String(e))
@@ -83,8 +77,8 @@ export default async function ({ evaluate, load }) {
   if (process.env.MODE === 'write') {
     const doc = {
       about:
-        'Expected output of the published generators for the public title sets. sha256 is the SHA-256 of JSON.stringify(draft.marks). ' +
-        'invariants: the v3 audit, every count 0. Produced by tools/verify/fixture.mjs (MODE=write).',
+        'Expected output of the published generator for the public title sets. sha256 is the SHA-256 of JSON.stringify(draft.marks). ' +
+        'invariants: the audit, every count 0. Produced by tools/verify/fixture.mjs (MODE=write).',
       produced: { browser: drawn.browser, fonts, table: table.id, words: table.words },
       versions: VERSIONS.map((v) => v.id),
       pages: drawn.pages,
@@ -104,8 +98,10 @@ export default async function ({ evaluate, load }) {
       if (want?.[id]?.sha256 === page[id].sha256) same[id]++
       else differ.push({ text: page.text, reading: page.reading, version: id, expected: want?.[id] ? { marks: want[id].marks, sum: want[id].sum } : null, drawn: { marks: page[id].marks, sum: page[id].sum } })
     }
-    const inv = page.v3.invariants
-    if (Object.values(inv).some((n) => n > 0)) failing.push({ text: page.text, invariants: inv })
+    for (const { id } of VERSIONS) {
+      const inv = page[id].invariants
+      if (Object.values(inv).some((n) => n > 0)) failing.push({ text: page.text, version: id, invariants: inv })
+    }
   }
   const missing = expected.pages.length - drawn.pages.length
   const ok = !differ.length && !failing.length && missing === 0

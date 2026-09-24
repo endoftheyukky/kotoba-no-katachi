@@ -1,7 +1,7 @@
 /**
  * 増殖・反復 — PROLIFERATION / REPETITION
  * What already repeats in the title is what the poem repeats.
- * (How the repetition occupies the page is the spatial composition's matter.)
+ * (How the repetition occupies the page is the page's matter: poem/parametric.)
  */
 import { arrangement } from '../../glyph/parts'
 import { toHiragana } from '../../language/kana'

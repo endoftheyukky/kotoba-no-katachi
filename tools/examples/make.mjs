@@ -1,10 +1,10 @@
-// The nine 作例 on the blank page: each drawn by the published v3 generator
-// through the site's own path (analyze → poem/generators.write(…, 3) →
+// The nine 作例 on the blank page: each drawn by the published generator
+// through the site's own path (analyze → poem/generators.write(…, 1) →
 // render/png.renderCanvas, the renderer 保存 uses), written to
-// public/examples/v3/, with a manifest of what each one is. The same paper,
+// public/examples/v1/, with a manifest of what each one is. The same paper,
 // larger, on the site's ground, is the link image of that poem's address
-// (public/og/v3/, 1200 × 630; see docs/site.md). The site's own link image
-// (public/ogp.png) is drawn here too: the v3 page of the work's own name.
+// (public/og/v1/, 1200 × 630; see docs/site.md). The site's own link image
+// (public/ogp.png) is drawn here too: the page of the work's own name.
 //
 // The thumbnails are the poems, not pictures of them: `CHECK=1` draws them
 // again and compares the drafts and the images with the manifest, so that a
@@ -28,16 +28,16 @@ export const EXAMPLES = [
   { text: '記憶', file: 'kioku' },
 ]
 const PX = 360
-const OUT = 'public/examples/v3'
+const OUT = 'public/examples/v1'
 /**
  * the site's own link image (public/ogp.png): the work reading its own name —
- * the v3 page of 「ことばのかたち」 (the same page /?title=ことばのかたち&v=3 draws),
+ * the page of 「ことばのかたち」 (the same page /?title=ことばのかたち&v=1 draws),
  * one paper in the middle of the ground, as the site shows a poem. Nothing else:
  * the card's own title already says the name the paper is made of.
  */
 const SITE = { file: 'public/ogp.png', w: 1200, h: 630, papers: [{ text: 'ことばのかたち', s: 570 }] }
 /** the link image: the paper, square, on the ground, with the sheet's own faint shadow — nothing added */
-const OG = { dir: 'public/og/v3', w: 1200, h: 630, paper: 540 }
+const OG = { dir: 'public/og/v1', w: 1200, h: 630, paper: 540 }
 const MANIFEST = 'tools/examples/manifest.json'
 
 export default async function ({ evaluate, load }) {
@@ -49,7 +49,7 @@ export default async function ({ evaluate, load }) {
     for (const e of ${JSON.stringify(EXAMPLES)}) {
       const input = N.normalizeTitle({ text: e.text })
       const a = await C.analyze(input)
-      const c = await G.write(a, 3)
+      const c = await G.write(a, 1)
       const canvas = R.renderCanvas(c.draft, a.glyphs, ${PX})
       const og = document.createElement('canvas')
       og.width = ${OG.w}; og.height = ${OG.h}
@@ -67,7 +67,7 @@ export default async function ({ evaluate, load }) {
     g.fillStyle = '#e8e6e1'; g.fillRect(0, 0, site.width, site.height)
     for (const p of ${JSON.stringify(SITE.papers)}) {
       const a = await C.analyze(N.normalizeTitle({ text: p.text }))
-      const c = await G.write(a, 3)
+      const c = await G.write(a, 1)
       const s = p.s, x = p.x ?? (site.width - s) / 2, y = p.y ?? (site.height - s) / 2
       g.save(); g.shadowColor = 'rgba(40, 36, 28, 0.07)'; g.shadowBlur = 24; g.shadowOffsetY = 6
       g.fillStyle = '#fff'; g.fillRect(x, y, s, s); g.restore()
@@ -80,7 +80,7 @@ export default async function ({ evaluate, load }) {
   const rows = made.list.map((m) => {
     const png = Buffer.from(m.png.split(',')[1], 'base64')
     const og = Buffer.from(m.og.split(',')[1], 'base64')
-    return { text: m.text, v: 3, file: `${m.file}.png`, px: PX, draft: sha(m.draft), png: sha(png), bytes: png.length, og: sha(og), data: png, ogData: og }
+    return { text: m.text, v: 1, file: `${m.file}.png`, px: PX, draft: sha(m.draft), png: sha(png), bytes: png.length, og: sha(og), data: png, ogData: og }
   })
   if (process.env.CHECK) {
     const known = JSON.parse(readFileSync(MANIFEST, 'utf8'))

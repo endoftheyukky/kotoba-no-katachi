@@ -65,9 +65,9 @@ export interface Acts {
   cut: { unit: number; axis: 'x' | 'y'; at: number; apart: number } | null
   /** how strong the leading act is, before competing (the material competes with it) */
   lead: number
-  /** which act leads the page, if any does (review only) */
+  /** which act leads the page, if any does */
   leader: string | null
-  /** what was read, and what it did (review only) */
+  /** what was read, and what it did */
   grounds: string[]
 }
 

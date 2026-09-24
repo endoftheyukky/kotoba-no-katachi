@@ -7,7 +7,7 @@
  * outside service, nothing computed per request) and kept for the visit.
  *
  * The table is part of what a published generator is: `axes-1` belongs to the
- * generator published as v=3 and is never changed. If it cannot be read, the
+ * generator published as v=1 and is never changed. If it cannot be read, the
  * page is not written — a page without its meaning would be a different poem
  * at the same address.
  */

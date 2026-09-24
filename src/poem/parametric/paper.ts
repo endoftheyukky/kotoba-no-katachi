@@ -1,20 +1,18 @@
 /**
- * v4 — the page itself, as parameters.
+ * The page itself, as parameters.
  *
- * Until now the generator centred every figure and fitted it to 86 % of the
- * page, and that fixed relation cost the series its widest gestures: v2c writes
- * a word small in a corner, a character larger than the page and cut by its
- * edge, a page of dust with one character in it. Those were not separate
- * compositions in v2c either — they are its scale regimes (poem/scale.ts):
+ * A figure is not always centred and fitted to the page: a word may stand small
+ * in a corner, a character larger than the page and cut by its edge, a page of
+ * dust with one character in it. The sizes a character may take:
  *
- *   micro   0.035–0.07 of the page   a title whose relations are weak: small, aside
- *   normal  0.1–0.3                  the ordinary page: relations between equals
- *   macro   0.55–1.1                 only what an operation produced — a residue,
- *                                    the parts of a glyph. Above 1 the page cuts it.
- *   mixed   macro against micro      the part large, the title small
+ *   0.035–0.07 of the page   a title whose relations are weak: small, aside
+ *   0.1–0.3                  the ordinary page: relations between equals
+ *   0.55–1.1                 only what an operation produced — a residue, the
+ *                            parts of a glyph. Above 1 the page cuts it.
+ *   the two together         the part large, the title small
  *
- * Here the same readings are four continuous numbers, and every one of those
- * states is a place in them rather than a kind of page:
+ * These are four continuous numbers, and every one of those states is a place
+ * in them rather than a kind of page:
  *
  *   occupancy  how much of the page the figure spans. 0.2 is a word in a
  *              corner; 1 fills it; above 1 the page cuts the figure.
@@ -24,15 +22,15 @@
  *   hierarchy  how much larger the figure's subject is than the rest of it.
  *
  * What keeps this honest is the invariant, not a margin: a character may be cut
- * by the page but never more than half of it (poem/form/invariants.ts).
+ * by the page but never more than half of it (poem/invariants.ts).
  */
 import { PAGE } from '../../render/stage'
 import type { Vec } from '../types'
 
 export interface PaperParams {
   /**
-   * The size of one character as a share of the page — v2c's own scale
-   * (poem/scale.ts): 0.035–0.07 micro, 0.1–0.3 normal, 0.55–1.1 macro. How much
+   * The size of one character as a share of the page: 0.035–0.07 small and
+   * aside, 0.1–0.3 ordinary, 0.55–1.1 what an operation produced. How much
    * of the page the figure takes follows from it and from how long the title
    * is; above a whole page, the edge cuts the character.
    */
@@ -67,7 +65,7 @@ export function fit(p: PaperParams, box: Box, nearest: number): { k: number; cen
   // `nearest` carries a character of 0.86 of it)
   const want = (p.scale * PAGE) / (0.86 * Math.max(1e-6, nearest))
   // The page holds what it holds: a figure may be larger than the page — a
-  // character cut by its edge is v2c's macro — but the places its characters
+  // character cut by its edge — but the places its characters
   // stand must all be on it.
   const reach = Math.max(box.x1 - box.x0, box.y1 - box.y0)
   const most = reach > 0 ? ((1 - 2 * INSET) * PAGE) / reach : Infinity

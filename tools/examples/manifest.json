@@ -1,7 +1,7 @@
 [
  {
   "text": "森",
-  "v": 3,
+  "v": 1,
   "file": "mori.png",
   "px": 360,
   "draft": "ada495919cc2e22f8121b1d25a96482862ce70a605b0556935adec90e451ae87",
@@ -11,7 +11,7 @@
  },
  {
   "text": "孤独",
-  "v": 3,
+  "v": 1,
   "file": "kodoku.png",
   "px": 360,
   "draft": "b24191de8f81c9418912da321c49ca1bdbe7f7356b711fc3625a956aab142e27",
@@ -21,7 +21,7 @@
  },
  {
   "text": "雨の中の雨",
-  "v": 3,
+  "v": 1,
   "file": "ame-no-naka-no-ame.png",
   "px": 360,
   "draft": "e009699bd68fdf900c1c53655953e81730b0c483a48dd3bccf53e3101ee0d896",
@@ -31,7 +31,7 @@
  },
  {
   "text": "余白",
-  "v": 3,
+  "v": 1,
   "file": "yohaku.png",
   "px": 360,
   "draft": "82208cee0b1339d809d2648af65dd38037daa31065744e0206328aa463e1f510",
@@ -41,7 +41,7 @@
  },
  {
   "text": "見えない",
-  "v": 3,
+  "v": 1,
   "file": "mienai.png",
   "px": 360,
   "draft": "f95a2fdc3ae34157ea6991a25be0bfce6d5237938f4ec89b37bb6e1d52106e62",
@@ -51,7 +51,7 @@
  },
  {
   "text": "群衆",
-  "v": 3,
+  "v": 1,
   "file": "gunshu.png",
   "px": 360,
   "draft": "dff50d18eff2f83a3f8fdfea8cc2e83195e7bc9f6a20d889428e4cd0b421d5c3",
@@ -61,7 +61,7 @@
  },
  {
   "text": "ささやき",
-  "v": 3,
+  "v": 1,
   "file": "sasayaki.png",
   "px": 360,
   "draft": "622e79b660edacfe170fa39df3fe93e40bff952551a1b40a890c951b1996cc2f",
@@ -71,7 +71,7 @@
  },
  {
   "text": "境界",
-  "v": 3,
+  "v": 1,
   "file": "kyokai.png",
   "px": 360,
   "draft": "cca7ab6f7c451ebc868a7a4a97caa074ec1a4187804d0048e2023699f14acdf7",
@@ -81,7 +81,7 @@
  },
  {
   "text": "記憶",
-  "v": 3,
+  "v": 1,
   "file": "kioku.png",
   "px": 360,
   "draft": "0fa8292ad20b52c53dd9a8356cc8400702a2bda21126e2f96e38e91691dad630",

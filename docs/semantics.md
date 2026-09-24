@@ -1,9 +1,9 @@
 # Semantics: the `axes-1` table
 
-v3 reads a title's meaning as nine numbers. They come from a fixed table,
+The generator reads a title's meaning as nine numbers. They come from a fixed table,
 distilled once from a Japanese word-vector file and shipped with the site. No
 model runs when a page is made, nothing is computed per request, and the
-table never changes once published: `axes-1` belongs to v3.
+table never changes once published: `axes-1` belongs to v1.
 
 Meaning is never drawn. It sets strengths — of the acts, of how many times the
 title is written, of the page's scale and position, of the material — and
@@ -151,7 +151,7 @@ version.
    (`/semantic/axes-1/NN.tsv`) and kept in memory for the visit; a failed fetch
    is not kept, so the next poem asks again.
 2. **If any shard cannot be read, `readMeaning` throws, and no page is
-   written.** A v3 page without its meaning would be a different poem at the
+   written.** A page without its meaning would be a different poem at the
    same address, so there is no fallback.
 3. The fetched shards are parsed together (`parseTable`) and read by
    `meaningOf(title, table)` (`axes.ts`).
@@ -207,16 +207,3 @@ Of the eighteen poles, `lasting`, `near`, `light`, `thing` and `idea` are
 computed but read by no rule. The abstraction axis therefore reaches the page
 only through `max|axis|` in `potential`; its main role is in the build, where
 the other eight axes are made orthogonal to it.
-
-## 5. Other tables in the repository (not used by any published version)
-
-`src/language/semantic/data/aozora-v0.json` and `chive-v0.json` are
-nearest-neighbour tables for single kanji, from an earlier experiment (v2d:
-related characters added to a page; not adopted). They are loaded only by
-`loadNeighbours()`, which nothing in the site calls, so `analyze()` and the
-v2 semantic grammar never see them. They are kept because the code still
-imports them, with their provenance: `tools/semantic/aozora_vec.py`
-(character co-occurrence PPMI + SVD over the Aozora Bunko corpus
-`globis-university/aozorabunko-clean`, CC BY 4.0), `chive_vec.py` (single-kanji
-vectors of chiVe), `distill.py` (24 nearest among the 3,000 most frequent
-kanji); see `src/language/semantic/data/NOTICE.md`.

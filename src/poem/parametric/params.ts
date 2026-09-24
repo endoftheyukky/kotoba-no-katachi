@@ -1,8 +1,8 @@
 /**
- * v4 — where a title stands in the trace's parameter space.
+ * Where a title stands in the trace's parameter space.
  *
  * Each parameter is read from the title, and each says which property it comes
- * from. The families of v1–v2c are places in this space, not separate kinds:
+ * from. Familiar kinds of page are places in this space, not separate kinds:
  * a single word with nothing repeated stands at closure 0 (a row); a phrase
  * with word boundaries at a small closure with all its turning at the breaks
  * (a path); a title that repeats itself entirely closes into a ring (an orbit);
@@ -13,7 +13,7 @@ import { RELATION_THRESHOLD } from '../../glyph/relation'
 import { structuralParts } from '../operations/decomposition'
 import type { Rng } from '../../core/random'
 import type { Analysis, Material, Unit } from '../types'
-import { allUnits } from '../spatial/common'
+import { allUnits } from '../units'
 import type { MaterialParams, MaterialSources } from './material'
 import type { Motifs } from './motif'
 import { drawn } from './motif'
@@ -68,7 +68,6 @@ export function traceParams(
   m: Material,
   rng: Rng,
   motifs?: Motifs,
-  rhyme?: number,
   meaning?: Meaning | null,
 ): TraceGrounds {
   // what the title means, as poles 0-1 (language/semantic/axes.ts); every
@@ -79,19 +78,18 @@ export function traceParams(
   // title's own readings asked for to the chord's value, as far as the title
   // has that structure — so pages that share a structure come near each other
   // without becoming the same page.
-  const lean = (key: string, value: number) => drawn(key, value, motifs, rhyme)
+  const lean = (key: string, value: number) => drawn(key, value, motifs)
   const units = allUnits(m)
   const grounds: string[] = []
   const chars = a.graphemes.filter((g) => g.char.trim())
   const n = Math.max(1, chars.length)
 
-  // What the reading yields, and what an operation has produced: v2c decides
-  // its scale by these two (poem/scale.ts), and so does the page here.
-  // What the reading yields. v2c reads it from the writing alone, so a word whose
-  // writing does nothing (孤独, 記憶) was read as weak and written small aside —
-  // every such word the same speck. A word whose meaning leans clearly on some
-  // axis is not weak: its meaning is something to read, and it lifts the
-  // potential as far as it leans.
+  // What the reading yields, and what an operation has produced: the page is
+  // sized by these two. Read from the writing alone, a word whose writing does
+  // nothing (孤独, 記憶) would be weak and written small aside — every such
+  // word the same speck. A word whose meaning leans clearly on some axis is not
+  // weak: its meaning is something to read, and it lifts the potential as far
+  // as it leans.
   const leaning = meaning ? meaning.coverage * Math.max(...Object.values(meaning.axes).map((v) => Math.abs(v))) : 0
   const potential = Math.max(clip(m.primary.poeticPotential ?? 0.5), clip(0.3 + 0.45 * leaning))
   const focus = m.primary.focus
@@ -203,7 +201,7 @@ export function traceParams(
     }
   }
 
-  // plastic, as in v1: which way the curve turns
+  // plastic: which way the curve turns
   const side: 1 | -1 = rng.next() < 0.5 ? 1 : -1
 
   // --- how many times the title is written ---------------------------------------
@@ -245,13 +243,11 @@ export function traceParams(
 /**
  * Where the figure stands on the page and how much of it it takes.
  *
- * v2c decides this once per poem as a scale regime (poem/scale.ts): a title
- * whose relations are weak is written small and aside (micro, 3.5–7 % of the
+ * A title whose relations are weak is written small and aside (3.5–7 % of the
  * page); what an operation produced — a residue, the parts of a glyph — may be
- * written larger than the page and cut by it (macro, 55–110 %); everything else
- * stands between (normal, 10–30 %). The same two readings are taken here, but
- * as numbers rather than as four regimes, so that a title can stand anywhere
- * between them:
+ * written larger than the page and cut by it (55–110 %); everything else stands
+ * between (10–30 %). These are not regimes but numbers, so that a title can
+ * stand anywhere between them:
  *
  *   how much the reading yields   → how large the writing is, and so how much
  *                                   of the page it takes
@@ -275,12 +271,12 @@ function paperParams(
   // an enclosed word presses on its page. A share of what the readings asked.
   const press = clip(1 - 0.15 * sem.still - 0.12 * sem.alone - 0.1 * sem.fading - 0.12 * sem.open + 0.4 * sem.heavy + 0.45 * sem.closed + 0.25 * sem.stirred, 0.72, 1.5)
   // the press acts on the ordinary register only; what an operation produced
-  // (v2c's macro — a residue, the parts of a glyph) is as large as it is
-  // v2c's macro is what an operation produced, and only that: in a title of one
-  // character the character is the result, so the page writes it large; in a
-  // longer title the result is one character among others, and it is that one
+  // (a residue, the parts of a glyph) is as large as it is.
+  // Only what an operation produced is written beyond the page: in a title of
+  // one character the character is the result, so the page writes it large; in
+  // a longer title the result is one character among others, and it is that one
   // that stands large (hierarchy, below) while the rest keep their size —
-  // v2c's mixed regime, "the part large, the title small".
+  // "the part large, the title small".
   const written = units.filter((u) => !u.absent && u.char.trim()).length
   const result = written <= 1 ? 0.9 * operation : 0.25 * operation
   const scale = clip(lean('scale', clip((0.04 + 0.22 * potential) * press + result, 0.035, 1.15)), 0.035, 1.15)
@@ -325,8 +321,8 @@ export interface MaterialGrounds {
  */
 /**
  * A form read inside the character by the parts it falls into: 森's three 木,
- * 品's three 口. v2c's silhouette takes its material this way, and without it a
- * character that is made of a smaller character offers the poem nothing.
+ * 品's three 口. Without it a character that is made of a smaller character
+ * offers the poem nothing.
  * The strength is how much of the character those parts are, and how well they
  * read.
  */
@@ -366,10 +362,9 @@ export function materialParams(
   figureNucleus: string | null,
   nucleusGrapheme?: number,
   motifs?: Motifs,
-  rhyme?: number,
   meaning?: Meaning | null,
 ): MaterialGrounds {
-  const lean = (key: string, value: number) => drawn(key, value, motifs, rhyme)
+  const lean = (key: string, value: number) => drawn(key, value, motifs)
   // RULE (meaning): a word of many offers its own characters as small copies —
   // a multitude written small; a word of fading or stirring offers what is left
   // of it, scattered. Never another word: the copies are the title's own.
@@ -388,7 +383,7 @@ export function materialParams(
   // a form read inside the character that the title itself writes (中 in 雨),
   // or that the character decomposes into (ぜ = せ + ゛) — not a component the
   // computer's inventory happens to find in its ink, which nearly every kanji has
-  // v2c's own threshold: below it a relation is not read at all (in a long
+  // the threshold below which a relation is not read at all (in a long
   // title of many kanji some weak containment can always be found)
   const relation =
     a.glyphRelations
@@ -415,10 +410,10 @@ export function materialParams(
   // with no evidence of its own is never opened by a lean alone: the pressure
   // is a share of what is already there.
   // the white a character closes in is material only where it is what the poem
-  // is about (v2c's own rule): nearly every kanji closes some white
-  // The white a character closes in is read (v2c's fourth level), but it is no
-  // longer a form to sample: drawn in small marks it became the same dotted
-  // grid on every page whose character held a box (日, 目, 口).
+  // is about: nearly every kanji closes some white.
+  // The white a character closes in is read (the fourth level), but it is not
+  // a form to sample: drawn in small marks it would be the same dotted grid on
+  // every page whose character held a box (日, 目, 口).
   const onForm = lean('onForm', clip(innerStrength))
   const onRing = lean('onRing', clip(Math.max(coordination, dependency) * (0.35 + 0.5 * repeatStrength)))
   const onPage = lean('onPage', clip(0.7 * erasure + 0.25 * clip(repeatStrength - innerStrength) + 0.6 * sem.many + 0.45 * sem.fading + 0.3 * sem.stirred))
@@ -450,7 +445,7 @@ export function materialParams(
   const spread = lean('spread', clip(0.8 * erasure + 0.35 * restStrength - 0.2 * repeatStrength))
   if (onPage > 0.02) grounds.push(`塵は読みから ${spread.toFixed(2)} の幅に散る（消された席 ${erasure.toFixed(2)}／題の残り ${restStrength.toFixed(2)}）`)
 
-  // as in v2c: the title's repetition first, then a form read inside the
+  // the title's repetition first, then a form read inside the
   // character, then the rest of the title — its own character only where
   // nothing else is offered
   const offered = repeatStrength + innerStrength + 0.5 * restStrength

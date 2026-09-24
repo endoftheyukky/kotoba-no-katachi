@@ -2,9 +2,9 @@
  * visualPotential — a measure separate from linguistic salience.
  *
  * linguisticSalience says how prominent a relation is for the title, as
- * language. visualPotential says how far the operations and spatial
- * compositions that exist now can turn that relation into a strong visual
- * structure that stays writing. A relation can be prominent and hard to show
+ * language. visualPotential says how far the operations and the page can
+ * turn that relation into a strong visual structure that stays writing. A
+ * relation can be prominent and hard to show
  * (a negation at the end of a word), or modest and very visible (a glyph that
  * falls apart into readable characters).
  *

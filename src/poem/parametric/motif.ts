@@ -1,11 +1,10 @@
 /**
- * v6 — the motif: what makes two pages rhyme.
+ * The motif: what makes two pages rhyme.
  *
- * v5 dissolved the families, and then the pages stood too evenly apart: every
- * title landed in its own place because every parameter was read from the title
- * on its own, and twenty small independent readings leave no two pages near
- * each other. A series with no neighbourhoods is as lifeless as a series of
- * templates.
+ * Were every parameter read from the title on its own, every title would land
+ * in its own place, and twenty small independent readings leave no two pages
+ * near each other. A series with no neighbourhoods is as lifeless as a series
+ * of templates.
  *
  * A motif is not a template and not a family. It is a structure a title *has* —
  * that it says something twice, that it holds two terms, that one of its
@@ -26,7 +25,7 @@
  */
 import type { Analysis, Material } from '../types'
 import { RELATION_THRESHOLD } from '../../glyph/relation'
-import { allUnits } from '../spatial/common'
+import { allUnits } from '../units'
 
 const clip = (v: number, lo = 0, hi = 1) => (Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo)
 
@@ -130,8 +129,8 @@ export const CHORDS: Record<keyof Motifs, Record<string, number>> = {
 }
 
 /**
- * How far a page is drawn toward the chords it belongs to. One number, so that
- * the whole rhyme can be turned off (0 is v5) and measured.
+ * How far a page is drawn toward the chords it belongs to: one number for the
+ * whole rhyme (0 would read every parameter on its own).
  */
 export const RHYME = 0.6
 
@@ -150,7 +149,7 @@ export function drawn(key: string, value: number, motifs: Motifs | undefined, ga
   return v
 }
 
-/** the structure a title has most of, for the review sheets (never drawn) */
+/** the structure a title has most of (never drawn) */
 export function dominant(motifs: Motifs): keyof Motifs | 'plain' {
   let best: keyof Motifs | 'plain' = 'plain'
   let most = 0.3

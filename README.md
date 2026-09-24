@@ -5,9 +5,9 @@
 **[作品を見る → kotoba-no-katachi.pages.dev](https://kotoba-no-katachi.pages.dev/)**
 
 <p align="center">
-  <a href="https://kotoba-no-katachi.pages.dev/?title=%E5%AD%A4%E7%8B%AC&v=3"><img src="public/examples/v3/kodoku.png" width="220" alt="「孤独」の紙面" /></a>
-  <a href="https://kotoba-no-katachi.pages.dev/?title=%E9%9B%A8%E3%81%AE%E4%B8%AD%E3%81%AE%E9%9B%A8&v=3"><img src="public/examples/v3/ame-no-naka-no-ame.png" width="220" alt="「雨の中の雨」の紙面" /></a>
-  <a href="https://kotoba-no-katachi.pages.dev/?title=%E4%BD%99%E7%99%BD&v=3"><img src="public/examples/v3/yohaku.png" width="220" alt="「余白」の紙面" /></a>
+  <a href="https://kotoba-no-katachi.pages.dev/?title=%E5%AD%A4%E7%8B%AC&v=1"><img src="public/examples/v1/kodoku.png" width="220" alt="「孤独」の紙面" /></a>
+  <a href="https://kotoba-no-katachi.pages.dev/?title=%E9%9B%A8%E3%81%AE%E4%B8%AD%E3%81%AE%E9%9B%A8&v=1"><img src="public/examples/v1/ame-no-naka-no-ame.png" width="220" alt="「雨の中の雨」の紙面" /></a>
+  <a href="https://kotoba-no-katachi.pages.dev/?title=%E4%BD%99%E7%99%BD&v=1"><img src="public/examples/v1/yohaku.png" width="220" alt="「余白」の紙面" /></a>
 </p>
 <p align="center"><sub>孤独 ・ 雨の中の雨 ・ 余白</sub></p>
 
@@ -23,10 +23,10 @@
 - 読み取るのは次のものです。
   - **言語**：規則による分かち書き、かな・モーラ・音韻特徴、反復・対・係り受け・否定などの関係
   - **字形**：同梱フォントの字を canvas に描いて測った墨の量・継ぎ目・部品、字どうしの包含と類似
-  - **意味**（v3 のみ）：chiVe から一度だけ作った固定の9軸の表
-- v3 の紙面は、v1 から続く operation layer（提案・特徴の降下・主操作・修飾）の出力である `Material` を、パラメトリックな生成器が配置したものです。生成器は、図（一本の曲線と行数）、紙面（大きさ・位置・向き）、互いに競合する行為（間・離れ・摩耗・傾き・分割）、素材（字自身の小さな複製）、韻（構造が共通する題どうしを近づける引力）からなります。
-- 乱数の種は題・読み・variant から作ります。v3 でこの種が決めるのは、曲線が曲がる向きの一つだけです。
-- 公開した版（v1・v2c・v3）は変更しません。131題の公開 fixture で、3つの版すべての出力が一致することを検証できます。
+  - **意味**：chiVe から一度だけ作った固定の9軸の表
+- 紙面は二段階でできます。まず operation layer（提案・特徴の降下・主操作・修飾）が題を読み、`Material` を作ります。次にパラメトリックな生成器がそれを配置します。生成器は、図（一本の曲線と行数）、紙面（大きさ・位置・向き）、互いに競合する行為（間・離れ・摩耗・傾き・分割）、素材（字自身の小さな複製）、韻（構造が共通する題どうしを近づける引力）からなります。
+- 乱数の種は題・読み・variant から作ります。種が決めるのは、曲線が曲がる向きの一つだけです。
+- 公開した版は変更しません。現在の版は v1 で、アドレスには常に `v=1` を書きます。131題の公開 fixture で、出力が記録と一致することを検証できます。
 
 ## 全体の流れ
 
@@ -35,16 +35,14 @@ flowchart LR
   IN["title · reading · v"] --> NT["normalize"]
   NT --> LA["language analysis"]
   NT --> GL["glyph measurement<br/>and relations"]
-  NT -->|v3| SE["meaning<br/>(axes-1 table)"]
+  NT --> SE["meaning<br/>(axes-1 table)"]
   LA --> OP["operation layer<br/>→ Material"]
   GL --> OP
-  OP --> V2["v1 / v2c:<br/>spatial composition<br/>+ mark grammar"]
-  OP --> V3["v3: motifs · figure ·<br/>page · acts · material"]
-  LA --> V3
-  GL --> V3
-  SE --> V3
-  V2 --> D["Draft (marks)"]
-  V3 --> D
+  OP --> PG["motifs · figure ·<br/>page · acts · material"]
+  LA --> PG
+  GL --> PG
+  SE --> PG
+  PG --> D["Draft (marks)"]
   D --> R["SVG / PNG"]
 ```
 
@@ -52,12 +50,12 @@ flowchart LR
 
 | 文書 | 内容 |
 | --- | --- |
-| [docs/architecture.md](docs/architecture.md) | 1ページができるまでの全体像、各段階とモジュール、データ型、版ごとに何が実行され何が捨てられるか、描画（SVG / PNG） |
+| [docs/architecture.md](docs/architecture.md) | 1ページができるまでの全体像、各段階とモジュール、データ型、描画（SVG / PNG） |
 | [docs/reading.md](docs/reading.md) | 入力とアドレス、正規化、分かち書き、読みの対応づけ、モーラと音韻、関係、書字方向、字形の計測・部品・判読・包含と類似・内部の白 |
 | [docs/semantics.md](docs/semantics.md) | 意味の表の作り方（all-but-the-top、軸の定義、抽象軸に対する直交化、正規化、int8 と 6 bit の量子化、64 分割）と実行時の読み方、極への変換 |
-| [docs/composition.md](docs/composition.md) | v3 生成器：operation layer、韻（motif と chord）、図・行・紙面のパラメータ、行為の競合（economy）、配置と切り取り、素材、書体 |
-| [docs/reproducibility.md](docs/reproducibility.md) | 種の役割、紙面が依存するもの、版と凍結範囲、検証（fixture と不変条件の監査）、制約と失敗時の挙動 |
-| [docs/site.md](docs/site.md) | ビルドと公開、リンクプレビューとアイコン、匿名の生成記録（Cloudflare Pages Functions + D1）と /admin |
+| [docs/composition.md](docs/composition.md) | 生成器：operation layer、韻（motif と chord）、図・行・紙面のパラメータ、行為の競合（economy）、配置と切り取り、素材、書体 |
+| [docs/reproducibility.md](docs/reproducibility.md) | 種の役割、紙面が依存するもの、版の固定、検証（fixture と不変条件の監査）、制約と失敗時の挙動 |
+| [docs/site.md](docs/site.md) | ビルドと公開、共有とリンクプレビュー、アイコン、匿名の生成記録（Cloudflare Pages Functions + D1）と /admin |
 
 ## 再現と開発
 
@@ -65,12 +63,13 @@ flowchart LR
 npm ci
 npm run dev          # http://localhost:5173
 npm run build        # 型検査 + dist/
-npm run verify       # 公開 fixture の検証：v1 / v2c / v3 × 131題が tools/verify/expected.json と一致するか
+npm test             # 単体テスト：生成記録・/admin・共有・読み・SVG の検査
+npm run verify       # 公開 fixture の検証：131題が tools/verify/expected.json と一致するか
 ```
 
 - `npm run verify` は Vite と headless Chrome を起動します。Chrome の場所は環境変数 `CHROME` で指定できます。どれか一つでも違えば終了コード 1 になります。
-- v3 の出力は次のものに固定されています。
-  - コード（タグ `v3.0.0`）
+- v1 の出力は次のものに固定されています。
+  - コード（タグ `v1.0.0`）
   - フォント（`@fontsource/noto-sans-jp` と `noto-serif-jp` の 5.3.0。`package-lock.json` で固定）
   - 意味の表 `public/semantic/axes-1/`（各断片の sha256 を `meta.json` に記録）
 - 字形はブラウザの canvas で測るため、出力は描画エンジンに依存します。fixture は Chromium で作成・検証しています（[制約](docs/reproducibility.md#limitations-and-failure-modes)）。
@@ -80,7 +79,8 @@ npm run verify       # 公開 fixture の検証：v1 / v2c / v3 × 131題が too
 ```
 src/            ページ、生成器（language / glyph / poem）、描画、記録のクライアント側
 src/study/      検証用の公開タイトルセット（サイトで入力された題は含みません）
-functions/, server/, migrations/   生成記録（Pages Functions + D1）
+functions/, server/, migrations/   共有用アドレスと生成記録（Pages Functions + D1）
+tests/          単体テスト
 tools/verify/   検証：headless Chrome ドライバ、fixture、expected.json
 tools/semantic/ 意味の表の作成スクリプト
 tools/examples/, tools/icons/      作例・OGP 画像・アイコンの描画
@@ -97,6 +97,5 @@ docs/           技術ドキュメント
 
 - 字体：Noto Sans JP / Noto Serif JP（SIL Open Font License 1.1。npm の `@fontsource/noto-sans-jp`、`@fontsource/noto-serif-jp` から配布）
 - 意味の表 `public/semantic/axes-1/`：chiVe v1.3 mc90（Copyright (c) 2024 Works Applications Co., Ltd.）から導いた表。Apache License 2.0（同じディレクトリの `LICENSE-chiVe.txt`、`NOTICE.txt`）
-- 研究用の近傍表 `src/language/semantic/data/`：青空文庫（パブリックドメイン）のコーパス `globis-university/aozorabunko-clean`（CC BY 4.0）と chiVe から導いた統計。どの公開版でも使っていません（`NOTICE.md`）
 
 制作：Yuki Sunaga

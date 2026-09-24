@@ -192,7 +192,7 @@ body[data-waiting] #stage::after {
 
 /*
  * 作例: nine poems as small sheets of the same paper, under the line, only
- * while the paper waits for words. Each sheet is a v3 page drawn by the site's
+ * while the paper waits for words. Each sheet is a page drawn by the site's
  * own renderer; its title is said small under it. Nothing moves.
  */
 #examples {

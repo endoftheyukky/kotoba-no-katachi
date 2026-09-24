@@ -1,5 +1,5 @@
 // GET /admin/api/generations — a page of records, newest (or oldest) first.
-//   order=newest|oldest  visitor=<uuid>  session=<uuid>  source=manual|example
+//   order=newest|oldest  visitor=<uuid>  session=<uuid>  source=manual
 //   q=<part of a title>  cursor=<created_at>:<id>  limit=1..100 (40)
 // Snapshots are not included: each is fetched on its own, when it is seen.
 import { SOURCES, UUID } from '../../../../src/archive/protocol'

@@ -44,7 +44,7 @@ function site(): Plugin {
     transformIndexHtml: {
       order: 'pre',
       handler(html, ctx) {
-        // only the public page: the study sheets and the admin sheet keep their own heads
+        // only the public page: the admin sheet keeps its own head
         if (ctx.path !== '/index.html') return html
         return html.replace('<!--site-meta-->', tags.join('\n    '))
       },

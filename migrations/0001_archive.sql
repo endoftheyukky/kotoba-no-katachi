@@ -1,8 +1,8 @@
 -- The anonymous archive of pages written on ことばのかたち.
 --
--- One row in `generations` for each poem someone newly wrote (typed words, or
--- an example chosen). Nothing about the request is kept: no IP address, no
--- user agent, no location, no account. The two ids are random UUIDs the
+-- One row in `generations` for each poem someone newly wrote (typed words).
+-- Nothing about the request is kept: no IP address, no user agent, no
+-- location, no account. The two ids are random UUIDs the
 -- browser keeps for itself (localStorage / sessionStorage); they tell browser
 -- profiles and visits apart, not people.
 --
@@ -18,7 +18,7 @@ CREATE TABLE generations (
   title             TEXT NOT NULL,             -- the words, as the page normalized them
   reading           TEXT NOT NULL DEFAULT '',  -- the reading given in brackets, or ''
   source            TEXT NOT NULL CHECK (source IN ('manual', 'example')),
-  generator_version TEXT NOT NULL,             -- 'v2c' (published) or 'v1' (?v=1)
+  generator_version TEXT NOT NULL,             -- the generator that drew it ('v1', src/archive/protocol.ts)
   output_hash       TEXT NOT NULL              -- SHA-256 of the canonical snapshot, computed by the server
 );
 

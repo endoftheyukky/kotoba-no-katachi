@@ -2,12 +2,12 @@
  * What a shared link says about its poem, before any script runs: the card a
  * link preview shows (functions/s.ts puts it into the page's head).
  *
- *   /s?title=孤独&v=3   the address the share buttons give (src/main.ts)
- *   /?title=孤独&v=3    the poem's own address, the canonical one
+ *   /s?title=孤独&v=1   the address the share buttons give (src/main.ts)
+ *   /?title=孤独&v=1    the poem's own address, the canonical one
  *
  * The same words, reading and version as the page reads them from the address;
  * nothing is drawn here. A 作例 has a card of its own, drawn ahead of time
- * (public/og/v3/, tools/examples/manifest.json); every other poem, for now,
+ * (public/og/v1/, tools/examples/manifest.json); every other poem, for now,
  * the site's card.
  */
 import site from '../site.config.json'
@@ -20,22 +20,27 @@ export const SITE_URL = site.url.replace(/\/+$/, '')
 export const SITE_IMAGE = `${SITE_URL}${site.ogImage}`
 
 /**
- * The version an address asks for, as src/poem/generators.ts versionOf reads
- * it: v=1, v=3, or — with none — v2c. Written again here so that the server
- * does not load the generator.
+ * The versions an address may name, and the current one, as
+ * src/poem/generators.ts has them. Written again here so that the server does
+ * not load the generator.
  */
-export const versionOf = (param: string | null): 1 | 2 | 3 => (param === '1' ? 1 : param === '3' ? 3 : 2)
+export const VERSIONS = [1] as const
+export type Version = (typeof VERSIONS)[number]
+export const CURRENT: Version = 1
 
-/** the query of a poem's address, as the page writes it (src/main.ts addressOf): no v for v2c */
-export function poemQuery(text: string, reading: string, v: 1 | 2 | 3): string {
+/** the version an address asks for: one that was published, or the current one (generators.ts versionOf) */
+export const versionOf = (param: string | null): Version => VERSIONS.find((v) => String(v) === param) ?? CURRENT
+
+/** the query of a poem's address, as the page writes it (src/main.ts addressOf): the version always named */
+export function poemQuery(text: string, reading: string, v: Version): string {
   const q = new URLSearchParams({ title: text })
   if (reading) q.set('reading', reading)
-  if (v !== 2) q.set('v', String(v))
+  q.set('v', String(v))
   return q.toString()
 }
 
-/** the 作例 cards, by their words (v3, no reading) */
-const CARDS = new Map((examples as { text: string; v: number; file: string }[]).filter((e) => e.v === 3).map((e) => [e.text, e.file]))
+/** the 作例 cards, by their words and version (no reading) */
+const CARDS = new Map((examples as { text: string; v: number; file: string }[]).map((e) => [`${e.v}:${e.text}`, `/og/v${e.v}/${e.file}`]))
 
 export interface ShareMeta {
   /** og:title, twitter:title */
@@ -62,11 +67,11 @@ export function shareMeta(address: URL): ShareMeta | null {
   const reading = input.reading ?? ''
   const v = versionOf(q.get('v'))
   const query = poemQuery(input.text, reading, v)
-  const card = v === 3 && !reading ? CARDS.get(input.text) : undefined
+  const card = reading ? undefined : CARDS.get(`${v}:${input.text}`)
   return {
     title: `「${input.text}」 — ${site.title}`,
     documentTitle: `${input.text} — ${site.title}`,
-    image: card ? `${SITE_URL}/og/v3/${card}` : SITE_IMAGE,
+    image: card ? `${SITE_URL}${card}` : SITE_IMAGE,
     url: `${SITE_URL}/s?${query}`,
     canonical: `${SITE_URL}/?${query}`,
   }

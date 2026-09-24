@@ -1,10 +1,10 @@
 # Architecture
 
-This document follows one title from the address bar to the drawn page, names
-the module that does each step, and says which steps belong to which published
-generator. The details of each stage are in [reading.md](reading.md) (input,
-language, glyphs), [semantics.md](semantics.md) (the meaning table),
-[composition.md](composition.md) (the v3 generator) and
+This document follows one title from the address bar to the drawn page and
+names the module that does each step. The details of each stage are in
+[reading.md](reading.md) (input, language, glyphs),
+[semantics.md](semantics.md) (the meaning table),
+[composition.md](composition.md) (the generator) and
 [reproducibility.md](reproducibility.md) (seed, versions, verification,
 limitations).
 
@@ -21,9 +21,7 @@ flowchart TD
   PROP --> DESC["scores · feature descent · primary operation · modifiers<br/>src/poem/compose.ts"]
   DESC --> MAT["Material<br/>units (absent / parts / minus) · primary · modifiers"]
 
-  MAT --> V12["v1 / v2c: spatial composition + mark grammar<br/>src/poem/spatial/* · src/poem/grammar/*"]
-
-  NT -->|"v3 only"| MEAN["readMeaning<br/>src/language/semantic/load.ts<br/>axes-1 shards → 9 axes + coverage"]
+  NT --> MEAN["readMeaning<br/>src/language/semantic/load.ts<br/>axes-1 shards → 9 axes + coverage"]
   MAT --> MOT["motifs<br/>parametric/motif.ts"]
   MAT --> TP
   LA --> TP
@@ -33,11 +31,10 @@ flowchart TD
   TP --> TM["traceMarks<br/>parametric/trace.ts"]
   TM --> MM["materialParams → materialMarks<br/>parametric/params.ts · material.ts · frame.ts"]
   MM --> FACE["withFaces<br/>src/poem/face.ts"]
-  V12 --> FACE
   FACE --> DRAFT["Draft = Mark[]"]
   DRAFT --> SVG["renderSVG<br/>src/render/svg.ts"]
   DRAFT --> PNG["renderCanvas → PNG<br/>src/render/png.ts"]
-  DRAFT -.->|offline audit only| INV["soundness()<br/>src/poem/form/invariants.ts"]
+  DRAFT -.->|offline audit only| INV["soundness()<br/>src/poem/invariants.ts"]
 ```
 
 The page (`src/main.ts`) does, for every poem:
@@ -49,46 +46,31 @@ The page (`src/main.ts`) does, for every poem:
 3. `renderSVG` to the screen, and `renderCanvas` for the PNG that 保存 and
    その他 hand over.
 
-## The three published generators
+## The generator
 
-All three are the same function, `compose(analysis, force)`, called with a
-fixed `Force` (`src/poem/generators.ts`):
-
-| version | address | call |
-| --- | --- | --- |
-| v1 | `?v=1` | `compose(a, {})` |
-| v2c | no `v` parameter | `compose(a, { grammar: 'auto' })` |
-| v3 | `?v=3` | `compose(a, { parametric: 'auto', meaning: await readMeaning(text) })` |
-
-`compose()` always runs the whole of its first half — proposals, feature
-descent, primary operation, modifiers, the spatial compositions' offers and the
-chosen composition's `realize()`, and `writeWith()` for the grammar — and only
-then decides what the page's marks are:
+`write(analysis, 1)` is `compose(analysis, await readMeaning(text))`
+(`src/poem/generators.ts`). `compose()` has two halves:
 
 ```ts
 // src/poem/compose.ts (abridged)
-const drawn4 = force.parametric ? parametricPage(a, material, …, force.meaning) : null
-const behaved = writeWith(force.grammar, a, material, drawn, placed, …)
-draft.marks = withFaces(a, material, force.parametric ? drawn4.marks : behaved.marks)
+const material = /* proposals → descent → primary → modifiers → Material */
+const page = parametricPage(a, material, new Rng(seed).fork('parametric'), (ms) => withFaces(a, material, ms), meaning)
+draft.marks = withFaces(a, material, page.marks)
 ```
 
-So:
-
-- **v3 depends on the operation layer.** The `Material` it draws is the
-  output of the v1 operation layer: which units are blanked (`absent`, from
-  absence), which arrive split into parts (`parts`, decomposition as a
-  modifier) or with another glyph subtracted (`minus`, transformation as a
-  modifier), and the primary operation's `focus` and `poeticPotential`, which
-  set the page scale, the enlarged subject, the face and the `nesting` motif
+- **The operation layer reads the title.** Its output is the `Material`:
+  which units are blanked (`absent`, from absence), which arrive split into
+  parts (`parts`, decomposition as a modifier) or with another glyph
+  subtracted (`minus`, transformation as a modifier), and the primary
+  operation's `focus` and `poeticPotential`, which set the page scale, the
+  enlarged subject, the face and the `nesting` motif
   ([composition.md](composition.md#1-the-operation-layer)).
-- **In v3, the spatial composition and the mark grammar are computed and
-  discarded.** Their results remain in the returned `Composition`
-  (`spatial`, `scale`, `parameters`, `contract`, `grammar`) but do not reach
-  the page. The `form: 'v3'` deformation (`src/poem/form/*`) is a research path
-  that no published generator enables.
-- **The shared modules are frozen for every version at once.** A change to
-  the language analysis, the glyph readings, the operations, the spatial
-  compositions or the grammars can change v1, v2c and v3 together
+- **The parametric generator draws it.** Motifs, the figure, the paper, the
+  acts and the material are continuous parameters read from the title, its
+  `Material` and its meaning (`src/poem/parametric/*`).
+- **Every module a page reads is part of the published version.** A change to
+  the language analysis, the glyph readings, the operations or the parametric
+  generator changes what the version writes
   ([reproducibility.md](reproducibility.md#versions-and-the-frozen-boundary)).
 
 ## Data at each step
@@ -139,18 +121,19 @@ src/title.ts                     input normalization, seed
 src/core/random.ts               cyrb53 hash, mulberry32 generator, fork()
 src/language/                    segmentation, kana, morae, phonology, relations
 src/language/semantic/           the meaning table: parse, look up, fetch shards
-src/language/lexicon/            a small bundled lexicon (v2 grammars only; not read by v3)
+src/language/lexicon/            a small bundled lexicon: the characters prepared beside the title's own
 src/glyph/                       fonts, coverage, measurement, parts, legibility, relations, interiors
 src/poem/compose.ts              analyze() and compose(): the whole generator
-src/poem/generators.ts           the published versions and their Force
+src/poem/generators.ts           the published version and the version an address names
 src/poem/operations/             proliferation, decomposition, transformation, absence
 src/poem/potential.ts, salience.ts, scope.ts   proposal scores
-src/poem/spatial/, grammar/, scale.ts           v1 / v2c page layout (computed but discarded in v3)
-src/poem/parametric/             the v3 generator: params, acts, motif, trace, paper, material, frame
+src/poem/units.ts                a unit of the Material as marks
+src/poem/parametric/             params, acts, motif, trace, paper, material, frame
 src/poem/face.ts                 which face each mark is written in
-src/poem/form/                   invariants.ts (the audit); the rest is an unpublished research path
+src/poem/invariants.ts           the audit of what a page may never break
 src/render/                      SVG and PNG
 src/main.ts, index.html, style.css   the public page
+functions/s.ts, server/share.ts  the shared address and its link preview (site.md)
 src/archive/, functions/, server/, migrations/   the anonymous generation log (site.md)
 src/study/                       public title sets used as regression fixtures (reproducibility.md)
 ```

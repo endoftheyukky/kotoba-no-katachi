@@ -1,10 +1,9 @@
 /**
- * v4 — the frame: the reading's own path on the page, as the material's axes.
+ * The frame: the reading's own path on the page, as the material's axes.
  *
- * Until now the material was placed in the page's own coordinates: dust thinned
- * from left to right whatever the figure did, and the satellites stood on a
- * circle around the largest character. That made the material a layer laid over
- * the page rather than something the page is made of.
+ * The material is not placed in the page's own coordinates — dust thinning from
+ * left to right whatever the figure did would make it a layer laid over the
+ * page rather than something the page is made of.
  *
  * The frame is where the reading goes: the written units in their order, as one
  * or more strands (a trace is one strand, or one per arm of a branch; a lattice
@@ -16,7 +15,7 @@
  * So the dust thins along the trace instead of along the page, the grain of a
  * lattice runs with its rows however they are sheared or curled, and the
  * satellites stand at a fixed distance from what is written — a circle when the
- * page is one character (v2c's orbit), the shape of the reading when it is not.
+ * page is one character, the shape of the reading when it is not.
  *
  * Nothing here is random and nothing is a parameter: this is the geometry the
  * generator has already made, read back.
@@ -153,8 +152,7 @@ export function walk(strand: Strand, step: number): At[] {
 /**
  * The loop at a fixed distance from a strand: the offset on one side, round its
  * end, back along the other, round its start. Where the strand is a single
- * point the two caps are the whole loop — a circle, which is what v2c's orbit
- * is. Where the strand closes, the loop is the outer offset alone.
+ * point the two caps are the whole loop — a circle. Where the strand closes, the loop is the outer offset alone.
  */
 export function offsetLoop(strand: Strand, radius: number): Vec[] {
   const at = strand.at

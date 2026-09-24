@@ -1,7 +1,7 @@
 /**
  * Generations — the archive of pages people wrote, for looking at.
  *
- *   /admin/                     every page, newest first (or oldest), by source, by title
+ *   /admin/                     every page, newest first (or oldest), by title
  *   /admin/?visitor=<id>        one browser profile: its visits in order, each with its pages
  *   /admin/?session=<id>        one visit: the pages in the order they were written
  *   …&id=<event>                one page, large, with everything recorded about it
@@ -22,7 +22,7 @@ interface Row {
   session_id: string
   title: string
   reading: string
-  source: 'manual' | 'example'
+  source: string
   generator_version: string
   output_hash: string
   bytes?: number | null
@@ -182,19 +182,16 @@ interface View {
   visitor: string
   session: string
   order: 'newest' | 'oldest'
-  source: '' | 'manual' | 'example'
   q: string
   id: string
 }
 
 function view(): View {
   const p = new URLSearchParams(location.search)
-  const source = p.get('source')
   return {
     visitor: p.get('visitor') ?? '',
     session: p.get('session') ?? '',
     order: p.get('order') === 'oldest' ? 'oldest' : 'newest',
-    source: source === 'manual' || source === 'example' ? source : '',
     q: p.get('q') ?? '',
     id: p.get('id') ?? '',
   }
@@ -254,15 +251,13 @@ async function pages(params: Record<string, string>, mine: number, each: (r: Row
 // every page, as a field
 async function archiveView(v: View, mine: number): Promise<void> {
   for (const b of filters.querySelectorAll<HTMLButtonElement>('[data-order]')) b.setAttribute('aria-pressed', String(b.dataset.order === v.order))
-  for (const b of filters.querySelectorAll<HTMLButtonElement>('[data-source]')) b.setAttribute('aria-pressed', String(b.dataset.source === v.source))
   if (document.activeElement !== search) search.value = v.q
   const grid = el('div', 'grid')
   sheets.append(grid)
   const params: Record<string, string> = { order: v.order, limit: '40' }
-  if (v.source) params.source = v.source
   if (v.q) params.q = v.q
   await pages(params, mine, (r) => grid.append(card(r, { when: 'stamp', visitor: true })))
-  if (mine === turn && !grid.children.length) status.textContent = v.q || v.source ? '該当する記録はありません' : 'まだ記録はありません'
+  if (mine === turn && !grid.children.length) status.textContent = v.q ? '該当する記録はありません' : 'まだ記録はありません'
 }
 
 function heading(title: string, sub: string, ...extra: Node[]): void {
@@ -335,8 +330,9 @@ async function openDetail(id: string, push: boolean): Promise<void> {
     const r = await api<Row>(`/admin/api/generations/${encodeURIComponent(id)}`)
     const shared = new URLSearchParams({ title: r.title })
     if (r.reading) shared.set('reading', r.reading)
-    if (r.generator_version === 'v1') shared.set('v', '1')
-    if (r.generator_version === 'v3') shared.set('v', '3')
+    // the version the snapshot was drawn by, as its address names it (v1 → v=1)
+    const version = /^v(\d+)$/.exec(r.generator_version)
+    if (version) shared.set('v', version[1])
     const page = el('a', '', '公開ページで開く')
     page.href = `${__SITE__.url || location.origin}/?${shared}`
     page.target = '_blank'
@@ -403,7 +399,6 @@ filters.addEventListener('click', (e) => {
   if (!b) return
   const v = view()
   if (b.dataset.order) v.order = b.dataset.order as View['order']
-  if (b.dataset.source !== undefined) v.source = b.dataset.source as View['source']
   history.replaceState(null, '', address({ ...v, id: '' }))
   void render()
 })

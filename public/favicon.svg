@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <!-- a sheet of paper with こ set high on it, as the first character of
-       ことばのかたち stands on its own v3 page (the site card). こ is the outline
+       ことばのかたち stands on its own page (the site card). こ is the outline
        of the glyph in Noto Sans JP 500 (SIL OFL 1.1), written as a path, so the
        icon needs no font. tools/icons/make.mjs draws the PNG sizes from this file. -->
   <rect width="32" height="32" fill="#fff"/>
