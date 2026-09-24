@@ -9,7 +9,7 @@ import { json } from '../../../../server/http'
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const q = new URL(request.url).searchParams
   const oldest = q.get('order') === 'oldest'
-  const limit = Math.min(100, Math.max(1, Number(q.get('limit')) || 40))
+  const limit = Math.min(100, Math.max(1, Math.trunc(Number(q.get('limit'))) || 40))
   const where: string[] = []
   const binds: unknown[] = []
   const add = (sql: string, ...values: unknown[]) => {

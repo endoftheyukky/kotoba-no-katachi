@@ -12,6 +12,14 @@
  *
  * Nothing about the request itself is kept: no address, no user agent, no
  * headers, no location. What is stored is listed in migrations/0001_archive.sql.
+ * The connecting address is used for one thing, a daily allowance that the
+ * browser's own ids cannot evade, and only as a keyed mark deleted after its
+ * day (server/limits.ts, migrations/0002_limits.sql).
+ *
+ * Every limit is taken before the record is written, cheapest first: the
+ * address's allowance (one row), the browser's ids (counted only up to their
+ * limits), then the day's place under the cap (one statement, so records that
+ * arrive together cannot pass it).
  *
  * The page never waits for this and never learns how it went: every outcome a
  * browser can cause is 204 (with a short reason in X-Archive, for testing), so
@@ -21,6 +29,7 @@ import { GENERATORS, HASH, SOURCES, UUID, type GenerationEvent } from '../src/ar
 import { canonicalSVG, checkSVG, MAX_SVG, sha256 } from '../src/archive/svg'
 import { MAX_TITLE, normalizeTitle } from '../src/title'
 import { empty, gzip, readText, sameOrigin } from './http'
+import { mark, pruneStatement, take } from './limits'
 
 /** the body: a snapshot and a few short strings */
 const MAX_BODY = MAX_SVG + 16_000
@@ -30,10 +39,17 @@ const FIELDS = ['visitor_id', 'session_id', 'title', 'reading', 'source', 'gener
 export const LIMITS = {
   perSessionPerMinute: 20,
   perVisitorPerHour: 120,
-  /** all visitors together, per UTC day: a record writes ~13 rows (indexes, counters), so this keeps
-   *  D1's free 100 000 rows written per day clear */
+  /** one connecting address, whatever ids it sends (server/limits.ts): a room of people writing
+   *  together shares one address, and only its archive records are dropped past this */
+  perAddressPer10Minutes: 60,
+  perAddressPerDay: 500,
+  /** all visitors together, per UTC day: a record writes ~15 rows (indexes, counters, its address's
+   *  allowance), so this keeps D1's free 100 000 rows written per day clear */
   perDay: 6_000,
 }
+
+const MINUTE = 60_000
+const DAY = 86_400_000
 
 const done = (reason: string) => empty(204, { 'x-archive': reason })
 
@@ -85,7 +101,8 @@ export async function acceptGeneration(request: Request, env: Env): Promise<Resp
   const svg = canonicalSVG(e.svg)
   const verdict = checkSVG(svg)
   if (verdict !== true) {
-    console.warn('archive: snapshot refused', verdict)
+    // the reason names only the rule, never the refused markup
+    console.warn('archive: snapshot refused', verdict.replace(/[^\w <>/-]/g, '').slice(0, 80))
     return done('refused:snapshot')
   }
   const hash = await sha256(svg)
@@ -93,20 +110,49 @@ export async function acceptGeneration(request: Request, env: Env): Promise<Resp
 
   const now = Date.now()
   // the browser's clock, kept only when it is plausibly right
-  const clientAt = Math.abs(e.client_created_at - now) < 7 * 86_400_000 ? Math.round(e.client_created_at) : null
+  const clientAt = Math.abs(e.client_created_at - now) < 7 * DAY ? Math.round(e.client_created_at) : null
+  const dayNumber = Math.floor(now / DAY)
   const day = `day:${new Date(now).toISOString().slice(0, 10)}`
   const db = env.DB
+  let reserved = false
 
   try {
-    const [daily, perSession, perVisitor] = await db.batch<{ n: number }>([
-      db.prepare('SELECT value AS n FROM counters WHERE name = ?1').bind(day),
-      db.prepare('SELECT COUNT(*) AS n FROM generations WHERE session_id = ?1 AND created_at > ?2').bind(e.session_id, now - 60_000),
-      db.prepare('SELECT COUNT(*) AS n FROM generations WHERE visitor_id = ?1 AND created_at > ?2').bind(e.visitor_id, now - 3_600_000),
+    // 1. the connecting address, before anything is read: one row, taken or not
+    const address = await mark(env, request, 'archive', dayNumber)
+    if (address) {
+      const taken = await take(db, {
+        key: `archive:${dayNumber}:${address}`,
+        limit: LIMITS.perAddressPerDay,
+        expires: (dayNumber + 1) * DAY,
+        burst: { start: Math.floor(now / (10 * MINUTE)), limit: LIMITS.perAddressPer10Minutes },
+      })
+      if (!taken) return done('dropped:address')
+    }
+
+    // 2. the browser's own ids: counted only up to their limits, so a full hour reads no more than that
+    const [perSession, perVisitor] = await db.batch<{ n: number }>([
+      db
+        .prepare('SELECT COUNT(*) AS n FROM (SELECT 1 FROM generations WHERE session_id = ?1 AND created_at > ?2 LIMIT ?3)')
+        .bind(e.session_id, now - MINUTE, LIMITS.perSessionPerMinute),
+      db
+        .prepare('SELECT COUNT(*) AS n FROM (SELECT 1 FROM generations WHERE visitor_id = ?1 AND created_at > ?2 LIMIT ?3)')
+        .bind(e.visitor_id, now - 60 * MINUTE, LIMITS.perVisitorPerHour),
     ])
     const n = (r: D1Result<{ n: number }>) => r.results[0]?.n ?? 0
-    if (n(daily) >= LIMITS.perDay) return done('dropped:day')
     if (n(perSession) >= LIMITS.perSessionPerMinute) return done('dropped:session')
     if (n(perVisitor) >= LIMITS.perVisitorPerHour) return done('dropped:visitor')
+
+    // 3. the day's place, taken in one statement: records arriving together cannot pass the cap
+    const place = await db
+      .prepare(
+        `INSERT INTO counters (name, value) VALUES (?1, 1)
+         ON CONFLICT (name) DO UPDATE SET value = value + 1 WHERE value < ?2
+         RETURNING value`,
+      )
+      .bind(day, LIMITS.perDay)
+      .first<{ value: number }>()
+    if (!place) return done('dropped:day')
+    reserved = true
 
     const id = crypto.randomUUID()
     const snapshot = await gzip(svg)
@@ -138,13 +184,14 @@ export async function acceptGeneration(request: Request, env: Env): Promise<Resp
       db
         .prepare(`UPDATE counters SET value = value + 1 WHERE name = 'sessions' AND (SELECT generations FROM sessions WHERE id = ?1) = 1`)
         .bind(e.session_id),
-      db
-        .prepare(`INSERT INTO counters (name, value) VALUES (?1, 1) ON CONFLICT (name) DO UPDATE SET value = value + 1`)
-        .bind(day),
+      // the first record of a UTC day clears the allowances whose windows are over
+      ...(place.value === 1 ? [pruneStatement(db, now)] : []),
     ])
     return done('stored')
   } catch (err) {
     console.error('archive: not stored', err)
+    // the day's place was taken for a record that was not written
+    if (reserved) await db.prepare('UPDATE counters SET value = value - 1 WHERE name = ?1 AND value > 0').bind(day).run().catch(() => undefined)
     return done('error')
   }
 }

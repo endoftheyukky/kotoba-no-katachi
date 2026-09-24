@@ -104,12 +104,18 @@ snapshot, computed on the server).
 
 `snapshots`: the canonical SVG, gzip (median ≈ 0.6 KB, largest seen ≈ 3 KB).
 `visitors`, `sessions`: first / last time and count per id. `counters`: the
-three totals and a per-day count (daily cap). `admin_throttle`: wrong
-passwords, one row for everyone.
+three totals and a per-day count (daily cap). `limits`
+(migrations/0002_limits.sql): short-lived allowances — records per connecting
+address per day, admin password attempts per address and overall per 15
+minutes — keyed by an HMAC of the address (IPv6: its /64) and the window (made with
+`SESSION_SECRET`, cut to 16 bytes); a row is deleted once its window is over.
+`admin_throttle` (0001) is no longer used.
 
 **Not stored**: IP address, user agent, headers, referrer, location, screen,
 language, cookies, fingerprints of any kind, names, e-mail, accounts. The
-server reads only the JSON body. (Cloudflare, as the host, processes request
+server reads the JSON body and, for the allowances above only, the connecting
+address Cloudflare reports — which is never written, only its keyed mark for
+the day (or the 15 minutes). (Cloudflare, as the host, processes request
 metadata in its own logs; this database holds none of it.)
 
 ### Identity
@@ -146,12 +152,23 @@ records will be refused.
 
 ### Abuse
 
-- Only this site's origin (`Origin` must match), `application/json`, ≤ ~1 MB.
+- Only this site's origin (`Origin` must match), `application/json`, and a
+  snapshot within the limits in `src/archive/svg.ts` (`MAX_SVG`,
+  `SNAPSHOT_LIMITS`: size, elements, depth, characters in one `<text>`, digits
+  in one number, masks, references, no mask drawn through another). They are
+  set from the pages the work draws: `npm run verify:snapshots` draws every
+  public title (and the longest titles) with every generator and fails if any
+  is refused.
 - Every field validated: UUIDs, the title exactly as `normalizeTitle` makes
   it (≤ 16 characters, no control characters), reading in kana, known source
   and generator, hash recomputed on the server.
-- Limits (silently dropped, 204): 20 per session per minute, 120 per visitor
-  per hour, 6 000 per UTC day for everyone (≈ 78 000 rows written).
+- Limits (silently dropped, 204), taken in this order before anything is
+  written: 60 per connecting address per 10 minutes and 500 per UTC day
+  (`dropped:address`; the browser's ids cannot evade it, and one room sharing
+  an address shares it), 20 per session per minute and 120 per visitor per
+  hour (counted only up to those numbers), 6 000 per UTC day for everyone
+  (`dropped:day`; the place is taken in one statement, so records arriving
+  together cannot pass it; ≈ 90 000 rows written).
 - There is no public read: `/api/generations` accepts POST only.
 - Every answer a browser can cause is 204 (`X-Archive: stored | refused:… |
   dropped:… | error`), so nothing appears in a visitor's console.
@@ -163,7 +180,14 @@ records will be refused.
   the secret is write-only on Cloudflare). `SESSION_SECRET` signs a cookie
   `__Secure-kotoba-admin` (HttpOnly, Secure, SameSite=Strict, Path=/admin, 12 h).
   Without both secrets `/admin` answers 503.
-- After 10 wrong passwords in 15 minutes all logins wait out the 15 minutes.
+- Opens only at the site's own address (`site.config.json` `url`) or on
+  localhost; a deployment's own address (`<hash>.` / `<branch>.…pages.dev`)
+  answers 404 (`server/site.ts`). Deployments made before this version still
+  open theirs: delete them in the dashboard.
+- Before a password is checked, an attempt is taken: 5 per connecting address
+  and 30 overall in each 15 minutes (429 without checking when none is left).
+  A right password gives its attempt back. Empty or overlong passwords are
+  refused without taking one. The form is read up to 4 KB.
 - Responses: `no-store`, `noindex`, CSP `default-src 'none'`, no framing.
 - Cloudflare Access was not used: on a `pages.dev` address it needs Zero Trust
   onboarding with payment details, and an application covering every
@@ -185,7 +209,9 @@ npm run db:migrate:remote    # apply new migrations to production
 npm run admin:password       # set / change the admin password (hidden input), then redeploy
 ```
 
-Deploy as above; Functions and bindings go with it.
+Deploy as above; Functions and bindings go with it. A new migration
+(`migrations/0002_limits.sql`) is applied with `db:migrate:remote` before the
+deploy that needs it: the archive and the login read the new table.
 
 Deleting records: always by an explicit condition (ids), never the whole
 table; delete the snapshots with them, and adjust `visitors`, `sessions` and
@@ -195,8 +221,8 @@ table; delete the snapshots with them, and adjust `visitors`, `sessions` and
 
 - Functions: 100 000 requests / day (one per recorded poem, plus admin use).
   Static pages are not counted.
-- D1: 100 000 rows written / day (one record writes ~13 rows including
-  indexes and counters), 5 000 000 rows read / day, 500 MB per database.
+- D1: 100 000 rows written / day (one record writes ~15 rows including
+  indexes, counters and its address's allowance), 5 000 000 rows read / day, 500 MB per database.
   At ~1–2 KB per record, 500 MB holds a few hundred thousand records.
 - Nothing here needs a paid plan. If a free limit is reached, recording stops
   until the next UTC day; the work itself keeps working.

@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "verify": "node tools/verify/run.mjs",
     "verify:write": "node tools/verify/run.mjs --write",
+    "verify:snapshots": "node tools/verify/run.mjs snapshots",
+    "test": "node --experimental-transform-types --disable-warning=ExperimentalWarning --import ./tests/register.mjs --test tests/*.test.ts",
     "dev:archive": "npm run build && npx --yes wrangler@4 pages dev dist --port 8788",
     "db:migrate:local": "npx --yes wrangler@4 d1 migrations apply kotoba-no-katachi-archive --local",
     "db:migrate:remote": "npx --yes wrangler@4 d1 migrations apply kotoba-no-katachi-archive --remote",
