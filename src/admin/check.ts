@@ -2,16 +2,17 @@
  * A snapshot, parsed, checked again against the renderer's own vocabulary
  * (archive/svg.ts) and made safe to stand beside others in one document.
  */
-import { ALLOWED, ok, PARENTS } from '../archive/svg'
+import { ALLOWED, checkSVG, ok, PARENTS } from '../archive/svg'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
 function allowed(el: Element, parent: string): boolean {
   const name = el.localName
-  const rules = ALLOWED[name]
-  if (!rules || el.namespaceURI !== SVG_NS || !PARENTS[name]?.includes(parent)) return false
+  // own entries only: a name such as constructor is not the renderer's
+  const rules = Object.hasOwn(ALLOWED, name) ? ALLOWED[name] : undefined
+  if (!rules || el.namespaceURI !== SVG_NS || !PARENTS[name].includes(parent)) return false
   for (const a of Array.from(el.attributes)) {
-    const rule = rules[a.name]
+    const rule = Object.hasOwn(rules, a.name) ? rules[a.name] : undefined
     if (!rule || !ok(rule, a.value)) return false
   }
   for (const n of Array.from(el.childNodes)) {
@@ -27,9 +28,12 @@ function allowed(el: Element, parent: string): boolean {
 /**
  * The page as an element, or null if it is not exactly what the renderer
  * writes. Parsed inert (a template runs nothing), then its clip and mask ids
- * are given a prefix: every snapshot numbers them from c0.
+ * are given a prefix: every snapshot numbers them from c0. A snapshot beyond
+ * the archive's limits (its size, its elements, its masks: archive/svg.ts) is
+ * not even parsed, whenever it was stored.
  */
 export function paper(markup: string, prefix: string): SVGSVGElement | null {
+  if (checkSVG(markup) !== true) return null
   const t = document.createElement('template')
   t.innerHTML = markup
   const root = t.content.firstChild

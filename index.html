@@ -124,10 +124,15 @@
         <dt>制作</dt>
         <dd>Yuki Sunaga</dd>
       </dl>
-      <!-- what the archive keeps (src/archive/record.ts, migrations/0001_archive.sql): keep the two in agreement -->
-      <p class="aside record">
-        ことばを入れて詩をつくると、そのことばと紙面が日時とともに記録されます。同じブラウザからの記録と、一度の訪問のなかでの順序がわかるよう、このブラウザに匿名のIDを保存します。記録には、名前・メールアドレス・IPアドレス・位置情報は含まれません。共有されたアドレスや作例を開いただけでは記録されません。記録は、この作品の制作と改善のためにのみ使います。
-      </p>
+      <!-- what the archive keeps (src/archive/record.ts, migrations/0001_archive.sql, migrations/0002_limits.sql):
+           keep them in agreement; the details are in docs/site.md, not here -->
+      <details class="record">
+        <summary>記録について</summary>
+        <p>ことばを入れて詩をつくると、そのことばと紙面が日時とともに記録されます。共有されたアドレスや作例を開いただけでは記録されません。</p>
+        <p>同じブラウザからの記録と、一度の訪問のなかでの順序がわかるよう、このブラウザに匿名のIDを保存します。記録には、名前・メールアドレス・位置情報は含まれません。</p>
+        <p>IPアドレスそのものは保存しません。不正な大量送信を防ぐため、IPアドレスから作った識別用の値を一時的に保持します。</p>
+        <p>記録は、この作品の運用と改善のためにのみ使います。仕組みの詳細は <a href="https://github.com/endoftheyukky/kotoba-no-katachi/blob/main/docs/site.md" target="_blank" rel="noopener">GitHub の技術文書</a>にあります。</p>
+      </details>
     </dialog>
 
     <script type="module" src="/src/main.ts"></script>

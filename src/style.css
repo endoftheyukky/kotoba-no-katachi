@@ -470,10 +470,67 @@ dialog dd a:focus-visible {
   outline-offset: 2px;
 }
 
-/* what is recorded: the last words of About */
+/* 記録について: the last line of About, folded; opened, it reads as quietly as the colophon */
 dialog .record {
   margin: 16px 0 0;
+  font-size: 12px;
   line-height: 1.8;
+  color: var(--mute);
+}
+
+dialog .record summary {
+  display: inline-block;
+  padding: 6px 0;
+  list-style: none;
+  cursor: pointer;
+}
+
+dialog .record summary::-webkit-details-marker {
+  display: none;
+}
+
+/* ＋ / − as the only mark, not read aloud (the element says itself whether it is open) */
+dialog .record summary::after {
+  content: '＋';
+  content: '＋' / '';
+  margin-left: 0.5em;
+}
+
+dialog .record[open] summary::after {
+  content: '−';
+  content: '−' / '';
+}
+
+dialog .record summary:hover,
+dialog .record summary:focus-visible {
+  color: var(--ink);
+  outline: none;
+}
+
+dialog .record summary:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
+}
+
+dialog .record p {
+  margin: 4px 0 8px;
+}
+
+dialog .record a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+dialog .record a:hover,
+dialog .record a:focus-visible {
+  color: var(--ink);
+}
+
+dialog .record a:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
 }
 
 /* the top edge of About, with × in its corner: it stays while the text scrolls under it */

@@ -4,6 +4,7 @@
 //
 //   npm run verify             check
 //   npm run verify:write       rewrite expected.json (only when a new version is published)
+//   npm run verify:snapshots   check the same pages' snapshots against the archive's limits (tools/verify/snapshots.mjs)
 //   CHROME=/path/to/chrome     the browser to use (default: the usual install path)
 import { spawn } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -16,7 +17,9 @@ const port = Number(process.env.PORT ?? 5199)
 const profile = mkdtempSync(join(tmpdir(), 'kotoba-verify-'))
 const server = await createServer({ server: { port, strictPort: true, host: '127.0.0.1', watch: null }, logLevel: 'error' })
 await server.listen()
-const child = spawn(process.execPath, ['tools/verify/cdp.mjs', `http://127.0.0.1:${port}`, profile, 'tools/verify/fixture.mjs'], {
+// npm run verify:snapshots draws the same pages to check the archive's snapshot limits instead
+const script = process.argv.includes('snapshots') ? 'tools/verify/snapshots.mjs' : 'tools/verify/fixture.mjs'
+const child = spawn(process.execPath, ['tools/verify/cdp.mjs', `http://127.0.0.1:${port}`, profile, script], {
   stdio: 'inherit',
   env: { ...process.env, MODE: process.argv.includes('--write') ? 'write' : 'check' },
 })

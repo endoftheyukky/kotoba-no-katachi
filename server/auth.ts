@@ -9,17 +9,26 @@
  *   cookie               __Secure-kotoba-admin, HttpOnly, Secure,
  *                        SameSite=Strict, Path=/admin, 12 hours; stateless
  *                        (changing SESSION_SECRET ends every session)
- *   throttle             after 10 wrong passwords in 15 minutes, every login is
- *                        refused until the 15 minutes are over. It counts for
- *                        everyone together: no address is kept to tell people apart.
+ *   attempts             a password is checked only after an attempt is taken
+ *                        (server/limits.ts): 5 per connecting address and 30 for
+ *                        everyone together in each 15 minutes. Taken, not counted
+ *                        afterwards, so passwords sent together cannot pass the
+ *                        limit; a right password gives its attempt back. One
+ *                        address alone cannot close the door for everyone. The
+ *                        address is not kept: only a keyed mark of it, for its
+ *                        15 minutes.
  *
  * Without both secrets the admin sheet stays closed (503).
  */
+import { giveBackStatement, mark, pruneStatement, take } from './limits'
 
 export const COOKIE = '__Secure-kotoba-admin'
 const TTL = 12 * 3_600_000
-const WINDOW = 15 * 60_000
-const MAX_FAILURES = 10
+
+export const ATTEMPTS = { window: 15 * 60_000, perAddress: 5, overall: 30 }
+
+/** the longest password checked; anything longer, or empty, is wrong without being checked */
+export const MAX_PASSWORD = 256
 
 const enc = new TextEncoder()
 
@@ -42,7 +51,7 @@ export async function passwordMatches(password: string, stored: string): Promise
   const [scheme, algo, iter, salt, hash] = stored.split(':')
   const iterations = Number(iter)
   if (scheme !== 'pbkdf2' || algo !== 'sha256' || !Number.isInteger(iterations) || iterations < 1_000 || iterations > 100_000) return false
-  if (!password || password.length > 256) return false
+  if (!password || password.length > MAX_PASSWORD) return false
   try {
     const expected = fromB64(hash)
     const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits'])
@@ -87,24 +96,24 @@ export async function authenticated(request: Request, env: Env): Promise<boolean
 export const sessionCookie = (token: string) => `${COOKIE}=${token}; Path=/admin; Max-Age=${TTL / 1000}; HttpOnly; Secure; SameSite=Strict`
 export const clearedCookie = `${COOKIE}=; Path=/admin; Max-Age=0; HttpOnly; Secure; SameSite=Strict`
 
-export async function throttled(db: D1Database): Promise<boolean> {
-  const row = await db.prepare('SELECT window_start, failures FROM admin_throttle WHERE id = 1').first<{ window_start: number; failures: number }>()
-  return !!row && Date.now() - row.window_start < WINDOW && row.failures >= MAX_FAILURES
-}
-
-export async function loginFailed(db: D1Database): Promise<void> {
+/**
+ * Take one attempt, for this address and for everyone, before a password is
+ * checked. Returns the rows it was taken from, or null when none is left (and
+ * then the overall count is not touched: one address cannot use up everyone's).
+ */
+export async function takeAttempt(request: Request, env: Env): Promise<string[] | null> {
   const now = Date.now()
-  await db
-    .prepare(
-      `INSERT INTO admin_throttle (id, window_start, failures) VALUES (1, ?1, 1)
-       ON CONFLICT (id) DO UPDATE SET
-         failures = CASE WHEN ?1 - window_start < ?2 THEN failures + 1 ELSE 1 END,
-         window_start = CASE WHEN ?1 - window_start < ?2 THEN window_start ELSE ?1 END`,
-    )
-    .bind(now, WINDOW)
-    .run()
+  const w = Math.floor(now / ATTEMPTS.window)
+  const expires = (w + 1) * ATTEMPTS.window
+  const address = await mark(env, request, 'login', w)
+  const own = `login:${w}:${address ?? 'unmarked'}`
+  const all = `login:${w}:all`
+  if (!(await take(env.DB, { key: own, limit: ATTEMPTS.perAddress, expires }))) return null
+  if (!(await take(env.DB, { key: all, limit: ATTEMPTS.overall, expires }))) return null
+  return [own, all]
 }
 
-export async function loginSucceeded(db: D1Database): Promise<void> {
-  await db.prepare('DELETE FROM admin_throttle WHERE id = 1').run()
+/** the right password: its attempt is given back, and windows that are over are cleared */
+export async function attemptSucceeded(env: Env, rows: string[]): Promise<void> {
+  await env.DB.batch([...rows.map((key) => giveBackStatement(env.DB, key)), pruneStatement(env.DB, Date.now())])
 }

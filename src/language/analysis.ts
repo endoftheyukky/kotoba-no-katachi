@@ -170,12 +170,12 @@ function mirror(graphemes: readonly Grapheme[]): Relation[] {
   return [{ kind: 'mirror', centre: g.length % 2 ? g[(g.length - 1) / 2].index : -1 }]
 }
 
-interface Run {
+export interface Run {
   start: number
   end: number
 }
 
-function kanjiRuns(graphemes: readonly Grapheme[]): Run[] {
+export function kanjiRuns(graphemes: readonly Grapheme[]): Run[] {
   const out: Run[] = []
   for (const g of graphemes) {
     if (g.script !== 'kanji') continue
@@ -186,31 +186,68 @@ function kanjiRuns(graphemes: readonly Grapheme[]): Run[] {
   return out
 }
 
+/** one step of the writing, as the reading must follow it */
+type Step = { run: number } | { kana: string } | { oneOf: string }
+
 /**
  * Match the reading against the writing: kana are literal anchors, each kanji
  * run takes whatever lies between them. Returns run start → reading.
+ *
+ * Where a run could take more or less, the earlier run takes the least that
+ * still lets the rest match — the choice the lazy expression ^(.+?)…$ once
+ * written here made. It is made by looking once from the end (from where each
+ * later step can still match the rest), so the time grows with the steps times
+ * the reading's length, never with the ways a reading can be divided.
  */
-function alignReading(graphemes: readonly Grapheme[], runs: readonly Run[], reading: string): Map<number, string> | null {
-  let pattern = '^'
-  const groups: number[] = []
+export function alignReading(graphemes: readonly Grapheme[], runs: readonly Run[], reading: string): Map<number, string> | null {
+  const steps: Step[] = []
   for (let i = 0; i < graphemes.length; ) {
     const run = runs.find((r) => r.start === i)
     if (run) {
-      pattern += '(.+?)'
-      groups.push(run.start)
+      steps.push({ run: run.start })
       i = run.end
       continue
     }
     const g = graphemes[i]
-    if (g.script === 'hiragana' || g.script === 'katakana') pattern += escape(toHiragana(g.char))
-    else if (g.char === 'ー') pattern += '(?:ー|[あいうえお])'
+    if (g.script === 'hiragana' || g.script === 'katakana') steps.push({ kana: toHiragana(g.char) })
+    else if (g.char === 'ー') steps.push({ oneOf: 'ーあいうえお' })
     // symbols and others are not read
     i++
   }
-  const m = new RegExp(pattern + '$').exec(reading.replace(/[^ぁ-ゟー]/g, ''))
-  if (!m) return null
-  return new Map(groups.map((start, k) => [start, m[k + 1]]))
+  // read as UTF-16 units, as the expression read it
+  const s = reading.replace(/[^ぁ-ゟー]/g, '')
+  const n = s.length
+  // can[k][p]: steps k… match s from p exactly to its end
+  const can = Array.from({ length: steps.length + 1 }, () => new Array<boolean>(n + 1).fill(false))
+  can[steps.length][n] = true
+  for (let k = steps.length - 1; k >= 0; k--) {
+    const step = steps[k]
+    const next = can[k + 1]
+    if ('run' in step) {
+      // at least one unit, then any place from which the rest matches
+      let later = false
+      for (let p = n - 1; p >= 0; p--) {
+        later ||= next[p + 1]
+        can[k][p] = later
+      }
+    } else if ('kana' in step) {
+      for (let p = 0; p + step.kana.length <= n; p++) can[k][p] = s.startsWith(step.kana, p) && next[p + step.kana.length]
+    } else {
+      for (let p = 0; p < n; p++) can[k][p] = step.oneOf.includes(s[p]) && next[p + 1]
+    }
+  }
+  if (!can[0][0]) return null
+  const out = new Map<number, string>()
+  let p = 0
+  steps.forEach((step, k) => {
+    if ('run' in step) {
+      // the shortest reading that leaves a match for the rest
+      let q = p + 1
+      while (!can[k + 1][q]) q++
+      out.set(step.run, s.slice(p, q))
+      p = q
+    } else p += 'kana' in step ? step.kana.length : 1
+  })
+  return out
 }
-
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const range = (a: number, b: number) => Array.from({ length: b - a }, (_, i) => a + i)

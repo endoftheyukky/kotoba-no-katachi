@@ -28,7 +28,7 @@ import { archiveName, CURRENT, versionOf, write, type Version } from './poem/gen
 import type { Analysis, Composition } from './poem/types'
 import { downloadBlob, pngOf, renderCanvas } from './render/png'
 import { renderSVG } from './render/svg'
-import { MAX_TITLE, normalizeTitle, type TitleInput } from './title'
+import { MAX_READING, MAX_TITLE, normalizeTitle, type TitleInput } from './title'
 
 const body = document.body
 const stage = document.getElementById('stage')!
@@ -96,6 +96,7 @@ function read(text: string, reading: string): TitleInput | string {
   const input = normalizeTitle({ text, reading })
   if (input === 'empty') return 'ことばを入力してください'
   if (input === 'too-long') return `ことばは${MAX_TITLE}字までです`
+  if (input === 'reading-too-long') return `よみは${MAX_READING}字までです`
   const missing = uncovered(input.text)
   if (missing.length) return `「${missing.join('')}」は、この作品の字体にない字です`
   return input
@@ -432,8 +433,9 @@ tryOwn.addEventListener('click', () => {
 // About closes with ×, Escape (the dialog's own), or a click outside it; the
 // focus goes back to About.
 aboutOpen.addEventListener('click', () => {
+  // opens at its first line, however far it was read last time, and 記録について folded
+  about.querySelector('details')?.removeAttribute('open')
   about.showModal()
-  // opens at its first line, however far it was read last time
   about.scrollTop = 0
 })
 about.addEventListener('click', (e) => {
