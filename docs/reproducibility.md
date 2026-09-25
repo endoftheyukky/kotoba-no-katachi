@@ -1,179 +1,112 @@
-# Determinism, versions and verification
+# 決定性、版、検証
 
-The same title, reading and version always give the same page. This document
-says exactly what that rests on, how to check it, and where it stops.
+同じ題、同じ読み、同じ版からは、いつも同じ紙面ができる。この文書では、それが何によって成り立っているか、どう確かめるか、どこまでしか保証しないかを書く。
 
 ```mermaid
 flowchart TD
-  A["address: title · reading · v"] --> N["normalizeTitle → text, reading, variant = 0"]
+  A["アドレス：title · reading · v"] --> N["normalizeTitle → text, reading, variant = 0"]
   N --> S["seed = cyrb53(text + ' ' + reading + ' ' + variant)"]
-  S --> R["Rng(seed).fork('parametric') → one draw: side (which way the curve turns)"]
-  A --> V["versionOf(v): 1 → v1 · none or unpublished → the current version (v1)"]
+  S --> R["Rng(seed).fork('parametric') → 一回だけ引く：side（曲線が曲がる向き）"]
+  A --> V["versionOf(v)：1 → v1 · 指定なし・未公開 → 現在の版（v1）"]
   V --> W["write(analysis, version) → compose(analysis, meaning)"]
   N --> W
   R --> W
-  P["fixed with the release: the code (tag v1.0.0) · the fonts (@fontsource 5.3.0, package-lock.json)<br/>· the table axes-1 (sha256 in meta.json) · the page's canvas rasterisation (Chromium)"] --> W
-  W --> D["Draft (marks) → the same SVG and PNG"]
+  P["公開時に固定したもの：コード（タグ v1.0.0）· フォント（@fontsource 5.3.0、package-lock.json）<br/>· 表 axes-1（meta.json の sha256）· ページのキャンバスの描画（Chromium）"] --> W
+  W --> D["Draft（marks）→ 同じ SVG と PNG"]
 ```
 
-## The seed
+## 乱数の種
 
-`titleSeed(input) = hash(text + " " + reading + " " + variant)` (`src/title.ts`),
-where `hash` is cyrb53 folded to 32 bits and the generator is mulberry32
-(`src/core/random.ts`). `fork(label)` makes an independent stream,
-`Rng(hash(seed + ":" + label))`, so one rule's draws never shift another's.
+`titleSeed(input) = hash(text + " " + reading + " " + variant)`（`src/title.ts`）。`hash` は 32 ビットに畳んだ cyrb53、乱数の生成器は mulberry32 である（`src/core/random.ts`）。`fork(label)` は独立した乱数列 `Rng(hash(seed + ":" + label))` を作るので、ある規則が乱数を引いても、ほかの規則の乱数はずれない。
 
-- **The version is not part of the seed.** `v` chooses which generator runs;
-  every version of one title starts from the same seed.
-- **The reading is.** Giving a reading changes the seed as well as the sound
-  analysis.
-- **The seed decides exactly one thing**: `side`, the direction the
-  curve turns (`rng.next() < 0.5 ? +1 : −1`, `parametric/params.ts`). Every
-  other value of a page is a deterministic function of the readings. The
-  material's placement uses a fixed ordered dither and a fixed integer hash of
-  lattice coordinates, not the random generator.
+- **版は種に含めない。** `v` はどの生成器を動かすかを選ぶだけで、ひとつの題のどの版も同じ種から始まる。
+- **読みは種に含める。** 読みを添えると、音の読み取りと一緒に種も変わる。
+- **種が決めるのは一つだけである。** 曲線が曲がる向き `side` である（`rng.next() < 0.5 ? +1 : −1`、`parametric/params.ts`）。紙面のほかの値は、すべて読み取りから決まる。素材の配置には乱数を使わず、固定の順序付きディザと、格子の座標の固定の整数ハッシュを使う。
 
-## What a page depends on
+## 紙面が依存するもの
 
-1. The normalised input (text, reading) and the version.
-2. The code of the published generator: `write()` (`src/poem/generators.ts`)
-   and everything `compose()` reads.
-3. The fonts: glyph measurements are made from Noto Sans JP 500 and Noto
-   Serif JP 300 as bundled from `@fontsource` 5.3.0.
-4. The meaning table `axes-1`, whose shards are pinned by the sha256
-   values in `public/semantic/axes-1/meta.json`.
-5. The browser's text rasterisation (see [Limitations](#limitations-and-failure-modes)).
+1. 正規化した入力（text、reading）と版
+2. 公開した生成器のコード：`write()`（`src/poem/generators.ts`）と、`compose()` が読むすべてのもの
+3. フォント：字形の計測は、`@fontsource` 5.3.0 として同梱した Noto Sans JP 500 と Noto Serif JP 300 で行う
+4. 意味の表 `axes-1`：断片は `public/semantic/axes-1/meta.json` の sha256 で固定している
+5. ブラウザの文字の描画（[制約と失敗時の挙動](#制約と失敗時の挙動)を参照）
 
-Nothing depends on the time, the device's locale or fonts, the window size
-(the page is drawn in its own 1000-unit space), earlier pages, or any network
-service other than the site's own files.
+時刻、端末の言語設定やフォント、ウィンドウの大きさ（紙面は 1000 単位の自前の座標で描く）、それまでに見た紙面、サイト自身のファイル以外のネットワーク上のサービスには、何も依存しない。
 
-## Versions and the frozen boundary
+## 版と凍結の範囲
 
-| version | address | call |
+| 版 | アドレス | 呼び出し |
 | --- | --- | --- |
 | v1 | `?v=1` | `compose(analysis, await readMeaning(text))` |
 
-The site writes the version into every address it makes (`&v=1`). An address
-with no `v`, or with a version that was never published, is drawn by the
-current one (`CURRENT` in `src/poem/generators.ts`).
+サイトは、作るアドレスすべてに版を書く（`&v=1`）。`v` のないアドレスや、公開していない版を指すアドレスは、現在の版（`src/poem/generators.ts` の `CURRENT`）で描く。
 
-A published version is never edited: a change to what it writes is a new
-version with its own `v` value, added to `VERSIONS` beside it (and to the copy
-in `server/share.ts`, `GENERATORS` in `src/archive/protocol.ts` and the
-verification fixture), and `CURRENT` says which version new words are written
-in. Addresses that name the older version keep drawing it.
+公開した版は書き換えない。書く内容を変えるときは、新しい `v` の値をもつ新しい版として `VERSIONS` に並べて加える（`server/share.ts` の写し、`src/archive/protocol.ts` の `GENERATORS`、検証の fixture にも加える）。新しいことばをどの版で書くかは `CURRENT` で決める。古い版を指すアドレスは、その版で描き続ける。
 
-**The frozen code is not only `src/poem/parametric/`**. Changing any of these
-can change what v1 writes: `src/title.ts`, `src/core/`, `src/language/`
-(including `semantic/` and `lexicon/`), `src/glyph/`, `src/poem/`
-(operations, scores, units, face, parametric), and the fonts and table they
-read. Rendering (`src/render/`) does not change the `Draft` but changes what
-is drawn from it. `tools/verify` is how to find out.
+**凍結の範囲は `src/poem/parametric/` だけではない。** 次のどれを変えても、v1 が書く内容は変わりうる。
 
-The tag `v1.0.0` marks the source as v1 was published. Later commits on
-`main` may change the site around the generator (About, sharing, icons,
-documentation); the verification below must stay identical.
+- `src/title.ts`
+- `src/core/`
+- `src/language/`（`semantic/` と `lexicon/` を含む）
+- `src/glyph/`
+- `src/poem/`（operations、点数、units、face、parametric）
+- それらが読むフォントと表
 
-## Verification
+描画（`src/render/`）は `Draft` を変えないが、`Draft` から描かれるものは変わる。変わったかどうかは `tools/verify` で確かめる。
 
-### Running it
+タグ `v1.0.0` は、v1 を公開したときのソースを指す。その後の `main` への commit では、生成器のまわりのサイト（About、共有、アイコン、文書など）を変えることがある。その場合も、下の検証の結果は同一でなければならない。
+
+## 検証
+
+### 実行のしかた
 
 ```bash
 npm ci
 npm run verify
 ```
 
-`tools/verify/run.mjs` serves the repository with Vite, opens headless Chrome
-(`$CHROME`, or the usual install path of the platform), and runs
-`tools/verify/fixture.mjs` in the page:
+`tools/verify/run.mjs` は、Vite でリポジトリを配信し、headless Chrome を開いて（`$CHROME`、なければプラットフォームのふつうのインストール先）、ページの中で `tools/verify/fixture.mjs` を実行する。
 
-1. For every title of the public title sets in `src/study/` — 34 development
-   titles, 47 held-out titles, 12 probes, 24 ordinary words and 14 edge cases,
-   131 in all, none of them typed on the site by a visitor — it normalises the
-   title, analyses it afresh, and runs `write()` for every published version.
-2. Each page is reduced to `sha256(JSON.stringify(draft.marks))` — the whole
-   output of the generator, every coordinate at full double precision —
-   with the number of marks and the sums of x, y and size as a readable
-   summary.
-3. It runs the invariant audit (below) on every page.
-4. It compares everything with `tools/verify/expected.json`, prints the result
-   as JSON, and exits 1 on any difference, any missing page or any invariant
-   failure.
+1. `src/study/` にある公開タイトルセットのすべての題について、題を正規化し、解析し直し、公開しているすべての版で `write()` を実行する。題は、開発用 34、検証用に取り分けた 47、探り用 12、ふつうの語 24、端のケース 14 の合計 131 で、どれもサイトで訪問者が入力したものではない。
+2. 紙面ごとに `sha256(JSON.stringify(draft.marks))` を求める。これは生成器の出力全体（すべての座標を倍精度のまま）のハッシュである。読める要約として、印の数と x、y、大きさの合計も添える。
+3. すべての紙面について、不変条件の監査（下）を行う。
+4. すべてを `tools/verify/expected.json` と比べ、結果を JSON で出力する。違いがひとつでもあるか、紙面が欠けているか、不変条件を破っていれば、終了コード 1 で終わる。
 
-`npm run verify:write` rewrites `expected.json`. It is for a new published
-version only; for a published version the file must not change.
+`npm run verify:write` は `expected.json` を書き直す。これは新しい版を公開するときだけに使う。公開した版について、このファイルを変えてはならない。
 
-### What `expected.json` was checked against
+### `expected.json` を何と照合したか
 
-When the fixture was made, it was cross-checked in two ways:
+fixture を作ったとき、二つの方法で照合した。
 
-- All 131 titles hash identically when drawn by the source deployed on the
-  site, and every page's canonical SVG is byte-for-byte the same.
-- 128 of the titles were also in the audit taken when the generator was
-  frozen; their pages agree mark for mark (the other three are edge cases
-  written later to replace titles that had come from the site's own input).
+- 131 題すべてについて、サイトに公開したソースで描いた紙面とハッシュが一致し、各紙面の正規化した SVG もバイト単位で一致した。
+- そのうち 128 題は、生成器を凍結したときの監査にも含まれていて、印のひとつひとつまで一致した（残りの 3 題は、サイトへの入力から採っていた題を置き換えるために、あとから書いた端のケースである）。
 
-### The invariant audit (`src/poem/invariants.ts`)
+### 不変条件の監査（`src/poem/invariants.ts`）
 
-`soundness(a, marks, o)` counts, on a finished page:
+`soundness(a, marks, o)` は、できあがった紙面について次の数を数える。
 
-| count | a failure is |
+| 数 | 失敗とみなすもの |
 | --- | --- |
-| `lost` | a character of the title that is not on the page: not written by a mark of which ≥ 50 % is visible (or that is clipped on purpose), not represented by a form of grains, and not one the poem writes as space (`absent`) |
-| `disordered` | two characters written once each, in the wrong reading order by more than 0.75 × the larger size — skipped for repetition pages and for figures read along a closing curve (`closure ≥ 0.35` or `rows > 1.05`); a withdrawn character is named and left out |
-| `overlaps` | two whole written marks of comparable size (≤ 3×) whose boxes (0.9 × size) overlap by more than 25 % of the smaller |
-| `inkHits` | a grain whose centre or one of four points at ±0.3 of its size falls on written ink (alpha > 96 in the glyph's raster) |
-| `crowded` | two grains whose boxes (0.8 × size) overlap by more than 30 % |
-| `infinite` | any non-finite coordinate, size or rotation |
+| `lost` | 紙面にない題の字。50 % 以上が見えている印（または意図して切り取った印）で書かれておらず、粒の形でも表されておらず、詩が余白として書く字（`absent`）でもないもの |
+| `disordered` | 一度ずつ書かれた二つの字が、大きいほうの大きさの 0.75 倍を超えて、読む順と逆に並んでいるもの。反復の紙面と、閉じた曲線に沿って読む図（`closure ≥ 0.35` または `rows > 1.05`）では調べない。退いた字は名前を挙げて除く |
+| `overlaps` | 大きさが同程度（3 倍以内）の、書かれた二つの字の枠（大きさの 0.9 倍）が、小さいほうの 25 % を超えて重なるもの |
+| `inkHits` | 粒の中心か、大きさの ±0.3 の四点のどれかが、書かれた墨（字形のラスターでアルファ値 96 超）に乗るもの |
+| `crowded` | 二つの粒の枠（大きさの 0.8 倍）が 30 % を超えて重なるもの |
+| `infinite` | 有限でない座標、大きさ、回転 |
 
-For every title of the fixture every count is 0.
+fixture のすべての題で、どの数も 0 である。
 
-**These checks do not run on the site.** The generator does not audit a page before
-showing it; its rules hold by construction ([composition.md §11](composition.md#11-what-holds-by-construction)),
-and the audit is how that is checked offline.
+**この検査はサイトでは行わない。** 生成器は紙面を見せる前に監査しない。規則は構造上つねに成り立つように作ってあり（[composition.md §11](composition.md#11-構造上つねに成り立つこと)）、監査はそれをオフラインで確かめるためのものである。
 
-## Limitations and failure modes
+## 制約と失敗時の挙動
 
-- **Kanji without a reading have no sound.** There is no reading dictionary:
-  unless the visitor adds a reading in brackets, a run of kanji is one
-  `unread` mora of weight 2, and nothing about its sound (repetition of
-  morae, vowels, special morae) is read. A reading that cannot be aligned with
-  the writing is ignored the same way.
-- **Segmentation is rule-based.** Tokens, parts of speech, coordination and
-  dependency come from script runs, a short list of function words and
-  okurigana endings ([reading.md](reading.md#segmentation-segmentts)). Titles
-  outside those patterns are segmented coarsely.
-- **Glyph readings belong to one font.** Containment, similarity, parts,
-  seams and counters are measurements of Noto Sans JP 500 as bundled. Another
-  font, or another version of this one, would read differently and draw
-  different pages. The inventory search cannot find components much smaller
-  than their own size inside a character.
-- **Measurement depends on the browser's rasterisation.** Glyphs are measured
-  by drawing text into a canvas and reading the pixels. Two rendering engines
-  (or two versions of one) may antialias the same glyph differently, which can
-  move a measured value and, near a threshold, change a decision.
-  `expected.json` was produced and checked in **Chromium (headless Chrome
-  153) on Windows**; the published site has been checked visually on iOS
-  Safari, but byte-identical output in WebKit or Gecko has not been verified.
-  Floating-point functions (`Math.sin`, `Math.log`, …) are specified to the
-  engine's precision and could differ in the last bit between engines; V8 is
-  consistent across platforms.
-- **The drawn glyphs are text in a web font.** The SVG uses `<text>`, not
-  outlines, so what the eye sees is the browser's rendering of the font.
-- **Characters the fonts do not have are refused**, not drawn in a fallback
-  font ([reading.md](reading.md#coverage)).
-- **If the fonts cannot be loaded, no page is drawn.** `GlyphLibrary.prepare`
-  throws; the site says 「紙面をつくれませんでした。もう一度お試しください。」
-  and draws nothing.
-- **If the meaning table cannot be read, no page is drawn.** A shard that
-  fails to load makes `readMeaning` throw; the page shows the same message.
-  The failure is not cached, so trying again fetches the shard again.
-- **Meaning ignores the reading** and reads only characters the table covers
-  (Japanese words up to 8 characters, single kanji); titles in other scripts
-  have coverage 0 and are read from their writing alone.
-- **The fixture covers the public title sets**, not every possible title. A
-  change that affects only titles outside them would pass it; the sets were
-  chosen to cover the structures the generator reads (repetition, pairs,
-  nesting, negation, readings, long titles, Latin letters, digits,
-  punctuation).
+- **読みのない漢字には音がない。** 読みの辞書はない。訪問者が括弧で読みを添えない限り、漢字の並びは重み 2 のひとつの `unread` モーラになり、その音について（モーラ、母音、特殊モーラのくり返しなど）は何も読まない。字面に割り当てられない読みも、同じように無視する。
+- **分かち書きは規則による。** トークン、品詞、並列、係りは、文字の種類の区間、短い機能語の一覧、送り仮名の語尾から決める（[reading.md](reading.md#分かち書きsegmentts)）。このパターンに当てはまらない題は、粗く分かれる。
+- **字形の読み取りは、ひとつのフォントについてのものである。** 包含、類似、部品、継ぎ目、counter は、同梱した Noto Sans JP 500 の計測である。別のフォントや、このフォントの別の版なら、読み方も描く紙面も変わる。部品の一覧による探索では、字の中にずっと小さく書かれた部品は見つからない。
+- **計測はブラウザの描画に依存する。** 字形は、キャンバスに文字を描いて画素を読むことで測る。二つの描画エンジン（あるいは同じエンジンの二つの版）が、同じ字形を違うアンチエイリアスで描けば、測った値が動き、閾値の近くでは判断が変わりうる。`expected.json` は **Windows 上の Chromium（headless Chrome 153）** で作って確かめた。公開サイトは iOS の Safari でも目で見て確かめたが、WebKit や Gecko でバイト単位まで一致するかは確かめていない。浮動小数点の関数（`Math.sin`、`Math.log` など）の精度はエンジンに任されていて、エンジン間で最後のビットが違う可能性がある。V8 はプラットフォームをまたいで一致する。
+- **描く字形は Web フォントの文字である。** SVG はアウトラインではなく `<text>` を使うので、目に見えるのは、ブラウザがフォントを描いた結果である。
+- **フォントにない字は拒否する。** 代わりのフォントでは描かない（[reading.md](reading.md#字体にある字の範囲)）。
+- **フォントを読み込めなければ、紙面は描かない。** `GlyphLibrary.prepare` が例外を投げ、サイトは「紙面をつくれませんでした。もう一度お試しください。」と表示して何も描かない。
+- **意味の表を読めなければ、紙面は描かない。** 断片の読み込みに失敗すると `readMeaning` が例外を投げ、ページは同じ文を表示する。失敗は覚えておかないので、もう一度試せば断片を取り直す。
+- **意味の読み取りは読みを使わず**、表にある字（8 字までの日本語の語と単漢字）だけを読む。ほかの文字の題は coverage が 0 になり、字面だけから読まれる。
+- **fixture が扱うのは公開タイトルセットだけである。** ありうるすべての題ではない。セットの外の題にだけ影響する変更は、検証を通ってしまう。セットは、生成器が読む構造（反復、組、入れ子、否定、読み、長い題、ラテン文字、数字、句読点）を覆うように選んである。

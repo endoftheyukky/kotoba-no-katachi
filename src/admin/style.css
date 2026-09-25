@@ -70,6 +70,11 @@ button[aria-pressed="true"] {
   color: var(--ink);
 }
 
+button:disabled {
+  color: var(--line);
+  cursor: default;
+}
+
 button:focus-visible,
 .sheet:focus-visible {
   outline: 1px solid var(--ink);
@@ -97,10 +102,11 @@ button:focus-visible,
   color: var(--mute);
 }
 
-#out {
+#refresh {
   margin-left: auto;
 }
 
+#refresh,
 #out button {
   font-size: 12px;
   letter-spacing: 0.06em;
@@ -139,6 +145,90 @@ button:focus-visible,
 }
 
 #q::placeholder {
+  color: var(--faint);
+}
+
+/* --- the archive at a glance: the last days, the words written most --- */
+
+#overview {
+  padding: 0 var(--side) 26px;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--mute);
+}
+
+#overview .sum {
+  margin: 0 0 12px;
+}
+
+#overview .days {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0 6px;
+  max-width: 560px;
+}
+
+#overview .day {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+}
+
+#overview .column {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 40px;
+}
+
+#overview .bar {
+  display: block;
+  width: 100%;
+  max-width: 16px;
+  min-height: 1px;
+  background: var(--line);
+}
+
+#overview .today .bar {
+  background: var(--mute);
+}
+
+#overview .day .n {
+  min-height: 1.3em;
+  font-size: 10px;
+  color: var(--ink);
+}
+
+#overview .date {
+  font-size: 10px;
+  color: var(--faint);
+}
+
+#overview .words {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 16px;
+  max-width: 820px;
+  margin: 16px 0 0;
+}
+
+#overview .label {
+  color: var(--faint);
+}
+
+#overview .word {
+  padding: 4px 0;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+
+#overview .word .n {
+  margin-left: 0.35em;
+  font-size: 11px;
   color: var(--faint);
 }
 
@@ -245,6 +335,10 @@ button:focus-visible,
   color: var(--faint);
 }
 
+.card .you {
+  color: var(--mute);
+}
+
 .card .step {
   margin-bottom: 7px;
   font-size: 12px;
@@ -307,6 +401,12 @@ button:focus-visible,
   padding: 0;
   font-size: 20px;
   line-height: 1;
+}
+
+/* ‹ ›: the page before and after, at the other end of the bar from × */
+#detail .bar .steps {
+  display: flex;
+  margin-right: auto;
 }
 
 #detail .body {

@@ -32,13 +32,13 @@
 
 ```mermaid
 flowchart LR
-  IN["title · reading · v"] --> NT["normalize"]
-  NT --> LA["language analysis"]
-  NT --> GL["glyph measurement<br/>and relations"]
-  NT --> SE["meaning<br/>(axes-1 table)"]
-  LA --> OP["operation layer<br/>→ Material"]
+  IN["title · reading · v"] --> NT["正規化"]
+  NT --> LA["言語の解析"]
+  NT --> GL["字形の計測<br/>と関係"]
+  NT --> SE["意味<br/>（axes-1 の表）"]
+  LA --> OP["操作の層<br/>→ Material"]
   GL --> OP
-  OP --> PG["motifs · figure ·<br/>page · acts · material"]
+  OP --> PG["モチーフ · 図 ·<br/>紙面 · 行為 · 素材"]
   LA --> PG
   GL --> PG
   SE --> PG
@@ -72,7 +72,7 @@ npm run verify       # 公開 fixture の検証：131題が tools/verify/expecte
   - コード（タグ `v1.0.0`）
   - フォント（`@fontsource/noto-sans-jp` と `noto-serif-jp` の 5.3.0。`package-lock.json` で固定）
   - 意味の表 `public/semantic/axes-1/`（各断片の sha256 を `meta.json` に記録）
-- 字形はブラウザの canvas で測るため、出力は描画エンジンに依存します。fixture は Chromium で作成・検証しています（[制約](docs/reproducibility.md#limitations-and-failure-modes)）。
+- 字形はブラウザの canvas で測るため、出力は描画エンジンに依存します。fixture は Chromium で作成・検証しています（[制約](docs/reproducibility.md#制約と失敗時の挙動)）。
 - 意味の表は、同じ chiVe のファイルから `tools/semantic/axes.py` と `shard.py` でビット単位で同一に作り直せます。
 - 生成記録をローカルで動かすには、`wrangler.example.toml` を `wrangler.toml` にコピーして自分の D1 の id を入れ、`npm run dev:archive` を実行します。
 

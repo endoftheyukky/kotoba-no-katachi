@@ -1,133 +1,128 @@
-# Composition: the generator
+# 構成：生成器
 
-How the generator turns an `Analysis` (see [reading.md](reading.md)) and a `Meaning` (see
-[semantics.md](semantics.md)) into a `Draft`. Every constant below is the one
-in the code; file references are to `src/poem/`. `clip(x, lo, hi)` clamps
-(default 0…1); `lean(key, x)` is the motif pull of [§3](#3-motifs-and-rhyme).
+生成器が、`Analysis`（[reading.md](reading.md)）と `Meaning`（[semantics.md](semantics.md)）から `Draft` を作る手順を書く。以下の定数はすべてコードの値そのままで、ファイルの場所は `src/poem/` からの相対パスで示す。`clip(x, lo, hi)` は値を範囲に収める関数（範囲を省くと 0…1）、`lean(key, x)` は [§3](#3-モチーフと韻) で説明するモチーフの引き寄せである。
 
 ```
 compose(a, meaning)
-  ├─ §1  operation layer → Material (units, primary, modifiers)
+  ├─ §1  操作の層 → Material（units, primary, modifiers）
   └─ parametricPage(a, material, rng.fork('parametric'), meaning)       parametric/index.ts
        ├─ §3  motifs = readMotifs(a, material)
-       ├─ §4–6 traceParams(): figure, rows, paper, acts                   parametric/params.ts, acts.ts
-       ├─ §7  traceMarks(): the figure laid on the page                   parametric/trace.ts, paper.ts
-       ├─ §8  materialParams() → economy → materialMarks()                 parametric/params.ts, material.ts, frame.ts
-       └─ marks = [...figure marks, ...material marks]
+       ├─ §4–6 traceParams()：図、行、紙面、行為                          parametric/params.ts, acts.ts
+       ├─ §7  traceMarks()：図を紙面に置く                                parametric/trace.ts, paper.ts
+       ├─ §8  materialParams() → 行為との配分 → materialMarks()           parametric/params.ts, material.ts, frame.ts
+       └─ marks = [...図の印, ...素材の印]
   └─ §9  withFaces(a, material, marks)                                    face.ts
 ```
 
-## 1. The operation layer
+## 1. 操作の層
 
-The first half of `compose()` is the operation layer (`compose.ts`,
-`operations/*`, `salience.ts`, `potential.ts`). Its output, the `Material`,
-is what the rest of the generator draws.
+`compose()` の前半を、操作の層（operation layer）と呼ぶ（`compose.ts`、`operations/*`、`salience.ts`、`potential.ts`）。この層が出力する `Material` を、生成器の残りの部分が描く。
 
-**Proposals.** Four operations each propose readings of the title
-(`propose(a)`); each proposal has a `focus`, a `level` (1 = between words and
-characters, 2 = inside a character, 3 = sound, 4 = the white inside a
-letterform), an `origin` (`endogenous` — the title's own structure,
-`intrinsic` — one character's own form, `exogenous` — a component the title
-does not write) and `roles` (whether it may be primary, whether it may be a
-modifier):
+**提案。** 四つの操作が、それぞれ題の読み方を提案する（`propose(a)`）。提案は次の値をもつ。
 
-| operation | focus kinds | reads |
+- `focus`：何に注目した読みか
+- `level`：1 = 語と字のあいだ、2 = 字の内側、3 = 音、4 = 字形の内側の白
+- `origin`：`endogenous`（題そのものの構造）、`intrinsic`（一字の形）、`exogenous`（題が書かない部品）
+- `roles`：主操作になれるか、修飾になれるか
+
+| 操作 | focus の種類 | 読むもの |
 | --- | --- | --- |
-| proliferation | `repetition`, `plain` | reduplication, recurrence of graphemes / morae / sounds, a form repeated inside one character (`echoForm`) |
-| decomposition | `parts`, `joint` | `structuralParts` (islands or open seams), cuts by beats when a reading is given, a kanji stem + kana ending |
-| transformation | `pair` | glyph containment / similarity between the title's characters (or with an inventory component), voicing (ぜ = せ + ゛) |
-| absence | `absence`, `counter` | negations, っ (silence), relation words; counters (white enclosed by strokes) |
+| proliferation（増やす） | `repetition`、`plain` | 反復、字・モーラ・音のくり返し、ひとつの字の中でくり返される形（`echoForm`） |
+| decomposition（分ける） | `parts`、`joint` | `structuralParts`（島、または開いた継ぎ目）、読みがあるときの拍による切れ目、漢字の語幹＋かなの語尾 |
+| transformation（変える） | `pair` | 題の字どうし（または部品の一覧の部品と）の字形の包含・類似、清濁（ぜ = せ + ゛） |
+| absence（欠けさせる） | `absence`、`counter` | 否定、っ（沈黙）、関係を表す語。counter（画に囲まれた白） |
 
-The values each proposal assigns are written out, rule by rule, in the
-`rules` array at the top of each operation file.
+各提案がどの値を割り当てるかは、各操作のファイルの先頭にある `rules` 配列に、規則ごとに書いてある。
 
-**Scores.**
+**点数。**
 
 ```
-linguisticSalience = relationStrength^0.4 · distinctiveness^0.4 · coverage^0.2     (0 if any is 0)
-visualPotential    = legibility · structure                                        (per focus kind, potential.ts)
+linguisticSalience = relationStrength^0.4 · distinctiveness^0.4 · coverage^0.2     （どれかが 0 なら 0）
+visualPotential    = legibility · structure                                        （focus の種類ごと。potential.ts）
 poeticPotential    = √(linguisticSalience · visualPotential)
 ```
 
-**Feature descent** (`compose.ts`). Candidates allowed to be primary are
-ranked by `poeticPotential` in five layers: (1) levels ≤ 2 of the title's own
-proposals; (2) + exogenous proposals of level ≤ 2; (3) + level 3; (4) +
-level 4; (5) everything. Starting at layer 1, with `upper` the best of the
-current layer and `deepest` the best of the last:
+**特徴の降下**（`compose.ts`）。主操作になれる候補を、次の五つの層に分けて `poeticPotential` で順位を付ける。
+
+1. 題そのものの提案のうち、level 2 以下
+2. 1 に、level 2 以下の exogenous な提案を加える
+3. 2 に level 3 を加える
+4. 3 に level 4 を加える
+5. すべて
+
+層 1 から始め、今の層の最高点を `upper`、最後の層の最高点を `deepest` として、次のように決める。
 
 ```
-upper ≥ SETTLED (0.6)                                   → settle here
-upper < DESCENT_FLOOR (0.32)                            → go down a layer
-deepest ≥ DECISIVE (1.5) · upper and deepest ≥ 0.6      → go down, unless the deeper candidate reads
-                                                          the same observation (shared basis) → settle
-otherwise                                               → settle
+upper ≥ SETTLED (0.6)                                   → この層に決める
+upper < DESCENT_FLOOR (0.32)                            → 一つ下の層へ
+deepest ≥ DECISIVE (1.5) · upper かつ deepest ≥ 0.6    → 下へ。ただし下の候補が同じ観察を読んでいる
+                                                          （根拠が共通する）なら、この層に決める
+それ以外                                                → この層に決める
 ```
 
-The primary operation is the first of the settled layer (variant 0; the site
-never uses another variant).
+主操作は、決めた層の先頭の候補である（variant 0。サイトは別の variant を使わない）。
 
-**Modifiers.** Every other proposal may act on the material as a modifier if
-it is not the primary's operation, has `roles.modifier`, has salience ≥ 0.4
-(`MODIFIER_SALIENCE`), and its slot is free: one *material* modifier
-(decomposition or transformation; taken already if the primary is one of
-them) and one *subtractive* modifier (absence). Its `apply()` rewrites units:
+**修飾。** ほかの提案は、次の条件をすべて満たせば、修飾として素材に働きかけられる。
 
-| operation | as primary | as modifier |
+- 主操作と同じ操作ではない
+- `roles.modifier` をもつ
+- salience が 0.4（`MODIFIER_SALIENCE`）以上
+- 空いている枠がある。枠は、*素材*の修飾（decomposition か transformation。主操作がどちらかなら埋まっている）と、*引き算*の修飾（absence）が一つずつ
+
+修飾は `apply()` で units を書き換える。
+
+| 操作 | 主操作のとき | 修飾のとき |
 | --- | --- | --- |
-| absence | marks its graphemes `absent` (unless that would leave nothing written) | the same |
-| decomposition | no change to units | `parts`: the character written as its parts, slightly apart |
-| transformation | no change to units | `minus`: every occurrence of the outer glyph written with the inner glyph removed |
+| absence | その字を `absent` にする（書かれる字が何も残らなくなる場合を除く） | 同じ |
+| decomposition | units は変えない | `parts`：字を部品に分け、少し離して書く |
+| transformation | units は変えない | `minus`：外側の字形が出てくるたびに、内側の字形の墨を取り除いて書く |
 
-**What the page takes from it:**
+**紙面がここから受け取るもの：**
 
-- `units` = the material's units in reading order, with `absent`, `parts` and
-  `minus` as the operation layer set them;
-- `primary.poeticPotential` (the page's `potential`, §5);
-- `primary.focus` — `pair` + containment gives `operation = relation.score`;
-  `parts` gives `operation = 0.55 + 0.45 · echo.similarity`; the focus also
-  names the page's subject (§5), feeds the `nesting` motif (§3), and decides
-  which marks are written in the reading face (§9).
+- `units`：素材の units を読む順に並べたもの。`absent`、`parts`、`minus` は操作の層が設定したまま
+- `primary.poeticPotential`（紙面の `potential`、§5）
+- `primary.focus`：`pair` で包含なら `operation = relation.score`、`parts` なら `operation = 0.55 + 0.45 · echo.similarity`。focus は紙面の主題（§5）も決め、`nesting` モチーフ（§3）に渡り、どの印を読み取り用の字体で書くか（§9）も決める
 
-## 2. What is read per unit
+## 2. 字ごとに読むもの
 
-With `n` the number of non-space graphemes:
+`n` を空白以外の字の数として、次の値を求める。
 
 ```
-weight_i  = clip(mean mora weight of the morae containing unit i, 0.6, 2.2)   (1 if none)   "beats"
-ink_i     = glyph density of unit i (reading face)
+weight_i  = clip(unit i を含むモーラの重みの平均, 0.6, 2.2)   （該当なしなら 1）   「拍」
+ink_i     = unit i の字形の density（読み取り用の字体）
 contrast  = clip(std(ink) / mean(ink) / 0.45)
 size_i    = clip((ink_i / mean(ink))^(0.5 · contrast), 0.8, 1.25) · 0.92^run_i
-            run_i = how many of the previous 3 units are the same character
-breaks    = unit indices where the token changes
+            run_i = 直前の 3 つの unit のうち、同じ字の数
+breaks    = トークンが変わる unit の位置
 ```
 
-## 3. Motifs and rhyme
+## 3. モチーフと韻
 
-`readMotifs(a, material)` (`parametric/motif.ts`), each in [0, 1]:
+`readMotifs(a, material)`（`parametric/motif.ts`）は、次の六つを [0, 1] の値で読む。
 
 ```
 repetition   = clip(covered / n · (0.45 + 0.55 · clip((occurrences − 1) / 2)))
-               covered: graphemes in a reduplication or a grapheme recurrence; occurrences: the most of either
-pairing      = clip(terms · (0.6 + 0.4 · clip((tokens − 1) / 3)))       terms = 1 coordination, 0.65 dependency, else 0
-nesting      = clip(max(read, 0.75 if focus is parts, 0.5 if focus is counter) + 0.1 · clip(counters / 3))
-               read = clip((score − 0.5) / 0.45) of the strongest containment ≥ 0.65 between the title's own
-               CJK characters (not inventory); counters: over all the title's characters
-absence      = clip(absent units / units + 0.45 if a negation)
+               covered：反復か字のくり返しに含まれる字の数。occurrences：そのどちらかの最多回数
+pairing      = clip(terms · (0.6 + 0.4 · clip((tokens − 1) / 3)))       terms = 並列なら 1、係りなら 0.65、それ以外 0
+nesting      = clip(max(read, focus が parts なら 0.75, focus が counter なら 0.5) + 0.1 · clip(counters / 3))
+               read = 題の漢字どうし（部品の一覧は除く）で最も強い 0.65 以上の包含の点数から clip((score − 0.5) / 0.45)
+               counters：題のすべての字について数える
+absence      = clip(absent な units / units + 否定があれば 0.45)
 articulation = clip((tokens − 1) / max(1, n − 1) / 0.5)
 echo         = clip(0.7 · ends + 0.5 · special / morae)
-               ends: 1 mirror, 0.9 same first/last character, 0.7 same mora, 0.45 same vowel, 0.15 same script, else 0
-               special: N / Q / R / devoiced morae
+               ends：鏡像なら 1、最初と最後の字が同じなら 0.9、同じモーラなら 0.7、同じ母音なら 0.45、
+                     同じ文字の種類なら 0.15、それ以外 0
+               special：N / Q / R / 無声化したモーラ
 ```
 
-Many parameters are then pulled toward a **chord** for every motif the title
-has, as far as it has it (`drawn`, `RHYME = 0.6`):
+多くのパラメータは、題がもつモチーフごとに、その強さに応じて**和音**（chord）の値へ引き寄せる（`drawn`、`RHYME = 0.6`）。
 
 ```
 for motif in [repetition, pairing, nesting, absence, articulation, echo]:
   if CHORDS[motif][key] exists:  v ← v + 0.6 · motifs[motif] · (CHORDS[motif][key] − v)
 ```
 
-| motif | chord targets |
+| モチーフ | 和音の目標値 |
 | --- | --- |
 | repetition | rows 3.2, closure 0.45, corners 0.25, scale 0.12, offset 0.25, density 0.8, onPage 0.5, fineness 0.75 |
 | pairing | eccentricity 0.35, opening 0.18, corners 0.45, offset 0.55, scale 0.2 |
@@ -136,71 +131,66 @@ for motif in [repetition, pairing, nesting, absence, articulation, echo]:
 | articulation | corners 0.8, shear 0.6, closure 0.3, offset 0.45, spread 0.4 |
 | echo | closure 0.7, corners 0.15, tangency 0.6, fineness 0.8, density 0.5, onForm 0.35 |
 
-Titles that share a structure are drawn toward the same values in the
-parameters that structure touches, and stay apart in the rest.
+構造が共通する題は、その構造が関わるパラメータでは同じ値に引き寄せられ、それ以外では離れたままになる。これを韻と呼んでいる。
 
-## 4. The figure (`parametric/params.ts`)
+## 4. 図（`parametric/params.ts`）
 
-The title is walked as one curve and written `rows` times.
+題を一本の曲線としてたどり、それを `rows` 回書く。
 
 ```
-repeatShare  = covered / n                       (as in the repetition motif)
+repeatShare  = covered / n                       （repetition モチーフと同じ）
 loops        = clip((occurrences − 1) / 2)
-endEcho      = as `ends` above, with 0.75 for the same mora and 0.2 for the same script
-headFinality = dependency ? clip((head − dependent) / max(1, tokens − 1)) : 0
+endEcho      = 上の ends と同じ。ただし同じモーラは 0.75、同じ文字の種類は 0.2
+headFinality = 係りがあれば clip((head − dependent) / max(1, tokens − 1))、なければ 0
 turnDensity  = clip((tokens − 1) / max(1, n − 1))
 
 closure      = lean(clip(0.55 · repeatShare · (0.45 + 0.55 · loops) + 0.4 · endEcho
-                         + 0.3 · headFinality + 0.25 · turnDensity))          total turning, in turns
-corners      = lean(clip(turnDensity / 0.5))                                  share of turning spent at word breaks
-asymmetry    = clip(|ln(w(A) / w(B))| / ln 4)     A, B: the dependency's or coordination's two terms,
+                         + 0.3 · headFinality + 0.25 · turnDensity))          回転の総量（周回数）
+corners      = lean(clip(turnDensity / 0.5))                                  回転のうち語の切れ目で曲がる割合
+asymmetry    = clip(|ln(w(A) / w(B))| / ln 4)     A, B：係りまたは並列の二つの項、
                                                    w(token) = Σ ink · (1 + length / 4)
 eccentricity = lean(clip(0.4 · asymmetry))
 opening      = directed ? lean(clip(directed · clip((closure − 0.35) / 0.5) · (0.12 + 0.3 · asymmetry), 0, 0.4)) : 0
-               directed = 1 dependency, 0.6 inflection, else 0
-tangency     = lean(clip(1.4 · closure − 0.2))                                how far marks turn with the curve
-branch       = at a coordination: one group of units per term (the marker joins the term before it),
-               forking at the first term's first unit, fan = clip(0.08 + 0.03 · groups, 0, 0.25) turns
-side         = rng.next() < 0.5 ? +1 : −1                                     the only random draw of the page
+               directed = 係りなら 1、inflection なら 0.6、それ以外 0
+tangency     = lean(clip(1.4 · closure − 0.2))                                印が曲線に沿ってどれだけ回るか
+branch       = 並列があるとき、項ごとに units をまとめる（接続の語は前の項につく）。
+               最初の項の最初の unit で枝分かれし、開き fan = clip(0.08 + 0.03 · groups, 0, 0.25) 周
+side         = rng.next() < 0.5 ? +1 : −1                                     紙面で唯一の乱数
 
 strength     = repeatShare · (0.4 + 0.6 · loops)
-rows         = clip(lean(1 + 7 · strength + 4.2 · kept.crowd), 1, 8)          not rounded: 2.4 = twice and 40 %
+rows         = clip(lean(1 + 7 · strength + 4.2 · kept.crowd), 1, 8)          丸めない。2.4 = 二回と 40 %
 spacing      = 1 + 0.35 · (1 − repeatShare)
 shear        = clip(lean(clip(1 / units + 0.6 · turnDensity, 0, 1.2)), 0, 1.2)
 decay        = clip(lean(clip(0.3 · runs / units + 0.2 · absent / units, 0, 0.4)), 0, 0.4)
-               runs: units equal to the unit before them
+               runs：直前の unit と同じ unit の数
 ```
 
-`kept.crowd` is the crowd act after competition (§6).
+`kept.crowd` は、行為が競い合ったあとの crowd の強さである（§6）。
 
-## 5. The page (`parametric/params.ts`, `paper.ts`)
+## 5. 紙面（`parametric/params.ts`、`paper.ts`）
 
 ```
-leaning   = coverage · max_axis |axis|                    (0 without meaning)
+leaning   = coverage · max_axis |axis|                    （意味がなければ 0）
 potential = max(clip(primary.poeticPotential), clip(0.3 + 0.45 · leaning))
-operation = primary focus: pair+containment → relation.score; parts → 0.55 + 0.45 · echo.similarity; else 0
+operation = 主操作の focus：pair で包含 → relation.score、parts → 0.55 + 0.45 · echo.similarity、それ以外 0
 press     = clip(1 − 0.15·still − 0.12·alone − 0.1·fading − 0.12·open + 0.4·heavy + 0.45·closed + 0.25·stirred, 0.72, 1.5)
-result    = (written units ≤ 1 ? 0.9 : 0.25) · operation
+result    = (書かれる units ≤ 1 ? 0.9 : 0.25) · operation
 scale     = clip(lean(clip((0.04 + 0.22 · potential) · press + result, 0.035, 1.15)), 0.035, 1.15)
-            the em size of one character as a share of the page
+            一字の em の大きさ（紙面に対する割合）
 occupancy = clip(scale · max(1, units) / 0.86, 0.05, 1.3)
 offset    = clip(lean(max(clip(1.05 − occupancy), clip(3 · (occupancy − 1))))
-                 + 0.3·alone + 0.2·far + 0.15·open − 0.3·closed)             0 centred … 1 against the edge
+                 + 0.3·alone + 0.2·far + 0.15·open − 0.3·closed)             0 は中央 … 1 は端に寄る
 toward    = atan2(−along.y + 0.8 · side · across.y + 1.4 · (falling − rising),
                   −along.x + 0.8 · side · across.x)
-            along / across: the writing direction and the next-line direction
+            along / across：書字方向と、次の行へ進む方向
 hierarchy = clip(lean(clip(1 + 3.2 · operation + 1.4 · clip((potential − 0.5) / 0.5), 1, 5)), 1, 5)
 ```
 
-If `hierarchy > 1.02`, the **subject** — the units of the primary's
-repetition, the character whose parts or counter it reads, or every
-occurrence of the outer character of its pair — is written `√hierarchy`
-larger, every other unit `√hierarchy` smaller.
+`hierarchy > 1.02` のとき、**主題**を `√hierarchy` 倍大きく、それ以外の unit を `√hierarchy` 倍小さく書く。主題とは、主操作の反復に含まれる units、主操作が部品や counter を読んだ字、または主操作の組の外側の字（出てくるたびすべて）である。
 
-## 6. Acts: what is done to the characters (`parametric/acts.ts`)
+## 6. 行為：字に加えること（`parametric/acts.ts`）
 
-**Economy.** Raw strengths from the meaning's poles (see
-[semantics.md](semantics.md#4-from-axes-to-poles)) and the motifs:
+**配分。** 意味の極（[semantics.md](semantics.md#4-軸から極へ)）とモチーフから、行為ごとの素の強さを求める。
 
 ```
 split    = clip(severed + 0.55 · pairing)
@@ -212,179 +202,113 @@ lean     = clip(stirred)
 crowd    = clip(0.9·many + 0.3·stirred)
 
 lead     = max(raw)
-kept_k   = raw_k · (raw_k / lead)²                  the leader keeps all; half as strong → an eighth
-leader   = argmax raw, if lead > 0.05
+kept_k   = raw_k · (raw_k / lead)²                  最も強い行為はそのまま。半分の強さなら 1/8 になる
+leader   = argmax raw（lead > 0.05 のとき）
 ```
 
-The acts compete, so a page has one leading gesture and the others recede
-smoothly. The **form** of each act always comes from the letterforms, the
-sound or the word's divisions; meaning sets only the strengths.
+行為は競い合うので、一枚の紙面には主な身振りがひとつあり、ほかの身振りはなめらかに弱まる。各行為の**形**は、つねに字形、音、語の切れ目から決まり、意味は強さだけを決める。
 
-| act | rule (with `e` = kept strengths) |
+| 行為 | 規則（`e` は競い合ったあとの強さ） |
 | --- | --- |
-| **gaps** | per gap between units, in steps of the mean weight: `1.6 · e.spread · (0.6 + 0.4 · boundary) − 0.35 · e.gather`, plus `2.6 · e.split` at the seam — the first word boundary, else the middle |
-| **withdraw** | if `e.withdraw > 0.03` and n > 1: the written unit with the least `ink · weight` leaves, `1.2 + 5 · e.withdraw` steps in the direction `toward + π` (the empty side of the page), `0.3 · e.withdraw` smaller; in the last row only |
-| **erode** | if `e.erode > 0.03` and more than one character is written: unit i loses `amount = clip(0.75 · e.erode · (i / (n−1))^1.3, 0, 0.6)` — the first whole, the last most worn. A kanji with ≥ 2 structural parts loses whole components, farthest along the reading first, while `gone + next ≤ amount + 0.12` and ≥ 35 % remains, never the last one; any other character (kana, a kanji that does not come apart) only when `amount ≥ 0.3`, clipped by `min(0.34, amount / 2)` of its size from its thinnest side. A title of one written character is not worn at all |
-| **lean** | every written unit tilts `(26 · e.lean + held) · inkLean` degrees; `held` = 7 for an N / Q / R / devoiced mora; `inkLean = clip(6 · (column centroid − ½), −1, 1)` — a glyph whose ink is centred does not lean |
-| **cut** | if `e.split > 0.12`: among kanji that did not withdraw or wear, whose structural parts are islands or open seams (closure ≤ 0.35), the one whose seam splits the ink most evenly (`1 − |share₀ − share₁| > 0.35`) is divided at its seam; the halves part by `0.12 + 0.45 · e.split` of its size across the seam and slide 0.7 × that along it (a divided 束 must not close into 東) |
-| **crowd** | read in §4: adds to `rows` |
+| **gaps**（間） | unit のあいだごとに、平均の重みを単位として `1.6 · e.spread · (0.6 + 0.4 · boundary) − 0.35 · e.gather` だけあける。継ぎ目（最初の語の切れ目、なければ中央）には `2.6 · e.split` を足す |
+| **withdraw**（退く） | `e.withdraw > 0.03` かつ n > 1 のとき、書かれる unit のうち `ink · weight` が最小のものが、`toward + π` の方向（紙面の空いた側）へ `1.2 + 5 · e.withdraw` 歩離れ、`0.3 · e.withdraw` だけ小さくなる。最後の行でだけ起こる |
+| **erode**（すり減る） | `e.erode > 0.03` かつ二字以上書かれるとき、unit i は `amount = clip(0.75 · e.erode · (i / (n−1))^1.3, 0, 0.6)` だけ失う（最初の字は完全に残り、最後の字が最もすり減る）。構造上の部品が 2 つ以上ある漢字は、読む順で遠い部品から丸ごと失う。`gone + next ≤ amount + 0.12` で、35 % 以上が残る範囲に限り、最後の部品は残す。それ以外の字（かな、部品に分かれない漢字）は `amount ≥ 0.3` のときだけ、いちばん薄い側から大きさの `min(0.34, amount / 2)` を削る。書かれる字が一字だけの題はすり減らない |
+| **lean**（傾く） | 書かれる unit はそれぞれ `(26 · e.lean + held) · inkLean` 度傾く。`held` は N / Q / R / 無声化したモーラで 7。`inkLean = clip(6 · (列の重心 − ½), −1, 1)` なので、墨が中央にある字形は傾かない |
+| **cut**（割る） | `e.split > 0.12` のとき、退かずすり減らなかった漢字のうち、構造上の部品が島か開いた継ぎ目（closure ≤ 0.35）で、継ぎ目が墨を最も均等に分ける字（`1 − |share₀ − share₁| > 0.35`）を継ぎ目で割る。二つの半分は、継ぎ目を横切る方向に大きさの `0.12 + 0.45 · e.split` だけ離れ、継ぎ目に沿ってその 0.7 倍ずれる（割った 束 が閉じて 東 に見えないように） |
+| **crowd**（群がる） | §4 で読む。`rows` を増やす |
 
-Rules that came from looking at the output: a kana or a one-character title is
-never worn by components (it would become another character: 愛 → 受); a cut
-never goes through solid strokes (土, 大, 本 would only look broken); one act
-per character.
+出力を見てから足した規則がある。かなと一字だけの題は、部品単位ではすり減らさない（別の字になってしまう。愛 → 受）。詰まった画を通る割り方はしない（土、大、本 は壊れて見えるだけになる）。行為は一字につきひとつまでとする。
 
-## 7. Laying the figure on the page (`parametric/trace.ts`, `paper.ts`)
+## 7. 図を紙面に置く（`parametric/trace.ts`、`paper.ts`）
 
-**The curve.** A turtle walks the units: each step advances by its weight and
-turns by
+**曲線。** タートルが units をたどる。一歩ごとに重みの分だけ進み、次の分だけ曲がる。
 
 ```
 closing = closure · (1 − opening);  total = 2π · closing · side
-at each break: + total · corners / (breaks + closing)
-at every step: + (total − total·corners [if there are breaks]) / (n − 1 + closing)
+切れ目ごとに：+ total · corners / (breaks + closing)
+一歩ごとに：  + (total − total·corners [切れ目があるとき]) / (n − 1 + closing)
 ```
 
-(sharing over one more place than there are gaps keeps a closing curve from
-writing its last character on its first). With `eccentricity ≥ 0.02`,
-`closure ≥ 0.45` and ≥ 4 units, the curve is swollen radially about its
-centroid by `1 + eccentricity · cos(θ − θ_heaviest)`. A branch walks the stem,
-then each term as its own arm from the fork, fanned about the heading there.
-The start heading is 0 (horizontal) or π/2 (vertical).
+すき間の数より一か所多く分けるのは、閉じる曲線が最後の字を最初の字の上に書かないようにするためである。`eccentricity ≥ 0.02`、`closure ≥ 0.45`、units が 4 つ以上のとき、曲線を重心のまわりに `1 + eccentricity · cos(θ − θ_heaviest)` 倍ふくらませる。枝分かれは、幹をたどったあと、各項を分岐点からの腕としてたどり、そこでの向きを中心に扇状に開く。最初の向きは 0（横書き）か π/2（縦書き）。
 
-**Rows.** The walk is repeated `⌈rows⌉` times; the last row holds
-`round(frac · n)` units. Row r is moved by `(across · gap + along · shear · step) · r`
-and scaled by `max(0.4, (1 − decay)^r)`, with
-`gap = max(spacing · step, sweep + 0.95 · smallest weight)` (rows never cross).
-Gaps from the acts are added along the writing, but capped so that the word
-opens only as far as the page can hold it at the size `scale` asks for.
+**行。** たどる動きを `⌈rows⌉` 回くり返し、最後の行には `round(frac · n)` 個の units を置く。行 r は `(across · gap + along · shear · step) · r` だけ動かし、`max(0.4, (1 − decay)^r)` 倍に縮める。`gap = max(spacing · step, sweep + 0.95 · 最小の重み)` なので、行どうしは交差しない。行為による間は書く向きに沿って足すが、`scale` が求める大きさのまま紙面に収まる範囲までに抑える。
 
-**Fit** (`fit`, `measure`, `stand`):
+**収め方**（`fit`、`measure`、`stand`）：
 
 ```
-want      = scale · PAGE / (0.86 · smallest weight)                       figure units → page units
-most      = (1 − 2 · 0.04) · PAGE / max(box width, box height)             every place on the page
+want      = scale · PAGE / (0.86 · 最小の重み)                            図の単位 → 紙面の単位
+most      = (1 − 2 · 0.04) · PAGE / max(外接矩形の幅, 高さ)                紙面のどこでも収まる倍率
 k         = min(want, most)
 centre    = PAGE/2 + (cos toward, sin toward) · offset · |PAGE − span| / 2
-em        = min(1.15 · PAGE / largest size, 0.86 · smallest weight · k) · min(1, room)
-room      = min over pairs of written units of  distance · k / (want_pair · em₀)
+em        = min(1.15 · PAGE / 最大の size, 0.86 · 最小の重み · k) · min(1, room)
+room      = 書かれる units のすべての組についての  距離 · k / (want_pair · em₀)  の最小値
             want_pair = ½ (size_u + size_v) · (tangency > 0.2 ? 1.45 : 0.92 + 0.53 · min(1, (|lean_u| + |lean_v|) / 24))
 ```
 
-The withdrawn character does not take part in the fit. Then the centre is
-moved, axis by axis, so that every written character's middle stays at least
-`edgeKeep(size) · size` from the page edge:
+退いた字は、収め方の計算に加えない。そのあと、書かれる字の中心が紙面の端から少なくとも `edgeKeep(size) · size` 離れるように、中心を軸ごとに動かす。
 
 ```
 edgeKeep(size) = 0.62 + (0.26 − 0.62) · clip((size / PAGE − 0.12) / 0.28)
 ```
 
-— a character up to 12 % of the page stays wholly on it with a margin; from
-40 % up, up to about half of it may be cut by the edge. If no
-centre satisfies every character, the figure is drawn 0.85× smaller, and so
-on (down to 6 %); if the characters would fall below `0.035 · PAGE`, rows
-are given up half a row at a time instead. Mark size is
-`max(0.035 · PAGE, em · size_i)`.
+紙面の 12 % までの字は余白をとって紙面に収まり、40 % 以上の字は最大で半分ほど端で切れてよい。すべての字を満たす中心がなければ、図を 0.85 倍にして試し直す（6 % まで）。字が `0.035 · PAGE` より小さくなるなら、縮める代わりに行を半行ずつ減らす。印の大きさは `max(0.035 · PAGE, em · size_i)` である。
 
-**Each mark.** Rotation `= (heading − start heading) · tangency` (degrees) `+ lean`.
-The withdrawn character is placed where the act sent it, else where it stood,
-else at the nearest page corner — the first of these where it overlaps no
-other written character. Erosion and cut clip the glyph (`keep`, intersected
-with any parts the operation layer set); if a clip would remove every part,
-the glyph is drawn whole. Finally a character drawn in parts is nudged as a
-group so that the edge rule holds for what is drawn.
+**印ひとつずつ。** 回転は `(その位置の向き − 最初の向き) · tangency`（度）`+ lean`。退いた字は、行為が送った場所、元の場所、最も近い紙面の角のうち、ほかの書かれる字に重ならない最初の場所に置く。すり減りと割りは字形を切り取る（`keep`。操作の層が設定した parts があれば、その共通部分をとる）。切り取るとすべての部品が消える場合は、字形を丸ごと描く。最後に、部品に分けて描く字は、描かれる部分が端の規則を満たすよう、まとめて少し動かす。
 
-## 8. Material (`parametric/params.ts`, `material.ts`, `frame.ts`)
+## 8. 素材（`parametric/params.ts`、`material.ts`、`frame.ts`）
 
-Small marks made of the title's own characters, placed in the figure's own
-geometry.
+素材は、題そのものの字で作る小さな印である。図そのものの幾何の上に置く。
 
-**Parameters** (`materialParams`), with the **nucleus** = the largest written
-mark:
+**パラメータ**（`materialParams`）。**核**（nucleus）は、書かれる印のうち最も大きいものとする。
 
 ```
-repeat    = the most repeated character: clip((count − 1) / 3 + 0.3), else 0
-inner     = max(score of the strongest containment ≥ 0.65 inside the nucleus between the title's own CJK
-                characters, a form the nucleus repeats in its own parts ≥ 2 times (森's three 木) read by readPart)
-rest      = clip(other characters / n)
-erasure   = clip(absent / units + 0.3 if a negation)
-onForm    = lean(clip(inner))                                          on the nucleus's ink
-onRing    = lean(clip(max(coordination 1, dependency 0.6) · (0.35 + 0.5 · repeat)))    around the reading
-onPage    = lean(clip(0.7·erasure + 0.25·clip(repeat − inner) + 0.6·many + 0.45·fading + 0.3·stirred))   dust
+repeat    = 最も多くくり返される字：clip((count − 1) / 3 + 0.3)、なければ 0
+inner     = max(核の中にある、題の漢字どうしの最も強い 0.65 以上の包含の点数,
+                核が自分の部品の中で 2 回以上くり返す形（森 の三つの 木）を readPart で読んだ点数)
+rest      = clip(ほかの字の数 / n)
+erasure   = clip(absent / units + 否定があれば 0.3)
+onForm    = lean(clip(inner))                                          核の墨の上
+onRing    = lean(clip(max(並列 1, 係り 0.6) · (0.35 + 0.5 · repeat)))    読みの流れのまわり
+onPage    = lean(clip(0.7·erasure + 0.25·clip(repeat − inner) + 0.6·many + 0.45·fading + 0.3·stirred))   塵
 offered   = 0.55·repeat + 0.4·inner + 0.3·erasure + 0.15·rest + 0.45·many + 0.35·fading + 0.2·stirred
-density   = (offered < 0.18 or onForm + onRing + onPage < 0.15) ? 0 : lean(clip(offered))
+density   = (offered < 0.18 または onForm + onRing + onPage < 0.15) ? 0 : lean(clip(offered))
 fineness  = lean(clip(0.3 + 0.4·repeat + 0.25·erasure + 0.3·clip((ink(nucleus) − 0.12) / 0.16)))
 regularity= clip(1 − 0.5 · special / morae)
-cut       = containment in the nucleus ? lean(containment) : 0             the residue is sampled instead
+cut       = 核の中に包含があれば lean(containment)、なければ 0             このときは残りの部分から標本をとる
 radius    = clip(0.12 + 0.14·repeat + 0.06·rest, 0.1, 0.32)
 spread    = lean(clip(0.8·erasure + 0.35·rest − 0.2·repeat))
-sources   = { repeat, inner, rest: 0.5·rest, self: 0.3 if repeat + inner + 0.5·rest < 0.2 }
+sources   = { repeat, inner, rest: 0.5·rest, self: repeat + inner + 0.5·rest < 0.2 なら 0.3 }
 ```
 
-**Economy with the acts:** if `lead > density`, `density ← density · (density / lead)²`.
+**行為との配分：** `lead > density` なら `density ← density · (density / lead)²` とする。
 
-**Placement** (`materialMarks`; nothing is random — a fixed 4 × 4 Bayer
-dither decides which lattice points are dropped, and `hash2` a fixed jitter):
+**配置**（`materialMarks`）。乱数は使わない。格子点のどれを落とすかは固定の 4 × 4 の Bayer ディザで決め、ずらしは固定の `hash2` で決める。
 
-- the three weights are normalised; nothing is placed if `density ≤ 0.02`;
-- **frame**: the written units' positions in reading order, broken into
-  strands where a gap exceeds max(2.2 × the median gap, 1.2 × the size); `s`
-  = along the reading (0–1), `d` = distance from it;
-- **form**: the nucleus is enlarged to span
-  `max(1.12 · size, PAGE · (0.32 + 0.38 · clip((takes − 0.45) / 0.55)))`
-  (`takes = onForm · (0.4 + 0.9 · density)`, growth ≤ 4×) and moved toward the
-  page centre; its ink is sampled on a lattice turned with it, step
-  `size / (11 + 13 · fineness)`, grain size
-  `max(step · (0.62 + 0.25 · (1 − fineness)), 0.014 · PAGE)`; a point is kept
-  when `ink · onForm · (0.4 + 0.9 · density) > dither`. The form **stands** only
-  with ≥ 45 ink cells, ≥ 32 grains and ≥ half the cells; then the grains
-  replace the nucleus (they `represent` its grapheme). Otherwise its weight
-  goes to ring and dust;
-- **ring**: satellites on a loop at `max(radius · PAGE, 0.7 · nucleus)` around
-  each strand (a circle around a single character), size
-  `clip(nucleus · (0.2 + 0.16 · (1 − fineness)), 0.02, 0.09) · PAGE`, count
-  `max(5, round(min(48, loop / (1.35 · size)) · (0.35 + 0.65 · density) · w_ring))`,
-  `w_ring` = the ring's normalised weight (including what an unreadable form
-  passed on);
-- **dust**: a lattice along and across each strand, step
-  `max((0.075 − 0.05 · fineness) · PAGE, 1.3 · size)`, reaching
-  `PAGE · (0.09 + 0.62 · spread)`; a point whose own distance from the reading
-  does not match its lattice row (it belongs to another part of the curve) is
-  dropped; a point is considered only if `dither(i+2, j+1) < 0.15 + 0.5 · density`,
-  and kept if `thinning · fade · clear · w_dust · (0.35 + 0.9 · density) > dither(i, j)`, where
-  `thinning = clip(1.15 − s)`, `fade = clip(1 − (d / reach)^1.6)`,
-  `clear` keeps it off written marks;
-- characters of grains follow the source shares in a fixed order
-  (`(7i + 13j) mod 100`); no grain stands on another; no grain stands on
-  written ink (checked at its centre and four points at ±0.3 of its size);
-  every grain stays within 2–98 % of the page.
+- 三つの重み（form、ring、dust）を正規化する。`density ≤ 0.02` なら何も置かない。
+- **frame**：書かれる units の位置を読む順に並べ、間隔が max(中央値の 2.2 倍, 大きさの 1.2 倍) を超えるところで筋に分ける。`s` は読みに沿った位置（0–1）、`d` は読みからの距離。
+- **form**：核を `max(1.12 · size, PAGE · (0.32 + 0.38 · clip((takes − 0.45) / 0.55)))` まで大きくし（`takes = onForm · (0.4 + 0.9 · density)`、拡大は 4 倍まで）、紙面の中央へ寄せる。核と一緒に回した格子で墨を標本にとる。格子の間隔は `size / (11 + 13 · fineness)`、粒の大きさは `max(step · (0.62 + 0.25 · (1 − fineness)), 0.014 · PAGE)`。`ink · onForm · (0.4 + 0.9 · density) > dither` の点を残す。墨のマスが 45 以上、粒が 32 以上、マスの半分以上が残ったときだけ、form は**成り立つ**。成り立てば粒が核の代わりになる（粒は核の字を `represent` する）。成り立たなければ、form の重みを ring と dust に回す。
+- **ring**：筋ごとに、そのまわり `max(radius · PAGE, 0.7 · nucleus)` の輪に粒を並べる（一字だけなら円）。粒の大きさは `clip(nucleus · (0.2 + 0.16 · (1 − fineness)), 0.02, 0.09) · PAGE`、数は `max(5, round(min(48, loop / (1.35 · size)) · (0.35 + 0.65 · density) · w_ring))`。`w_ring` は ring の正規化した重み（読めなかった form から回った分も含む）。
+- **dust**：筋ごとに、それに沿った方向と横切る方向の格子を張る。間隔は `max((0.075 − 0.05 · fineness) · PAGE, 1.3 · size)`、届く範囲は `PAGE · (0.09 + 0.62 · spread)`。読みからの距離が格子の列と合わない点（曲線の別の部分に属する点）は落とす。`dither(i+2, j+1) < 0.15 + 0.5 · density` の点だけを候補にし、`thinning · fade · clear · w_dust · (0.35 + 0.9 · density) > dither(i, j)` なら残す。`thinning = clip(1.15 − s)`、`fade = clip(1 − (d / reach)^1.6)`、`clear` は書かれた印の上に置かないための値。
+- 粒の字は、決まった順序（`(7i + 13j) mod 100`）で sources の割合どおりに割り当てる。粒どうしは重ねない。書かれた墨の上にも置かない（中心と、大きさの ±0.3 の四点で確かめる）。どの粒も紙面の 2–98 % の範囲に収める。
 
-## 9. Faces (`face.ts`)
+## 9. 字体（`face.ts`）
 
-A mark is written in the reading face (Noto Sans JP 500) when it is a reading
-of ink — clipped, shifted or subtracted, the two terms of the primary's glyph
-pair, the character whose counter the primary reads — and in the writing face
-(Noto Serif JP 300) otherwise. A derived mark (a grain) smaller than
-`0.035 · PAGE` is written in the reading face, whose strokes survive at that
-size. The serif is used only for characters it covers and has ink for.
+墨の読み取りから生まれる印は、読み取り用の字体（Noto Sans JP 500）で書く。切り取った字、ずらした字、墨を引いた字、主操作の字形の組の二つの字、主操作が counter を読んだ字がこれにあたる。それ以外は書き用の字体（Noto Serif JP 300）で書く。`0.035 · PAGE` より小さい派生の印（粒）は、その大きさでも画がつぶれない読み取り用の字体で書く。明朝体は、その字を含み、墨があるときだけ使う。
 
-## 10. Cropping, in one place
+## 10. 切り取りのまとめ
 
-- The **page edge** clips everything (the SVG's page clip). How much of a
-  character it may cut is `edgeKeep(size)` (§7): none for small characters, up
-  to about half for macro characters.
-- **Acts** clip glyphs in em space: erosion keeps whole components (or all but
-  a strip of the thinnest side); a cut keeps each half.
-- **Operation-layer modifiers**: decomposition draws a character as its parts
-  (each a clip), transformation removes another glyph's ink (a mask).
+- **紙面の端**はすべてを切り取る（SVG の紙面のクリップ）。字がどこまで切れてよいかは `edgeKeep(size)`（§7）で決まる。小さな字は切れず、とても大きな字は最大で半分ほど切れる。
+- **行為**は em 空間で字形を切り取る。すり減りは部品を丸ごと残す（または、いちばん薄い側の帯を除いて残す）。割りは二つの半分をそれぞれ残す。
+- **操作の層の修飾**：decomposition は字を部品ごとに描き（部品ごとにクリップ）、transformation は別の字形の墨を取り除く（マスク）。
 
-## 11. What holds by construction
+## 11. 構造上つねに成り立つこと
 
-The rules below are enforced while the page is made, not checked afterwards:
-no character is lost to an act (a withdrawn character is held on the page; a
-worn one keeps a component; a clip that would remove everything is undone);
-no two written characters overlap (the size follows the closest pair); every
-character keeps `edgeKeep` of itself on the page; no grain stands on written
-ink or on another grain; the only random choice is `side`. The invariant audit
-that checks these on the output is offline — see
-[reproducibility.md](reproducibility.md#verification).
+次の規則は、紙面を作る途中で守らせている。あとから検査して直すわけではない。
+
+- 行為によって字が失われることはない。退いた字は紙面に残し、すり減った字は部品をひとつ残し、すべてを消す切り取りは取り消す。
+- 書かれる二つの字が重なることはない（大きさは最も近い組に合わせて決める）。
+- どの字も `edgeKeep` の分は紙面に残る。
+- 粒は、書かれた墨の上にも、ほかの粒の上にも置かない。
+- 乱数による選択は `side` だけである。
+
+出力についてこれらを確かめる不変条件の監査は、オフラインで行う（[reproducibility.md](reproducibility.md#検証)）。

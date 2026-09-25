@@ -14,6 +14,7 @@
     <header id="head">
       <a id="home" href="/admin/">Generations</a>
       <span id="totals" aria-live="polite"></span>
+      <button type="button" id="refresh">refresh</button>
       <form id="out" method="post" action="/admin/logout"><button type="submit">log out</button></form>
     </header>
 
@@ -23,7 +24,12 @@
         <button type="button" data-order="oldest" aria-pressed="false">oldest</button>
       </span>
       <label class="search"><span class="hidden">title</span><input id="q" type="search" placeholder="title" maxlength="32" autocomplete="off" /></label>
+      <!-- shown only in a browser that has written on the work itself: its own records -->
+      <button type="button" id="hide-mine" aria-pressed="false" hidden>hide mine</button>
     </nav>
+
+    <!-- the last days and the words written most, above every page -->
+    <section id="overview" aria-label="overview" hidden></section>
 
     <section id="context" hidden></section>
     <main id="sheets"></main>
@@ -31,7 +37,13 @@
     <p id="status" role="status"></p>
 
     <dialog id="detail" aria-label="Generation">
-      <form method="dialog" class="bar"><button type="submit" aria-label="閉じる">×</button></form>
+      <form method="dialog" class="bar">
+        <span class="steps">
+          <button type="button" id="prev" aria-label="previous">‹</button>
+          <button type="button" id="next" aria-label="next">›</button>
+        </span>
+        <button type="submit" aria-label="閉じる">×</button>
+      </form>
       <div class="body">
         <div class="paper big"></div>
         <dl></dl>

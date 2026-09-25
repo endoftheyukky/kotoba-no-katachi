@@ -4,7 +4,14 @@
  *   /admin/                     every page, newest first (or oldest), by title
  *   /admin/?visitor=<id>        one browser profile: its visits in order, each with its pages
  *   /admin/?session=<id>        one visit: the pages in the order they were written
- *   …&id=<event>                one page, large, with everything recorded about it
+ *   …&id=<event>                one page, large, with everything recorded about it;
+ *                               ‹ › (or the arrow keys) to the page before and after it
+ *   …&hide=mine                 every browser but this one
+ *
+ * Above every page: the last fourteen days (the viewer's own days) and the
+ * words written by the most browsers. A browser that has written on the work
+ * itself knows its own id there (archive/record.ts): its records are marked
+ * "you", and can be left out.
  *
  * The pages are the snapshots kept when they were written (never redrawn by
  * today's generator); each is fetched when it comes near the screen and checked
@@ -54,6 +61,21 @@ const status = byId('status')
 const totals = byId('totals')
 const detail = byId('detail') as HTMLDialogElement
 const search = byId('q') as HTMLInputElement
+const overview = byId('overview')
+const hideMine = byId('hide-mine') as HTMLButtonElement
+const prev = byId('prev') as HTMLButtonElement
+const next = byId('next') as HTMLButtonElement
+
+/** this browser's own id on the work (archive/record.ts), if it has written there */
+const me = (() => {
+  try {
+    const id = localStorage.getItem('kotoba:visitor') ?? ''
+    return /^[0-9a-f-]{36}$/.test(id) ? id : ''
+  } catch {
+    return ''
+  }
+})()
+hideMine.hidden = !me
 
 // --- words -------------------------------------------------------------------
 
@@ -172,6 +194,7 @@ function card(r: Row, o: CardOptions): HTMLElement {
   const meta = el('p', 'meta')
   if (o.visitor) meta.append(link({ visitor: r.visitor_id }, visitorName(r.visitor_id)), ' · ')
   meta.append(r.source)
+  if (me && r.visitor_id === me) meta.append(' · ', el('span', 'you', 'you'))
   a.append(meta)
   return a
 }
@@ -183,6 +206,7 @@ interface View {
   session: string
   order: 'newest' | 'oldest'
   q: string
+  hide: '' | 'mine'
   id: string
 }
 
@@ -193,6 +217,7 @@ function view(): View {
     session: p.get('session') ?? '',
     order: p.get('order') === 'oldest' ? 'oldest' : 'newest',
     q: p.get('q') ?? '',
+    hide: me && p.get('hide') === 'mine' ? 'mine' : '',
     id: p.get('id') ?? '',
   }
 }
@@ -221,6 +246,7 @@ async function render(): Promise<void> {
   status.textContent = ''
   loadMore = null
   filters.hidden = !!(v.visitor || v.session)
+  overview.hidden = !!(v.visitor || v.session)
   context.hidden = !(v.visitor || v.session)
   context.replaceChildren()
   try {
@@ -244,6 +270,7 @@ async function pages(params: Record<string, string>, mine: number, each: (r: Row
     cursor = page.next
     more.hidden = !cursor
     loadMore = cursor ? load : null
+    if (detail.open) steps(view().id)
   }
   await load()
 }
@@ -252,12 +279,72 @@ async function pages(params: Record<string, string>, mine: number, each: (r: Row
 async function archiveView(v: View, mine: number): Promise<void> {
   for (const b of filters.querySelectorAll<HTMLButtonElement>('[data-order]')) b.setAttribute('aria-pressed', String(b.dataset.order === v.order))
   if (document.activeElement !== search) search.value = v.q
+  hideMine.setAttribute('aria-pressed', String(v.hide === 'mine'))
+  void showOverview(v.hide === 'mine' ? me : '')
   const grid = el('div', 'grid')
   sheets.append(grid)
   const params: Record<string, string> = { order: v.order, limit: '40' }
   if (v.q) params.q = v.q
+  if (v.hide === 'mine') params.exclude = me
   await pages(params, mine, (r) => grid.append(card(r, { when: 'stamp', visitor: true })))
   if (mine === turn && !grid.children.length) status.textContent = v.q ? '該当する記録はありません' : 'まだ記録はありません'
+}
+
+// --- the archive at a glance -----------------------------------------------------------
+
+interface Overview {
+  today: string
+  days: Array<{ day: string; generations: number; visitors: number }>
+  words: Array<{ title: string; generations: number; visitors: number }>
+}
+
+/** the browser left out of the overview on screen; null until one is shown (or after refresh) */
+let overviewFor: string | null = null
+
+async function showOverview(exclude: string): Promise<void> {
+  if (overviewFor === exclude) return
+  overviewFor = exclude
+  const q = new URLSearchParams({ tz: String(new Date().getTimezoneOffset()), days: '14' })
+  if (exclude) q.set('exclude', exclude)
+  let o: Overview
+  try {
+    o = await api<Overview>(`/admin/api/overview?${q}`)
+  } catch (e) {
+    overviewFor = null
+    console.warn(e)
+    return
+  }
+  if (overviewFor !== exclude) return
+  const today = o.days.at(-1)!
+  const sum = o.days.reduce((n, d) => n + d.generations, 0)
+  const head = el('p', 'sum', `today ${count(today.generations, 'generation')} · ${count(today.visitors, 'visitor')} — ${o.days.length} days ${count(sum, 'generation')}`)
+  const top = Math.max(1, ...o.days.map((d) => d.generations))
+  const days = el('div', 'days')
+  for (const d of o.days) {
+    const col = el('div', d.day === o.today ? 'day today' : 'day')
+    col.title = `${d.day.replace(/-/g, '.')} · ${count(d.generations, 'generation')} · ${count(d.visitors, 'visitor')}`
+    const column = el('span', 'column')
+    const bar = el('span', 'bar')
+    bar.style.height = `${(d.generations / top) * 100}%`
+    column.append(bar)
+    col.append(column, el('span', 'n', d.generations ? String(d.generations) : ''), el('span', 'date', String(Number(d.day.slice(8)))))
+    days.append(col)
+  }
+  const words = el('p', 'words')
+  words.append(el('span', 'label', 'words'))
+  for (const w of o.words) {
+    const b = el('button', 'word')
+    b.type = 'button'
+    b.title = `${count(w.visitors, 'visitor')} · ${count(w.generations, 'generation')}`
+    b.append(w.title, el('span', 'n', String(w.visitors)))
+    b.addEventListener('click', () => {
+      search.value = w.title
+      history.replaceState(null, '', address({ ...view(), q: w.title, id: '' }))
+      void render()
+    })
+    words.append(b)
+  }
+  overview.replaceChildren(head, days, ...(o.words.length ? [words] : []))
 }
 
 function heading(title: string, sub: string, ...extra: Node[]): void {
@@ -271,7 +358,7 @@ async function visitorView(v: View, mine: number): Promise<void> {
   const who = await api<Visitor>(`/admin/api/visitors/${encodeURIComponent(v.visitor)}`)
   if (mine !== turn) return
   heading(
-    visitorName(who.id),
+    visitorName(who.id) + (who.id === me ? ' (you)' : ''),
     `${count(who.generations, 'generation')} · ${count(who.sessions.length, 'session')} · ${stamp(who.first_at)} – ${stamp(who.last_at)}`,
   )
   const number = new Map(who.sessions.map((s, i) => [s.id, i + 1]))
@@ -326,6 +413,7 @@ async function openDetail(id: string, push: boolean): Promise<void> {
   big.replaceChildren()
   dl.replaceChildren()
   if (!detail.open) detail.showModal()
+  steps(id)
   try {
     const r = await api<Row>(`/admin/api/generations/${encodeURIComponent(id)}`)
     const shared = new URLSearchParams({ title: r.title })
@@ -363,7 +451,10 @@ async function openDetail(id: string, push: boolean): Promise<void> {
 }
 
 detail.addEventListener('close', () => {
-  if (!view().id) return
+  const id = view().id
+  if (!id) return
+  // the page just looked at stays in view in the list
+  sheets.querySelector(`.paper[data-id="${CSS.escape(id)}"]`)?.closest('.card')?.scrollIntoView({ block: 'nearest' })
   if (pushedDetail) history.back()
   else {
     const p = new URLSearchParams(location.search)
@@ -371,6 +462,44 @@ detail.addEventListener('close', () => {
     history.replaceState(null, '', address(Object.fromEntries(p) as Partial<View>))
   }
   pushedDetail = false
+})
+
+/** the pages in the list, in the order they stand on the screen */
+const listedIds = () => [...sheets.querySelectorAll<HTMLElement>('.paper[data-id]')].map((p) => p.dataset.id!)
+
+/** ‹ and ›: whether there is a page before and after this one (after: perhaps not loaded yet) */
+function steps(id: string): void {
+  const ids = listedIds()
+  const i = ids.indexOf(id)
+  prev.disabled = i <= 0
+  next.disabled = i < 0 || (i === ids.length - 1 && !loadMore)
+}
+
+/** to the page before or after the one shown, in the list's own order, loading more at its end */
+async function go(by: -1 | 1): Promise<void> {
+  const id = view().id
+  if (!id) return
+  let ids = listedIds()
+  if (ids.indexOf(id) < 0) return
+  if (ids.indexOf(id) + by >= ids.length && loadMore) {
+    await loadMore()
+    ids = listedIds()
+  }
+  const to = ids[ids.indexOf(id) + by]
+  if (!to) return
+  const p = new URLSearchParams(location.search)
+  p.set('id', to)
+  history.replaceState(null, '', `/admin/?${p}`)
+  void openDetail(to, false)
+}
+
+prev.addEventListener('click', () => void go(-1))
+next.addEventListener('click', () => void go(1))
+detail.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault()
+    void go(e.key === 'ArrowLeft' ? -1 : 1)
+  }
 })
 
 detail.addEventListener('click', (e) => {
@@ -399,6 +528,7 @@ filters.addEventListener('click', (e) => {
   if (!b) return
   const v = view()
   if (b.dataset.order) v.order = b.dataset.order as View['order']
+  if (b === hideMine) v.hide = v.hide ? '' : 'mine'
   history.replaceState(null, '', address({ ...v, id: '' }))
   void render()
 })
@@ -428,7 +558,19 @@ more.querySelector('button')!.addEventListener('click', async (e) => {
 
 window.addEventListener('popstate', () => void render())
 
-void api<{ generations: number; visitors: number; sessions: number }>('/admin/api/stats')
-  .then((t) => (totals.textContent = `${count(t.generations, 'generation')} · ${count(t.visitors, 'visitor')} · ${count(t.sessions, 'session')}`))
-  .catch((e) => console.warn(e))
+function showTotals(): void {
+  void api<{ generations: number; visitors: number; sessions: number }>('/admin/api/stats')
+    .then((t) => (totals.textContent = `${count(t.generations, 'generation')} · ${count(t.visitors, 'visitor')} · ${count(t.sessions, 'session')}`))
+    .catch((e) => console.warn(e))
+}
+
+// refresh: the totals, the overview and the list read again (snapshots never change, and stay)
+byId('refresh').addEventListener('click', () => {
+  listed = ''
+  overviewFor = null
+  showTotals()
+  void render()
+})
+
+showTotals()
 void render()
