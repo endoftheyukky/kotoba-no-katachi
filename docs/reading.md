@@ -1,257 +1,180 @@
-# Reading a title
+# 題を読む
 
-What the system reads before it composes anything: the input, the language,
-and the letterforms. The meaning table is in [semantics.md](semantics.md).
+紙面を組み立てる前に、システムが読み取るもの（入力、言語、字形）をまとめる。意味の表については [semantics.md](semantics.md) に書く。
 
-## 1. Input
+## 1. 入力
 
-### The address and the input line
+### アドレスと入力欄
 
-A poem is addressed by `?title=…&reading=…&v=…` (`src/main.ts`):
+詩のアドレスは `?title=…&reading=…&v=…` の形をとる（`src/main.ts`）。
 
-- `title` — the words.
-- `reading` — optional, the reading of the whole title in kana.
-- `v` — the version of the generator that draws it: `1`. A version that was
-  never published, or none, is the current one (`versionOf`,
-  `src/poem/generators.ts`). The site always writes the version into the
-  address (`&v=1`), so an address keeps the page it was given even after a
-  later version is published.
+- `title`：ことば。
+- `reading`：省略できる。題全体の読みをかなで書く。
+- `v`：その紙面を描く生成器の版。公開中の版は `1`。公開していない版や、版の指定がないアドレスは、現在の版で描く（`versionOf`、`src/poem/generators.ts`）。サイトはアドレスに必ず版を書く（`&v=1`）ので、あとで新しい版を公開しても、アドレスは受け取ったときの紙面を指し続ける。
 
-On the input line a reading may follow the words in brackets:
-`子供の城（こどものしろ）`. The line is split by
+入力欄では、ことばのあとに括弧で読みを添えられる（`子供の城（こどものしろ）`）。入力は次の正規表現で分ける。
 
 ```
 /^(.*\S)\s*[（(]\s*([\p{Script=Hiragana}\p{Script=Katakana}ー・\s]+)\s*[）)]\s*$/u
 ```
 
-Brackets holding anything other than kana, ー, ・ and spaces are part of the
-words.
+括弧の中に、かな・ー・・・空白以外の字があれば、その括弧もことばの一部として扱う。
 
-### Normalization (`src/title.ts`)
+### 正規化（`src/title.ts`）
 
 ```
-text    = NFC(title), line breaks → one space, trimmed
-          empty → refused; more than 16 code points (MAX_TITLE) → refused
-reading = NFC(reading), all whitespace removed, katakana → hiragana; empty → none
-variant = 0            (the site never sets another)
+text    = NFC(title)。改行は半角空白ひとつに置き換え、前後の空白を除く
+          空なら拒否。16 コードポイント（MAX_TITLE）を超えたら拒否
+reading = NFC(reading)。空白をすべて除き、カタカナをひらがなにする。空なら読みなし
+variant = 0            （サイトが別の値を使うことはない）
 ```
 
-The page then refuses a title containing any character outside the Unicode
-ranges declared by the bundled reading face's `@font-face` rules
-(`uncovered()`, `src/glyph/coverage.ts`) — see [Coverage](#coverage). The
-archive server applies the same `normalizeTitle` again to what it receives.
+さらにページは、同梱の読み取り用字体の `@font-face` が宣言する Unicode の範囲から外れる字を含む題を拒否する（`uncovered()`、`src/glyph/coverage.ts`。[字体にある字の範囲](#字体にある字の範囲)を参照）。生成記録のサーバーも、受け取った題に同じ `normalizeTitle` をかけ直す。
 
-The seed is computed from `text`, `reading` and `variant`
-([reproducibility.md](reproducibility.md#the-seed)).
+乱数の種は `text`、`reading`、`variant` から作る（[reproducibility.md](reproducibility.md#乱数の種)）。
 
-## 2. Language (`src/language/`)
+## 2. 言語（`src/language/`）
 
-### Graphemes and scripts
+### 書記素と文字の種類
 
-The title is split into code points (`Array.from`). Each gets a script
-(`script.ts`): `hiragana` U+3041–309F, `katakana` U+30A0–30FF, `kanji`
-(U+4E00–9FFF, U+3400–4DBF, U+F900–FAFF, 々), `mark` (ー), `symbol` (a fixed set
-of punctuation and spaces: ！？、。「」（）…〜・／： etc.), else `other`
-(Latin letters, digits). Small kana (ぁぃぅぇぉゃゅょゎっ ァィゥェォャュョヮッヵヶ) are flagged
-`small`.
+題はコードポイントごとに分ける（`Array.from`）。それぞれに文字の種類（script）を割り当てる（`script.ts`）。
 
-### Segmentation (`segment.ts`)
+- `hiragana`：U+3041–309F
+- `katakana`：U+30A0–30FF
+- `kanji`：U+4E00–9FFF、U+3400–4DBF、U+F900–FAFF、々
+- `mark`：ー
+- `symbol`：決まった記号と空白（！？、。「」（）…〜・／： など）
+- `other`：それ以外（ラテン文字、数字）
 
-There is **no morphological analyser and no dictionary**. The rule segmenter
-(`ruleSegmenter`, behind a `Segmenter` interface) uses only what is visible:
+小書きのかな（ぁぃぅぇぉゃゅょゎっ ァィゥェォャュョヮッヵヶ）には `small` の印を付ける。
 
-1. The title is cut into runs of one script (ー joins the run it lengthens;
-   every symbol is a run of its own).
-2. Kanji, katakana and `other` runs are nouns; a symbol run is a symbol.
-3. A hiragana run after a content run:
-   - starts with a function word → that word is split off
-     (`あるいは もしくは ならびに または および` conjunctions,
-     `から まで より` particles);
-   - is a single character in `の を に へ が は で と も や か` → a particle;
-   - is longer and starts with `の を へ が は` → that character is a particle;
-   - a hiragana run directly after a kanji run is **okurigana**: it joins the
-     kanji token (`触る`, `美しい`), which is then a verb if it ends in an
-     e-row kana (imperative, `走れ`), an adjective if it ends in い, a verb if
-     it ends in a u-row kana, otherwise a noun; the index where the kana
-     begins is kept as `stem`.
-4. Any other hiragana run is a noun (or an imperative verb by the same ending
-   test).
+### 分かち書き（`segment.ts`）
 
-### Readings and morae (`analysis.ts`, `morae.ts`, `kana.ts`)
+**形態素解析器も辞書も使わない。** 規則による分かち書き（`Segmenter` インターフェースの裏にある `ruleSegmenter`）は、字面から分かることだけを使う。
 
-- **A kanji has no sound unless a reading is given.** If `reading` is given, it
-  is aligned to the writing by a regular expression in which every kana of the
-  title is a literal anchor (ー matches ー or a vowel) and every run of kanji is
-  `(.+?)`. If it does not match, `readingAligned` is false and the kanji stay
-  unread.
-- The sound sequence is the kana of the title, with each aligned kanji run
-  replaced by its reading; an unaligned kanji run stays a single `unread`
-  mora.
-- Morae: `cv` (onset, vowel, manner of articulation), `Q` (っ), `N` (ん),
-  `R` (ー, taking the previous vowel), `unread`. A small glide or vowel joins
-  the preceding `cv` mora of the same token (き+ゃ is one beat; `palatal`).
-  Weight 1 for every mora, **2 for an unread kanji run**.
-- Devoicing: a non-palatal `cv` mora with vowel i or u and a voiceless onset
-  is `devoiced` when the next mora is `Q` or has a voiceless onset, or, at the
-  end, when it is す.
+1. 題を、同じ文字の種類が続く区間に切る。ー はのばしている区間につなげ、記号はひとつずつ別の区間にする。
+2. 漢字・カタカナ・`other` の区間は名詞、記号の区間は記号とする。
+3. 内容語の区間に続くひらがなの区間は、次のように扱う。
+   - 機能語で始まるなら、その語を切り出す（接続詞 `あるいは もしくは ならびに または および`、助詞 `から まで より`）。
+   - `の を に へ が は で と も や か` のどれか一字だけなら、助詞とする。
+   - それより長く、`の を へ が は` で始まるなら、その一字を助詞とする。
+   - 漢字の区間の直後にあるひらがなの区間は**送り仮名**として、漢字のトークンにつなげる（`触る`、`美しい`）。つなげたトークンは、エ段のかなで終われば命令形の動詞（`走れ`）、い で終われば形容詞、ウ段のかなで終われば動詞、それ以外は名詞とする。かなが始まる位置は `stem` として残す。
+4. それ以外のひらがなの区間は名詞とする（同じ語尾の判定で、命令形の動詞になることもある）。
 
-### Phonological features (`phonology.ts`)
+### 読みとモーラ（`analysis.ts`、`morae.ts`、`kana.ts`）
 
-- `voicing` — a kana written with a voicing mark: its canonical decomposition
-  (NFD) gives the unvoiced base and the mark (ぜ = せ + ゛). Nothing is looked
-  up in a table of pairs.
-- `special` — every `Q`, `N`, `R` mora.
-- `echo` — the same mora, vowel or onset returning, over the read morae but
-  measured against all morae: a mora needs ≥ 2 members; an onset ≥ 2 members
-  and ≥ 60 % of the beats; a vowel ≥ 3 members and ≥ 75 %.
+- **読みが与えられない限り、漢字に音はない。** `reading` があれば、それを字面に割り当てる。題のかなを目印（ー は ー か母音に対応する）、漢字の区間を「一字以上の何か」として、読みを先頭から当てはめる。当てはめ方が複数あるときは、前の漢字の区間ができるだけ短い読みを取る。この割り当ては、末尾から「ここから先が残りの読みと一致するか」を表に埋める動的計画法で求めるので、計算量は区間の数と読みの長さの積で済む。一致しなければ `readingAligned` は false になり、漢字は読まれないまま残る。
+- 音の列は、題のかなに、割り当てられた漢字の区間の読みを差し込んだものである。割り当てられなかった漢字の区間は、ひとつの `unread` モーラになる。
+- モーラの種類は `cv`（頭子音、母音、調音の仕方）、`Q`（っ）、`N`（ん）、`R`（ー。直前の母音を引き継ぐ）、`unread` の五つ。小書きの半母音や母音は、同じトークンの直前の `cv` モーラと一拍にまとめる（き＋ゃ で一拍、`palatal`）。重みはどのモーラも 1 で、**読まれない漢字の区間だけ 2** とする。
+- 無声化：拗音でない `cv` モーラのうち、母音が i か u で頭子音が無声のものは、次のモーラが `Q` か無声の頭子音をもつとき、または語末の す のとき、`devoiced` とする。
 
-### Relations (`analysis.ts`)
+### 音韻の特徴（`phonology.ts`）
 
-| relation | rule |
+- `voicing`：濁点・半濁点付きのかな。正規分解（NFD）で清音の字と記号に分ける（ぜ = せ + ゛）。清濁の対応表は使わない。
+- `special`：すべての `Q`、`N`、`R` モーラ。
+- `echo`：同じモーラ、母音、頭子音がくり返し現れること。読まれたモーラについて数え、割合はすべてのモーラに対して測る。モーラは 2 個以上、頭子音は 2 個以上かつ拍の 60 % 以上、母音は 3 個以上かつ 75 % 以上で成り立つ。
+
+### 関係（`analysis.ts`）
+
+| relation | 規則 |
 | --- | --- |
-| `recurrence` | the same grapheme (as hiragana), mora key or vowel occurring more than once (`unit` = grapheme / mora / vowel) |
-| `reduplication` | a unit of 1…⌊n/2⌋ graphemes repeated in immediate succession, longest first, without overlaps; 々 and ゝ repeat the character before them (ささ, 許許, ころころ, 人々) |
-| `mirror` | the non-symbol graphemes (≥ 3, at least 2 distinct) read the same backwards (雨の中の雨) |
-| `relationWord` | a particle or conjunction token |
-| `coordination` | a conjunction, or と / や / か, between two content tokens |
-| `dependency` | any other particle between two content tokens (dependent → head) |
-| `silence` | a `Q` mora |
-| `negation` | a token ending in ません / なかった / ない / なく / ぬ / ず, or a noun of ≥ 2 characters starting with 無 不 非 未 |
-| `separation` | a whitespace symbol between two tokens |
-| `imperative` | a verb token in the imperative form |
-| `inflection` | a token with a kanji stem and a kana ending |
+| `recurrence` | 同じ字（ひらがなにそろえて比べる）、モーラ、母音が二回以上現れる（`unit` = grapheme / mora / vowel） |
+| `reduplication` | 1〜⌊n/2⌋ 字のまとまりが、すぐ続けてくり返される。長いものから、重ならないように取る。々 と ゝ は直前の字をくり返す（ささ、許許、ころころ、人々） |
+| `mirror` | 記号以外の字（3 字以上で、2 種類以上）が、逆から読んでも同じ並びになる（雨の中の雨） |
+| `relationWord` | 助詞か接続詞のトークン |
+| `coordination` | 二つの内容語のあいだにある接続詞、または と / や / か |
+| `dependency` | 二つの内容語のあいだにある、それ以外の助詞（係る語 → 受ける語） |
+| `silence` | `Q` モーラ |
+| `negation` | ません / なかった / ない / なく / ぬ / ず で終わるトークン、または 無 不 非 未 で始まる 2 字以上の名詞 |
+| `separation` | 二つのトークンのあいだにある空白の記号 |
+| `imperative` | 命令形の動詞のトークン |
+| `inflection` | 漢字の語幹とかなの語尾からなるトークン |
 
-### Writing direction
+### 書字方向
 
-Horizontal when the title has more katakana than hiragana and kanji together;
-otherwise vertical. It sets the reading direction of every layout
-(`directions()`, `src/poem/units.ts`) and turns ー 〜 … and similar
-marks by 90° in vertical writing; small kana sit in a corner of their cell
-(`src/glyph/layout.ts`).
+カタカナの数が、ひらがなと漢字の合計より多い題は横書き、それ以外は縦書きにする。書字方向は、あらゆる配置の読む向きを決める（`directions()`、`src/poem/units.ts`）。縦書きでは ー 〜 … などを 90° 回し、小書きのかなを字のます目の隅に寄せる（`src/glyph/layout.ts`）。
 
-## 3. Letterforms (`src/glyph/`)
+## 3. 字形（`src/glyph/`）
 
-Every reading of a glyph is a reading of **these particular letterforms**: the
-computer measures the ink of the bundled font and compares shapes. None of it
-is a fact about the characters, and another font would read differently.
+字形についての読み取りは、どれも**この字体のこの字形**についての読み取りである。計算は同梱のフォントの墨を測り、形を比べているだけで、字そのものについての事実ではない。別のフォントなら別の読み方になる。
 
-### Faces
+### 字体
 
-| face | font | used for |
+| 字体 | フォント | 用途 |
 | --- | --- | --- |
-| reading face (`sans`) | Noto Sans JP 500 | every measurement and relation; marks that are readings of ink |
-| writing face (`serif`) | Noto Serif JP 300 | the title written as writing (`src/poem/face.ts`) |
+| 読み取り用（`sans`） | Noto Sans JP 500 | すべての計測と関係。墨の読み取りから生まれる印 |
+| 書き用（`serif`） | Noto Serif JP 300 | 書かれたものとしての題（`src/poem/face.ts`） |
 
-Both are bundled from `@fontsource/noto-sans-jp` and `@fontsource/noto-serif-jp`
-(version 5.3.0, pinned by `package-lock.json`) as unicode-range subsets, and
-loaded with `document.fonts.load()` before any measurement
-(`GlyphLibrary.prepare`). If the fonts cannot be loaded, `prepare` throws and
-no page is drawn.
+どちらも `@fontsource/noto-sans-jp` と `@fontsource/noto-serif-jp`（5.3.0、`package-lock.json` で固定）の unicode-range ごとの断片として同梱し、計測の前に `document.fonts.load()` で読み込む（`GlyphLibrary.prepare`）。フォントを読み込めなければ `prepare` は例外を投げ、紙面は描かない。
 
-### Coverage
+### 字体にある字の範囲
 
-`covers(face, char)` checks the code point against the `unicodeRange` of the
-`@font-face` rules the page registered for that face and weight — not a
-rendering, because a rendering would succeed in a system fallback font. A
-character outside them would be measured and drawn in whatever font the
-device falls back to, so the page refuses it instead. The serif face is used
-for a mark only if it covers the character and has ink for it.
+`covers(face, char)` は、その字体と太さについてページが登録した `@font-face` の `unicodeRange` に、コードポイントが含まれるかを調べる。実際に描いて確かめないのは、描画はシステムの代替フォントでも成功してしまうからだ。範囲外の字は、端末が代わりに使うフォントで計測・描画されることになるので、ページはその字を拒否する。書き用の字体は、その字を含み、かつ墨があるときだけ印に使う。
 
-### Measurement (`metrics.ts`)
+### 計測（`metrics.ts`）
 
-Each glyph is drawn once with `fillText` at 200 px on a 600 × 600 canvas.
-Pixels with alpha > 8 are ink. From the ink's bounding box:
+字形ごとに一度、600 × 600 のキャンバスに `fillText` で 200 px の字を描く。アルファ値が 8 を超える画素を墨とみなし、墨の外接矩形から次の値を求める。
 
-- `density` — Σ alpha / 255 over the box, divided by 200² (ink per em square).
-- `half`, `pen` — half the ink box, and the pen origin relative to the ink
-  centre, in em units (EM = 100). Every glyph is drawn centred on its ink.
-- `rows`, `cols` — ink per band, 40 bands each way, normalised to max 1.
-- `grid` — 24 × 24 coverage.
-- `seam` — the thinnest place of the column and row profiles in their middle
-  (28 %–72 %), smoothed over ±2 % of the length, scored as its ink against the
-  mean; the axis with the lower score wins. `share` is the ink on each side.
-- `islands` — 8-connected components with alpha > 64 holding ≥ 1.5 % of the ink.
-- `ink` — the cropped alpha raster, kept for every later reading.
+- `density`：矩形内のアルファ値 / 255 の合計を 200² で割ったもの（全角の正方形あたりの墨の量）。
+- `half`、`pen`：墨の矩形の半分の大きさと、墨の中心から見たペンの原点の位置（em 単位、EM = 100）。どの字形も、墨の中心に合わせて描く。
+- `rows`、`cols`：縦横それぞれ 40 本の帯ごとの墨の量。最大値が 1 になるよう正規化する。
+- `grid`：24 × 24 の被覆率。
+- `seam`：列と行の分布の中央部（28 %–72 %）でいちばん細い場所。長さの ±2 % でならし、平均に対する墨の量で点数を付け、点数の低いほうの軸を採る。`share` は継ぎ目の両側の墨の割合。
+- `islands`：アルファ値 64 超の 8 近傍の連結成分のうち、墨の 1.5 % 以上を占めるもの。
+- `ink`：切り出したアルファ値のラスター。後のすべての読み取りに使う。
 
-### Parts (`parts.ts`, `operations/decomposition.ts`)
+### 部品（`parts.ts`、`operations/decomposition.ts`）
 
-`structuralParts(char)` is how the system splits a glyph:
+`structuralParts(char)` は、字形を次のように分ける。
 
-- if the glyph has ≥ 2 islands → the islands (at most 6), each kept exactly;
-- otherwise `partition(m, 5, 0.35)`: repeatedly cut the part holding the most
-  ink at its thinnest line, looked for across 15–85 % of the part, only where
-  the letterform is already open (closure ≤ 0.35) and each side keeps ≥ 6 % of
-  the ink.
+- 島（`islands`）が 2 つ以上あれば、その島を部品にする（最大 6 つ。形はそのまま残す）。
+- そうでなければ `partition(m, 5, 0.35)` を使う。いちばん墨の多い部品を、いちばん細い線でくり返し切る。切る線は部品の 15–85 % の範囲で探し、字形がもともと開いている場所（closure ≤ 0.35）で、両側に墨の 6 % 以上が残るときだけ切る。
 
-A part is a set of rectangles in em space, so it can be kept by a clip.
+部品は em 空間の矩形の集まりとして表すので、クリップでそのまま切り出せる。
 
-### Legibility (`legibility.ts`)
+### 判読（`legibility.ts`）
 
-`readPart` asks whether a part reads as a character: its ink, scaled onto a
-32 × 32 grid with its proportions kept, is compared with whole glyphs of the
-inventory — 68 components and simple characters
-(`木口日月目田人亻大小山川土士工王子女力刀又寸十八心火水氵米糸言金門立石耳貝車虫竹示禾犬牛手扌艹宀穴广辶冖夕止皿巾己弓欠斤方文白夫井中上下`),
-five strokes (`一丨丿丶乙`), and the title's own characters. A reading needs
-≥ 0.85 mutual overlap (one cell of tolerance) and aspect ratios within a
-factor 1.6; a part holding ≥ 85 % of the ink is the glyph itself, not a part.
+`readPart` は、ある部品が字として読めるかを判定する。部品の墨を縦横比を保ったまま 32 × 32 の格子に縮め、次の字形全体と比べる。
 
-### Relations between glyphs (`relation.ts`)
+- 68 個の部品と簡単な字（`木口日月目田人亻大小山川土士工王子女力刀又寸十八心火水氵米糸言金門立石耳貝車虫竹示禾犬牛手扌艹宀穴广辶冖夕止皿巾己弓欠斤方文白夫井中上下`）
+- 5 つの画（`一丨丿丶乙`）
+- 題そのものの字
 
-`relate(inner, outer)` lays one glyph over another on a 64 × 64 grid covering
-±62 em units around the ink centres:
+読めたとみなすには、互いの重なりが 0.85 以上（1 マスのずれは許す）で、縦横比の差が 1.6 倍以内であることが要る。墨の 85 % 以上を占める部品は、部品ではなく字形そのものとみなす。
 
-1. Search: scale ∈ {0.94, 1, 1.06} × offsets −12…12 step 4 (em units), then
-   around the best: scale ± 0.03 × offsets ± 3 step 1.
-2. Score each placement by **lift above chance**: `overlap` = share of the
-   inner's cells on the outer's ink; `chance` = the outer's ink share inside
-   the inner's bounding box; `lift = (overlap − chance) / (1 − chance)`.
-   `containment` is the best lift.
-3. Residue: the outer's cells not covered by the (one-cell dilated) inner,
-   split into 8-connected pieces; pieces smaller than max(3 cells, 3 % of the
-   outer) are dropped. `residue.share` is the rest as a share of the outer;
-   `substance` the share of it in kept pieces; `pieces` their rectangles.
+### 字形どうしの関係（`relation.ts`）
 
-Among the title's distinct characters (`readRelations`), a pair is tested
-only when the ink ratio is 0.3–1.18, and read as:
+`relate(inner, outer)` は、墨の中心から ±62 em 単位を覆う 64 × 64 の格子の上で、ひとつの字形を別の字形に重ねる。
 
-- **similarity** — both directions have containment ≥ 0.65
-  (`RELATION_THRESHOLD`) and both residues ≤ 15 % (人 ≈ 入, 大 ≈ 犬);
-- **containment** — otherwise, in each direction where the inner has at most
-  1.05 × the outer's ink (川 in 州). Relations below 0.65 are kept but most
-  rules ignore them.
+1. 探索：倍率 {0.94, 1, 1.06} とずらし −12…12（4 刻み、em 単位）を試し、いちばんよい位置のまわりで、倍率 ±0.03、ずらし ±3（1 刻み）を試す。
+2. 各位置に、**偶然を超えてどれだけ重なるか**で点数を付ける。`overlap` は内側の字形のマスのうち外側の墨に重なる割合、`chance` は内側の外接矩形の中で外側の墨が占める割合で、`lift = (overlap − chance) / (1 − chance)` とする。`containment` は最もよい `lift` である。
+3. 残り（residue）：外側のマスのうち、（1 マス太らせた）内側に覆われないものを 8 近傍の連結成分に分け、max(3 マス, 外側の 3 %) より小さい成分は捨てる。`residue.share` は残った部分の外側に対する割合、`substance` はそのうち残した成分の割合、`pieces` はその矩形である。
 
-Against components the title does not write (`readInventory`, `origin:
-'inventory'`), the conditions are stricter: the component's density ≥ 0.24
-(no light skeletal forms), its ink 0.3–1.05 × the character's, a coarse lift
-≥ 0.35 at offsets {−8, 0, 8}, then containment ≥ 0.8, residue 6–80 %,
-substance ≥ 0.6, at most 4 pieces; strokes are never the inner glyph; one
-reading per character. Because the search moves a component by at most ±12 em
-units and scales it by at most ±9 %, a component drawn much smaller inside a
-character (a typical 偏 or 旁) is not found.
+題に含まれる異なる字どうし（`readRelations`）では、墨の量の比が 0.3–1.18 の組だけを調べ、次のように読む。
 
-Voicing: for each voiced kana, `relate(base, voiced)` must reach containment
-≥ 0.65 for the font to show the base inside it; that relation is kept in
-`analysis.voicing`.
+- **似ている（similarity）**：両方向とも containment が 0.65（`RELATION_THRESHOLD`）以上で、両方の残りが 15 % 以下（人 ≈ 入、大 ≈ 犬）。
+- **含む（containment）**：それ以外で、内側の墨が外側の 1.05 倍以下になる方向（州 の中の 川）。0.65 未満の関係も残すが、ほとんどの規則は使わない。
 
-### Interiors (`interior.ts`)
+題が書かない部品との比較（`readInventory`、`origin: 'inventory'`）では、条件を厳しくする。部品の density が 0.24 以上（細い骨組みだけの形は除く）、墨の量が字の 0.3–1.05 倍、ずらし {−8, 0, 8} での粗い lift が 0.35 以上で、そのうえで containment 0.8 以上、残り 6–80 %、substance 0.6 以上、成分 4 つ以下を求める。画は内側の字形にしない。読みは一字につきひとつまでとする。探索でのずらしは最大 ±12 em 単位、倍率の変化は最大 ±9 % なので、字の中にずっと小さく書かれた部品（よくある偏や旁）は見つからない。
 
-- **counters** — white the outside cannot reach: a flood fill from the ink
-  box's border over pixels with alpha ≤ 60; every remaining white component
-  holding ≥ 8 % of the box is a counter (口 ≈ 47 %, 日 two of ≈ 20 %, 田 four
-  of ≈ 10 %). Their arrangement (single, stacked, beside, grid, nested) and
-  evenness are recorded.
-- **echoForm** — the same form returning inside one character: islands of
-  ≥ 12 % of the ink, each normalised to a 16 × 16 grid, grouped where every
-  pair has IoU ≥ 0.8 (品's three 口).
-- Left–right symmetry is measured but used nowhere.
+清濁：濁点付きのかなについて、`relate(base, voiced)` の containment が 0.65 以上になれば、このフォントでは清音の字が中に見えているとみなし、その関係を `analysis.voicing` に残す。
 
-### What the generator reads from this
+### 内側の白（`interior.ts`）
 
-The generator uses: glyph `density` (ink weight of each step, which character withdraws,
-material fineness), `cols` (which way a character leans), `rows`/`cols` (its
-thinnest side, for wear), `seam` (where a character is cut),
-`structuralParts` (wear and cut by components; forms repeated inside a
-character), `readPart`, containment relations of the title's own characters
-(material, the nesting motif), counters (the nesting motif), and the ink
-raster (keeping material off written ink; the invariant audit). See
-[composition.md](composition.md).
+- **counters（字の中の閉じた白）**：外から届かない白。墨の矩形の縁から、アルファ値 60 以下の画素を塗りつぶしていき、残った白の成分のうち矩形の 8 % 以上を占めるものを counter とする（口 ≈ 47 %、日 は ≈ 20 % が二つ、田 は ≈ 10 % が四つ）。並び方（ひとつ、上下、左右、格子、入れ子）と大きさのそろい方も記録する。
+- **echoForm**：ひとつの字の中に同じ形がくり返し現れること。墨の 12 % 以上を占める島をそれぞれ 16 × 16 の格子に正規化し、どの組も IoU が 0.8 以上になるものをまとめる（品 の三つの 口）。
+- 左右の対称性も測っているが、どこにも使っていない。
+
+### 生成器がここから使うもの
+
+生成器が使うのは次のものである。詳しくは [composition.md](composition.md) に書く。
+
+- 字形の `density`：一歩ごとの墨の重み、どの字が退くか、素材の細かさ
+- `cols`：字がどちらへ傾くか
+- `rows`/`cols`：いちばん薄い側（すり減らすとき）
+- `seam`：字を割る位置
+- `structuralParts`：部品単位のすり減りと割り方、字の中でくり返される形
+- `readPart`
+- 題の字どうしの containment の関係：素材、入れ子のモチーフ
+- counters：入れ子のモチーフ
+- 墨のラスター：書かれた墨の上に素材を置かないため。不変条件の監査にも使う
