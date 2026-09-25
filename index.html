@@ -34,6 +34,21 @@
             placeholder="ことばを入力"
             enterkeyhint="go"
           />
+          <!-- the reading, if any: a second, quieter line under the words, ending in つくる -->
+          <p id="reading-line">
+            <label for="reading">読み（任意）</label>
+            <input
+              id="reading"
+              lang="ja"
+              maxlength="96"
+              spellcheck="false"
+              autocapitalize="off"
+              autocorrect="off"
+              placeholder="ひらがな"
+              enterkeyhint="go"
+            />
+            <button type="submit" id="make">つくる</button>
+          </p>
         </form>
 
         <p id="actions">
@@ -109,7 +124,7 @@
       <p>
         コンクリート・ポエトリー、とくに新國誠一の視覚詩を参照しています。文字の形や音、配置、反復、空白も言葉の一部として扱う考え方をもとに、字形の計測や語の解析といった計算によって紙面をつくっています。
       </p>
-      <p class="aside">ことばは十六字まで。読みを指定するときは「子供の城（こどものしろ）」のように括弧で添えます。</p>
+      <p class="aside">ことばは十六字まで。漢字の読みは「読み（任意）」の欄に、ひらがなで添えられます。</p>
       <dl>
         <dt>字体</dt>
         <dd>Noto Sans JP・Noto Serif JP（SIL Open Font License 1.1）</dd>
