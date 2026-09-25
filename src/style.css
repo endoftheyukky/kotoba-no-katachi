@@ -156,7 +156,8 @@ body[data-waiting] #stage::after {
 /* the line */
 #entry {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 #title {
@@ -187,6 +188,90 @@ body[data-waiting] #stage::after {
 
 #title[aria-invalid="true"] {
   border-bottom-style: dashed;
+}
+
+/* the reading: under the words, a step quieter — a small name, a light line */
+#reading-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0 0.9em;
+  margin-top: 10px !important;
+}
+
+#reading-line label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--mute);
+  white-space: nowrap;
+}
+
+#reading {
+  flex: 0 1 9em;
+  width: 9em;
+  min-width: 4.5em;
+  font: inherit;
+  /* at least 16px, so that a phone does not zoom into the line */
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 3px 0 4px;
+  outline: none;
+}
+
+#reading::placeholder {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+
+#reading:focus-visible {
+  border-bottom-color: var(--ink);
+}
+
+#reading[aria-invalid="true"] {
+  border-bottom-style: dashed;
+  border-bottom-color: var(--ink);
+}
+
+/* つくる: where the two lines end — a small framed word, as quiet as 保存 · 共有, found by its frame */
+#make {
+  flex: none;
+  align-self: center;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: #6b6963;
+  background: none;
+  border: 1px solid var(--faint);
+  border-radius: 0;
+  padding: 5px 12px 5px 13px;
+  cursor: pointer;
+  position: relative;
+}
+
+/* the frame stays small; the place a finger can press is the usual 44px */
+#make::after {
+  content: "";
+  position: absolute;
+  inset: -8px -6px;
+}
+
+#make:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+#make:focus-visible {
+  color: var(--ink);
+  border-color: var(--ink);
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
 }
 
 /* the title of a poem that arrived by its address */

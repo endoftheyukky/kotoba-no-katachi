@@ -38,6 +38,7 @@ const body = document.body
 const stage = document.getElementById('stage')!
 const form = document.getElementById('entry') as HTMLFormElement
 const field = document.getElementById('title') as HTMLInputElement
+const readingField = document.getElementById('reading') as HTMLInputElement
 const caption = document.getElementById('caption')!
 const examples = document.getElementById('examples')!
 const save = document.getElementById('save') as HTMLButtonElement
@@ -87,12 +88,33 @@ function mode(m: 'write' | 'view'): void {
 }
 
 /**
- * One line holds the words and, optionally, their reading in brackets after
- * them — 子供の城（こどものしろ）. Anything else in brackets is part of the words.
+ * The words line may still hold a reading in brackets after the words, as it
+ * once had to — 子供の城（こどものしろ）. Anything else in brackets is part of the words.
  */
 function parse(value: string): { text: string; reading: string } {
   const m = /^(.*\S)\s*[（(]\s*([\p{Script=Hiragana}\p{Script=Katakana}ー・\s]+)\s*[）)]\s*$/u.exec(value)
   return m ? { text: m[1], reading: m[2] } : { text: value, reading: '' }
+}
+
+/** a reading as the page takes one: kana, ー, ・ and spaces (the archive takes the same, server/generations.ts) */
+const KANA = /^[\p{Script=Hiragana}\p{Script=Katakana}ー・\s]*$/u
+
+/**
+ * What the two lines ask for: the words, and the reading from its own line —
+ * or, when that is empty, from brackets after the words.
+ */
+function entered(): { text: string; reading: string } {
+  const words = parse(field.value)
+  const reading = readingField.value.trim()
+  return reading ? { text: words.text, reading } : words
+}
+
+/** the two lines hold these words and this reading (or are emptied) */
+function fill(input: { text: string; reading?: string } | null): void {
+  field.value = input?.text ?? ''
+  readingField.value = input?.reading ?? ''
+  field.removeAttribute('aria-invalid')
+  readingField.removeAttribute('aria-invalid')
 }
 
 /** words the work can write, or why not */
@@ -238,6 +260,8 @@ async function show(input: TitleInput, history: 'push' | 'replace' | 'none', ver
     stage.setAttribute('aria-label', `「${label}」の紙面`)
     caption.textContent = `「${label}」`
     body.dataset.state = 'shown'
+    // the lines hold the poem on the paper, however it came (typed, an address, Back / Forward, a 作例)
+    fill(input)
     // a poem on the paper is looked at first, however it came: the line closes
     // until 別のことばで試す opens it again
     mode('view')
@@ -283,33 +307,42 @@ function fromAddress(): { input: TitleInput; version: Version } | string | null 
   return typeof input === 'string' ? input : { input, version: versionOf(q.get('v')) }
 }
 
-// Enter writes the poem — but an Enter that only confirms a conversion must not also send the words
-field.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter') return
-  e.preventDefault()
-  if (e.isComposing || e.keyCode === 229) return
-  form.requestSubmit()
-})
-
-field.addEventListener('input', () => {
-  if (field.hasAttribute('aria-invalid')) {
-    field.removeAttribute('aria-invalid')
-    say('')
-  }
-})
+// Enter, on either line, writes the poem — but an Enter that only confirms a conversion must not also send the words
+for (const line of [field, readingField]) {
+  line.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return
+    e.preventDefault()
+    if (e.isComposing || e.keyCode === 229) return
+    form.requestSubmit()
+  })
+  line.addEventListener('input', () => {
+    if (line.hasAttribute('aria-invalid')) {
+      line.removeAttribute('aria-invalid')
+      say('')
+    }
+  })
+}
 
 form.addEventListener('submit', (e) => {
   e.preventDefault()
-  const { text, reading } = parse(field.value)
+  if (!KANA.test(readingField.value)) {
+    readingField.setAttribute('aria-invalid', 'true')
+    say('読みは、ひらがなかカタカナで入力してください')
+    return
+  }
+  const { text, reading } = entered()
   const input = read(text, reading)
   if (typeof input === 'string') {
-    field.setAttribute('aria-invalid', 'true')
+    // a reading too long is the reading's line; everything else, the words'
+    ;(input.startsWith('よみ') ? readingField : field).setAttribute('aria-invalid', 'true')
     say(input)
     return
   }
   field.removeAttribute('aria-invalid')
+  readingField.removeAttribute('aria-invalid')
   // the keyboard would keep covering the poem
   field.blur()
+  readingField.blur()
   // the poem already on the paper, by the generator words are written in now:
   // nothing to write again, only to look at
   if (same(input, current?.input ?? null) && current?.version === writing && body.dataset.state === 'shown') {
@@ -329,7 +362,7 @@ examples.addEventListener('click', (e) => {
   const input = read(q.get('title') ?? '', q.get('reading') ?? '')
   if (typeof input === 'string') return
   e.preventDefault()
-  field.value = ''
+  fill(null)
   window.scrollTo(0, 0)
   mode('view')
   void show(input, 'push', versionOf(q.get('v')))
@@ -446,8 +479,7 @@ document.addEventListener('pointerdown', (e) => {
 tryOwn.addEventListener('click', () => {
   blank()
   mode('write')
-  field.value = ''
-  field.removeAttribute('aria-invalid')
+  fill(null)
   say('')
   field.focus()
 })
@@ -474,7 +506,7 @@ window.addEventListener('popstate', () => {
   if (!input) {
     blank()
     mode('write')
-    field.value = ''
+    fill(null)
     say('')
     return
   }
@@ -496,8 +528,8 @@ if (first && typeof first !== 'string') {
   blank()
   if (typeof first === 'string') {
     const q = new URLSearchParams(location.search)
-    field.value = q.get('reading') ? `${q.get('title')}（${q.get('reading')}）` : (q.get('title') ?? '')
-    field.setAttribute('aria-invalid', 'true')
+    fill({ text: q.get('title') ?? '', reading: q.get('reading') ?? '' })
+    ;(first.startsWith('よみ') ? readingField : field).setAttribute('aria-invalid', 'true')
     say(first)
   }
 }
