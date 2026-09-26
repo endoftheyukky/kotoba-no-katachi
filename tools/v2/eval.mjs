@@ -26,6 +26,25 @@ const sets = {
     { text: '東京特許許可局', reading: 'とうきょうとっきょきょかきょく' }, { text: 'すもももももももものうち' },
     { text: 'かえるぴょこぴょこ' }, { text: 'ささやき' }, { text: 'コーヒー' }, { text: 'きのうのきょうのあした' },
   ],
+  // any input (Stage 11): every kind of text a person may type, including what the site refuses before it
+  // composes (a character the face lacks, an empty or too long title); for looking only
+  robustness: [
+    '図書館', '経済', 'ありがとう', 'あ', 'ラジオ', 'ヴァイオリン', 'hello', 'WORLD', 'a', '12345', '0', '3.14',
+    '「」', '！？', '、。', '……', '・', 'Tシャツ', '3月の雨', 'iPhoneの画面', 'A4用紙', '空 と 海', 'a b c',
+    ['生', 'なま'], '生', ['今日', 'こんにち'], ['雨', 'かぜ'], 'ぬるぴか', '森雨林', '雨囚', '薔薇', '龘', '々', '𠮟る',
+    '🌧', '雨🌧', '한글', '𪚥', '葛\u{E0100}', '辻\u{E0100}城', 'か\u309A', 'e\u0301', '一', 'A', '1', '。',
+    'あいうえおかきくけこさしすせそた', '東西南北春夏秋冬朝昼夕夜天地人心', '雨雨雨雨雨雨雨雨雨雨雨雨雨雨雨雨',
+    ['寿限無', 'じゅげむじゅげむごこうのすりきれかいじゃりすいぎょのすいぎょうまつうんらいまつふうらいまつくうねるところにすむところ'],
+    'ー', 'っ', '〜', 'ｱｲｳ', 'ＡＢＣ', '①②', '∞', '♪',
+    '', '   ', 'あいうえおかきくけこさしすせそたち', ['雨', 'あ'.repeat(65)],
+  ].map((t) => (Array.isArray(t) ? { text: t[0], reading: t[1] } : { text: t })),
+  // two characters of the same or of different scripts that may hold each other's form (Stage 11: the
+  // relations between a title's own glyphs, read by v1, across scripts); for looking only
+  scripts: [
+    '大太', '木本', '日白', 'へヘ', 'ぬめ', 'シツ', 'ソン', 'はほ', 'OQ', 'EF', 'PR', 'bd', 'ce', 'il', '18', '38', '69',
+    '1年', '一1', '十+', '工エ', '口ロ', '力カ', '夕タ', '八ハ', '二ニ', '千チ', 'T字', 'I工', 'H日', 'X文', 'Good',
+    'ロO', 'レL', 'へA', '一ー', '口。', '大、', '・丶', '!1', 'rG', '1年目', 'Go', 'Lと', 'Iと工',
+  ].map((text) => ({ text })),
   public: [...STUDY_TITLES, ...HOLDOUT_TITLES, ...PROBE_TITLES, ...DIFFICULT_WORDS, ...EDGE_TITLES].map((t) => ({ text: t.text, ...(t.reading ? { reading: t.reading } : {}) })),
 }
 const work = mkdtempSync(join(tmpdir(), 'kotoba-v2-eval-'))

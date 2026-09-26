@@ -10,6 +10,7 @@ import { normalizeTitle } from '../src/title'
 import { alignIndex } from '../src/v2/align/lookup'
 import type { AlignManifest, AlignShard } from '../src/v2/align/table'
 import { discover, gates, select } from '../src/v2/discovery'
+import { structureOf } from '../src/v2/discovery/select'
 import type { DiscoveryInput } from '../src/v2/discovery/input'
 import { CASES } from '../src/v2/fixtures/cases'
 import type { BenchmarkCase, DiscoveryPattern, Expect } from '../src/v2/fixtures/types'
@@ -33,6 +34,7 @@ const inputFor = (text: string, relations: readonly GlyphRelation[] = [], readin
   if (typeof input === 'string') throw new Error(input)
   return { language: analyzeLanguage(input), structure, align, relations }
 }
+const box = { x: 0, y: 0, w: 0, h: 0 }
 const run = (text: string, relations: readonly GlyphRelation[] = [], reading?: string) => {
   const input = inputFor(text, relations, reading)
   const ds = discover(input)
@@ -217,13 +219,37 @@ describe('Discovery: words, sound and the title\'s characters together', () => {
   })
 
   test('a relation between two written characters (v1 relate) is an inter-character Discovery, with its gates', () => {
-    const rel = (score: number): GlyphRelation => ({ kind: 'containment', origin: 'title', inner: '川', outer: '州', score, containment: score, overlap: 0.9, dx: 0, dy: 0, scale: 1, residue: { share: 0.28, pieces: [], box: { x: 0, y: 0, w: 0, h: 0 }, centroid: { x: 0, y: 0 }, substance: 1 } })
+    const rel = (score: number): GlyphRelation => ({ kind: 'containment', origin: 'title', inner: '川', outer: '州', score, containment: score, overlap: 0.9, dx: 0, dy: 0, scale: 1, residue: { share: 0.238, pieces: [box, box, box], box, centroid: { x: 0, y: 0 }, substance: 1 } })
     const strong = run('川州', [rel(0.9)])
     const d = strong.ds.find((x) => x.type === 'inter_containment')!
     assert.ok(d && d.type === 'inter_containment' && d.inner.char === '川' && d.outer.char === '州')
     assert.deepEqual(gates(d, strong.input), [])
     const weak = run('川州', [rel(0.4)])
     assert.deepEqual(gates(weak.ds.find((x) => x.type === 'inter_containment')!, weak.input), ['inter:relation-threshold'])
+  })
+
+  // Stage 11: a containment is an addition between two written characters (Stage 6): the structure, where it
+  // speaks, must name the inner, and the residue passes the addition's own ink gates (§4.1). A similarity is a
+  // relation of shape, not of components: it keeps v1's reading, across scripts too (工 ≈ エ)
+  test('a containment the structure denies, or whose residue is no addition, is no primary; silence is not a denial', () => {
+    assert.equal(structureOf('東', '天', inputFor('天東')), 'denies')
+    assert.equal(structureOf('天', '人', inputFor('人天')), 'names')
+    assert.equal(structureOf('州', '川', inputFor('川州')), 'names')
+    assert.equal(structureOf('国', '口', inputFor('口国')), 'names')
+    assert.equal(structureOf('三', '二', inputFor('二三')), 'silent')
+    assert.equal(structureOf('年', '1', inputFor('1年')), 'denies')
+    assert.equal(structureOf('G', 'r', inputFor('rG')), 'silent')
+    const of = (text: string, inner: string, outer: string, share: number, pieces: number, kind: GlyphRelation['kind'] = 'containment') => {
+      const r = run(text, [{ kind, origin: 'title', inner, outer, score: 0.8, containment: 0.8, overlap: 0.9, dx: 0, dy: 0, scale: 1, residue: { share, pieces: Array.from({ length: pieces }, () => box), box, centroid: { x: 0, y: 0 }, substance: 1 } }])
+      return gates(r.ds.find((x) => x.type === 'inter_containment' || x.type === 'inter_similarity')!, r.input)
+    }
+    assert.deepEqual(of('天東', '天', '東', 0.2, 1), ['inter:structure-names-inner'])
+    assert.deepEqual(of('rG', 'r', 'G', 0.61, 1), ['inter:delta-share'])
+    assert.deepEqual(of('1年', '1', '年', 0.649, 2), ['inter:structure-names-inner', 'inter:delta-share'])
+    assert.deepEqual(of('FE', 'F', 'E', 0.17, 1), [])
+    assert.deepEqual(of('はほ', 'は', 'ほ', 0.19, 1), [])
+    assert.deepEqual(of('川州', '川', '州', 0.238, 5), ['inter:delta-pieces'])
+    assert.deepEqual(of('工エ', '工', 'エ', 0, 0, 'similarity'), [])
   })
 
   test('the order of types decides between characters of one title (§4.3), never a score', () => {

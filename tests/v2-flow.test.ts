@@ -78,6 +78,18 @@ describe('the flow of a line: its shapes, each from a relation', () => {
     const { f } = await flow('今日も明日も', 3)
     assert.ok(!f.lines.some((l) => l[0] === 4), 'not inside 明日')
   })
+
+  test('a word in letters or a number is not split inside: it stays one line (Stage 11)', async () => {
+    for (const [t, room] of [['morning', 3], ['Good morning!', 3], ['12345678', 3], ['2026年の春', 2]] as const) {
+      const { f, o } = await flow(t, room)
+      const w = (g: number) => /^[\p{Script=Latin}\p{Nd}]$/u.test(o.language.graphemes[g].char)
+      for (let i = 1; i < f.lines.length; i++) {
+        const a = f.lines[i - 1][f.lines[i - 1].length - 1]
+        const b = f.lines[i][0]
+        assert.ok(!(w(a) && w(b) && o.language.tokenOf[a] === o.language.tokenOf[b]), `${t} @${room}: split inside ${o.language.graphemes[a].char}${o.language.graphemes[b].char}`)
+      }
+    }
+  })
 })
 
 describe('a longer title: the figure in its line', () => {

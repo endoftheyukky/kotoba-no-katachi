@@ -136,7 +136,7 @@ describe('Layout: §15.3 on every page', () => {
     assert.equal(new Set(sig).size, 4)
   })
 
-  test('the rest of a longer title: written once, at one size no larger than the figure\'s unit (TODO-10)', () => {
+  test('the rest of a longer title: written once, at one size — the figure\'s unit, or where the units are strokes the room the figure leaves (TODO-10, Stage 11)', () => {
     for (const t of ['川または州', '国際空港', '木と林と森', '雨の中の雨', '触る', '音楽']) {
       const { draft, trace } = compose(t)
       const flows = trace.geometry.detail!.flows ?? []
@@ -144,8 +144,10 @@ describe('Layout: §15.3 on every page', () => {
       const sizes = new Set(flows.map((f) => f.size))
       assert.equal(sizes.size, 1, `${t}: one size for the rest`)
       const g = trace.geometry
-      // the unit, also where the units are strokes (Stage 10: the whole had tied a long title's figure to its words)
-      for (const f of flows) assert.ok(f.size <= Math.min(g.unitSize, 0.16 * FRAME.w) + 0.6, `${t}: ${f.size} against ${g.unitSize}`)
+      // a character unit: the unit (same scale). Stroke units (Stage 11): the words are tied to no unit and take the
+      // room the figure leaves, never less than the unit's cell and never more than a character written as itself
+      if (g.detail!.strokeUnit) for (const f of flows) assert.ok(f.size >= g.unitSize - 0.6 && f.size <= 0.16 * FRAME.w + 0.6, `${t}: ${f.size} against ${g.unitSize}`)
+      else for (const f of flows) assert.ok(f.size <= Math.min(g.unitSize, 0.16 * FRAME.w) + 0.6, `${t}: ${f.size} against ${g.unitSize}`)
       for (const f of flows) for (const p of f.points) assert.equal(draft.marks.filter((m) => m.grapheme === p.grapheme).length, 1, `${t}: grapheme ${p.grapheme} written once`)
     }
   })

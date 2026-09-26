@@ -40,7 +40,7 @@ export async function observeTitle(input: TitleInput, env: V2Runtime): Promise<R
   const titleRelations = metrics.size > 1 ? readRelations(metrics) : []
   // every grapheme's character, spaces too: Discovery asks the tables of each (not finding one is an answer)
   const [tables, axes] = await Promise.all([tablesFor(language.graphemes.map((g) => g.char), env.source), env.meaning ? env.meaning(input.text) : Promise.resolve(null)])
-  return observe({ input, language, titleRelations, axes, tables })
+  return observe({ input, language, titleRelations, axes, tables, faceLacks: own.filter((c) => !covers('sans', c)) })
 }
 
 /** the page of a title, ready to draw */

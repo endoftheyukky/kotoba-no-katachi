@@ -209,9 +209,10 @@ function grids(rect: PageRect, pitch: { x: number; y: number }, multiple = 1, gr
 }
 
 /** the title's grapheme a character of the relation is, when the relation lies between the title's characters */
-function graphemeOf(p: Discovery | null, language: LanguageAnalysis, char: string): number | null {
+function graphemeOf(p: Discovery | null, language: LanguageAnalysis, char: string, rest: readonly number[]): number | null {
   if (!p || p.level !== 'inter-character') return null
-  const g = p.graphemes.find((i) => language.graphemes[i]?.char === char)
+  // a character inside a longer word stays in its word (the plan's rest): no unit writes it
+  const g = p.graphemes.find((i) => language.graphemes[i]?.char === char && !rest.includes(i))
   return g ?? null
 }
 
@@ -305,7 +306,7 @@ function fieldSingleton(input: FieldInput, frame: PageRect, interleave: boolean)
   }
   // the base is itself one of the title's characters (a relation between them): one unit writes it, the first
   // in reading order; the others repeat it
-  const gi = graphemeOf(input.primary, input.language, d.base)
+  const gi = graphemeOf(input.primary, input.language, d.base, input.rest)
   if (gi !== null) {
     const cell = firstCell(cols, rows, input.language.direction === 'vertical', takes)
     if (cell) {
@@ -722,6 +723,8 @@ export function geometry(input: FieldInput): GeometrySelection & { geometry: Fie
     return got.length ? { chosen: pick(got), candidates: got } : null
   })
   if (!line) return { candidates, chosen: chosen.name, geometry: chosen }
-  candidates = [...line.candidates, ...candidates.filter((c) => c.name.includes('dense'))]
+  // the chosen candidate is kept as it was written, with the rest of the title and its causes (Stage 11: the
+  // Rationale records the geometry the page has, not the candidate before the title's rest was placed)
+  candidates = [...line.candidates.map((c) => (c.name === line.geometry.name ? line.geometry : c)), ...candidates.filter((c) => c.name.includes('dense'))]
   return { candidates, chosen: line.geometry.name, geometry: line.geometry }
 }

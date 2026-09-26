@@ -18,6 +18,12 @@ export interface Rationale {
     /** character → the IDS it was read with (or null) */
     structure: Readonly<Record<string, string | null>>
     inkNotes: readonly string[]
+    /**
+     * added at Stage 11: what is not there for a character of the title, each kind kept apart and never filled
+     * in — structure (structure-1 has no structure), ink (align-1 has no entry), resonance (resonance-1 has no
+     * row: no evidence, not negative evidence), glyph (the reading face has no glyph; measured at run time only)
+     */
+    missing: readonly { char: string; missing: readonly ('structure' | 'ink' | 'resonance' | 'glyph')[] }[]
   }
   discoveries: readonly { id: DiscoveryId; eligible: boolean; failed: readonly GateName[] }[]
   selection: { primary: DiscoveryId | null; secondary: readonly DiscoveryId[]; reason: string }

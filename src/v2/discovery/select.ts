@@ -129,6 +129,16 @@ export function gates(d: Discovery, input: DiscoveryInput): GateName[] {
       const written = new Set(input.language.graphemes.map((g) => g.char))
       fail(written.has(d.inner.char) && written.has(d.outer.char), 'inter:both-written')
       fail(d.relation.score >= RELATION_THRESHOLD, 'inter:relation-threshold')
+      if (d.type === 'inter_containment') {
+        // a containment is read as an addition between two written characters (Stage 6): the outer is the inner
+        // and a residue. Structure is the truth of what exists: where the outer's structure is decomposed and
+        // never names the inner, the ink's reading is not a component (§2.1: ink does not decide a component)
+        fail(structureOf(d.outer.char, d.inner.char, input) !== 'denies', 'inter:structure-names-inner')
+        // the residue is the addition's delta, read from ink: the addition's own ink gates (§4.1, appendix A)
+        const pieces = d.relation.residue.pieces.length
+        fail(d.relation.residue.share <= CONSTANTS.ADDITION_MAX_DELTA_SHARE.value, 'inter:delta-share')
+        fail(pieces >= 1 && pieces <= CONSTANTS.ADDITION_MAX_DELTA_PIECES.value, 'inter:delta-pieces')
+      }
       break
     }
     default:
@@ -146,6 +156,51 @@ function byCodePoint(a: string, b: string): number {
     if (d) return d
   }
   return x.length - y.length
+}
+
+/**
+ * What the outer's structure says of the inner (Stage 11): `names` — the inner is a component of it, followed
+ * down (天 → 大 → 人) with another region's name for an unencoded component (州: 川) and a written-as form
+ * (囗 as 口); `denies` — the structure is decomposed, fully encoded, and never names it (東 = 木 日: no 天);
+ * `silent` — no structure to ask (a kana, a letter, a digit, a character outside structure-1), an atomic one
+ * (三), or an unencoded component nothing names. Only `denies` stops a relation: silence is not a denial.
+ */
+export function structureOf(outer: string, inner: string, input: DiscoveryInput): 'names' | 'denies' | 'silent' {
+  const top = input.structure.lookup(outer)
+  if (top.status !== 'found' || top.structure.tree.kind === 'leaf') return 'silent'
+  const written = new Set(input.structure.manifest.forms.filter((f) => f.kind === 'written-as' && f.chars.includes(inner)).map((f) => f.form))
+  const seen = new Set<string>([outer])
+  let unknown = false
+  const walk = (c: string, depth: number): boolean => {
+    const r = input.structure.lookup(c)
+    if (r.status !== 'found') return false
+    // another region's name for an unencoded component: its characters (not its operators, U+2FF0–2FFF)
+    const named = r.entry.supplements.flatMap((s) => [...s.named].filter((ch) => ch.codePointAt(0)! < 0x2ff0 || ch.codePointAt(0)! > 0x2fff))
+    const supplied = new Set(r.entry.supplements.map((s) => s.unknown))
+    const leaves: string[] = []
+    const collect = (n: typeof r.structure.tree): void => {
+      if (n.kind === 'op') n.children.forEach(collect)
+      else if (n.tier === 'unknown') { if (!supplied.has(n.char)) unknown = true }
+      else leaves.push(n.char)
+    }
+    collect(r.structure.tree)
+    for (const l of [...leaves, ...named]) {
+      if (l === inner || written.has(l)) return true
+      if (seen.has(l) || depth >= 8 || [...l].length !== 1) continue
+      seen.add(l)
+      if (walk(l, depth + 1)) return true
+    }
+    return false
+  }
+  if (walk(outer, 0)) return 'names'
+  return unknown ? 'silent' : 'denies'
+}
+
+/** why nothing was found at all: a structure with no relation, or no structure to read (never the same thing) */
+function noCandidate(input: DiscoveryInput): string {
+  const unread = [...new Set(input.language.graphemes.map((g) => g.char).filter((c) => c.trim() && input.structure.lookup(c).status !== 'found'))]
+  const base = 'no candidate: the structure offers no relation of a known type'
+  return unread.length ? `${base}; structure-1 has no structure for ${unread.join(' ')}` : base
 }
 
 /** the Discoveries F demotes: from the decomposition of a character its origin names a pictograph (§4.2) */
@@ -173,7 +228,7 @@ export function select(discoveries: readonly Discovery[], input: DiscoveryInput,
       secondary: [],
       rejected: judged.map((j) => ({ id: j.d.id, failed: j.failed })),
       demoted,
-      none: { reason: discoveries.length === 0 ? 'no candidate: the structure offers no relation of a known type' : demoted.length ? `demoted by origin (F); otherwise stopped at: ${stops.join(', ') || 'none'}` : `every candidate stopped at a gate: ${stops.join(', ') || 'none primary-capable'}` },
+      none: { reason: discoveries.length === 0 ? noCandidate(input) : demoted.length ? `demoted by origin (F); otherwise stopped at: ${stops.join(', ') || 'none'}` : `every candidate stopped at a gate: ${stops.join(', ') || 'none primary-capable'}` },
     }
   }
   // secondary: candidates sharing a term with the primary, not a re-reading of the same observation

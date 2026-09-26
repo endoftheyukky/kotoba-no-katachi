@@ -31,6 +31,10 @@ export type GateName =
   | 'intersection:two-strokes'
   | 'inter:both-written'
   | 'inter:relation-threshold'
+  // added at Stage 11: a containment is an addition between two written characters
+  | 'inter:structure-names-inner'
+  | 'inter:delta-share'
+  | 'inter:delta-pieces'
   // may never be primary in v2.0
   | 'type:not-primary-capable'
 

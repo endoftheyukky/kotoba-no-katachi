@@ -21,7 +21,8 @@
  *   a line longer than its room      it breaks where the room ends, at its last   lines           (wrap)
  *     (the rest beside a figure)       word's beginning or split inside a word; a line
  *                                        keeps two characters at least, and the lines
- *                                        are no wider across than they are long
+ *                                        are no wider across than they are long; a
+ *                                        word in letters, a number, is not split
  *
  * A reduplication is not bent: bent back upright, its repeat reads backwards. A vowel or a consonant alone
  * returning (an echo of the vowel, of the onset) does not shape the line: nearly every two-character word has
@@ -173,8 +174,13 @@ export function flowOf(graphemes: readonly number[], constraints: readonly Const
   if (Number.isFinite(wrapAt)) {
     // where a word begins (v1's tokens): a line of writing breaks between words where it can
     const words = new Set(language.tokens.map((t) => t.start))
+    // a word in letters or a number is not split inside (the break a Japanese line takes anywhere is no break
+    // in a Latin word or in a number: written without a hyphen, it reads as two words; Stage 11, *failure: Good
+    // morning! — morn | ing!*)
+    const letter = (g: number) => /^[\p{Script=Latin}\p{Nd}]$/u.test(language.graphemes[g]?.char ?? '')
+    const withinLetters = (a: number, b: number) => letter(a) && letter(b) && language.tokenOf[a] === language.tokenOf[b]
     /** a line broken into lines of about L: even lengths, set again for what is left after each break */
-    const piecesOf = (line: readonly number[], L: number) => {
+    const piecesOf = (line: readonly number[], L: number): number[][] | null => {
       const out: number[][] = []
       let left = [...line]
       for (let most = lineLength(left.length, L); left.length > most; most = lineLength(left.length, L)) {
@@ -188,6 +194,7 @@ export function flowOf(graphemes: readonly number[], constraints: readonly Const
         if (!noHead(left[back])) cut = back
         while (cut < left.length && noHead(left[cut])) cut++
         if (cut >= left.length) break
+        if (withinLetters(left[cut - 1], left[cut])) return null
         out.push(left.slice(0, cut))
         left = left.slice(cut)
       }
@@ -202,7 +209,7 @@ export function flowOf(graphemes: readonly number[], constraints: readonly Const
       let ps = [line]
       for (let L = Math.max(2, Math.floor(wrapAt)); L < line.length; L++) {
         const q = piecesOf(line, L)
-        if (reads(q)) {
+        if (q && reads(q)) {
           ps = q
           break
         }

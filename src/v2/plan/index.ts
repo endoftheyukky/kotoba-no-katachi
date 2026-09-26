@@ -263,11 +263,19 @@ export function selectPlan(candidates: readonly PlanCandidate[]): PlanCandidate 
   return [...candidates].sort((a, b) => a.unmotivated.length - b.unmotivated.length || b.satisfied.length - a.satisfied.length || rank(a.rule) - rank(b.rule))[0]
 }
 
-export function plan(constraints: readonly Constraint[], primary: Discovery | null, graphemes: readonly { index: number; char: string }[]): Plan {
+export function plan(constraints: readonly Constraint[], primary: Discovery | null, graphemes: readonly { index: number; char: string }[], language?: { tokens: readonly { start: number; end: number }[]; tokenOf: readonly number[] }): Plan {
   const candidates = planCandidates(constraints)
   const chosen = selectPlan(candidates)
   // the graphemes the chosen plan does not realise itself: a structural plan realises its Discovery's
-  const own = new Set(chosen.rule === 'Sequence' || chosen.rule === 'Absent' ? graphemes.map((g) => g.index) : primary?.graphemes ?? [])
+  // a relation between two of the title's characters takes a character out of the line only where it is a word by
+  // itself (大と太); one inside a longer word stays in its word, and the figure writes it as its form only (Stage 11,
+  // *failure: 春はあけぼの — け written by the field, あけぼの read あ | け | ぼの across the page*)
+  const aWord = (i: number) => {
+    const tk = language?.tokens[language.tokenOf[i]]
+    return !language || (!!tk && tk.end - tk.start === 1)
+  }
+  const figure = primary?.level === 'inter-character' ? primary.graphemes.filter(aWord) : primary?.graphemes ?? []
+  const own = new Set(chosen.rule === 'Sequence' || chosen.rule === 'Absent' ? graphemes.map((g) => g.index) : figure)
   const rest = chosen.rule === 'Sequence' || chosen.rule === 'Absent' ? [] : graphemes.filter((g) => g.char.trim() && !own.has(g.index)).map((g) => g.index)
   return { selection: { candidates, chosen: chosen.rule, order: 'unmotivated-asc,satisfied-desc,rule-order' }, plan: chosen, rest }
 }

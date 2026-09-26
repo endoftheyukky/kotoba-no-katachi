@@ -126,12 +126,19 @@ interface Figure {
 function figureOf(t: LineInput, g: FieldGeometry): Figure {
   const vertical = t.language.direction === 'vertical'
   const first = (a: { x: number; y: number }, b: { x: number; y: number }) => (vertical ? b.x - a.x || a.y - b.y : a.y - b.y || a.x - b.x)
-  const lay = (x: FieldGeometry) => layout({ plan: t.plan, geometry: x, primary: t.primary, align: t.align, language: t.language }).marks
+  const lay = (x: FieldGeometry) => layout({ plan: t.plan, geometry: x, primary: t.primary, align: t.align, language: t.language, rest: t.rest }).marks
   let marks = lay(g)
   const realised: number[] = []
   const titleUnits = [...(g.detail?.titleUnits ?? [])]
+  // only a character that is a word by itself (木 in 木と林と森): a character inside a word is read with its word,
+  // and a unit far from it would take it out of the word's order (Stage 11, *failure: 春はあけぼの — the け of
+  // あけぼの written by the field's first unit, the word read あ | け | ぼの across the page*)
+  const aWord = (i: number) => {
+    const tk = t.language.tokens[t.language.tokenOf[i]]
+    return !!tk && tk.end - tk.start === 1
+  }
   for (const u of unitsOf(g)) {
-    const gi = t.rest.find((i) => t.language.graphemes[i].char === u && !realised.includes(i))
+    const gi = t.rest.find((i) => t.language.graphemes[i].char === u && !realised.includes(i) && aWord(i))
     if (gi === undefined) continue
     const unit = marks.filter((m) => m.derived && !m.keep && m.char === u).sort(first)[0]
     if (!unit) continue
@@ -167,9 +174,14 @@ interface Run {
 /** the rest in runs of consecutive graphemes, each walked as a flow and attached to the character next to it in the figure */
 function runsOf(t: LineInput, rest: readonly number[], anchors: ReadonlyMap<number, unknown>, wrapOf: (gs: readonly number[]) => number = () => Infinity): Run[] {
   const runs: number[][] = []
+  // a space the title writes between two runs stays in the one run (a step of white in its line), unless a
+  // character of the figure stands there (Stage 11, *failure: Good morning! — Good and morning! two runs*)
+  const white = (g: number) => !t.language.graphemes[g]?.char.trim() && !anchors.has(g)
   for (const g of [...rest].sort((a, b) => a - b)) {
     const last = runs[runs.length - 1]
-    if (last && last[last.length - 1] === g - 1) last.push(g)
+    const end = last ? last[last.length - 1] : -1
+    const gap = last ? Array.from({ length: g - end - 1 }, (_, i) => end + 1 + i) : []
+    if (last && gap.every(white)) last.push(...gap, g)
     else runs.push([g])
   }
   const keys = [...anchors.keys()].sort((a, b) => a - b)
@@ -242,7 +254,7 @@ function inTheLine(t: LineInput, frame: PageRect, figureAt: FigureAt): Arranged 
     const room = steps ? (along - figLen) / steps : Infinity
     const wide = Math.max(1, ...runs.map((r) => wideOf(r.flow, horizontal)))
     const want = Math.min(m0, across / wide)
-    return { got, fig, runs, want, room, span }
+    return { got, fig, runs, want, room, span, cap: across / wide }
   }
   let lo = along * 0.1
   let hi = along
@@ -259,7 +271,9 @@ function inTheLine(t: LineInput, frame: PageRect, figureAt: FigureAt): Arranged 
     }
     best = at(lo) ?? whole
   }
-  const m = Math.max(0, Math.min(best.want, best.room))
+  // the figure is laid out for the words at its unit; words tied to no unit (a stroke unit is no character)
+  // then take the room the figure leaves, up to a character written as itself (Stage 11)
+  const m = Math.max(0, free(best.fig.g) ? Math.min(measure, best.room, best.cap) : Math.min(best.want, best.room))
   const span = best.span ?? { lo: f0 + along / 2, hi: f0 + along / 2 }
   const before = best.runs.filter((r) => r.side === 'before')
   const after = best.runs.filter((r) => r.side === 'after')
@@ -373,7 +387,10 @@ function beside(t: LineInput, frame: PageRect, figureAt: FigureAt): Arranged | n
     best = at(lo)
     if (!best) return null
   }
-  const { box, runs, m } = best
+  const { box, runs } = best
+  // words tied to no unit take the room across the figure leaves, up to a character written as itself (Stage 11)
+  const perSize = runs.reduce((s, r) => s + wideOf(r.flow, horizontal) + 0.5, 0)
+  const m = free(best.fig.g) && perSize ? Math.min(measure, ...runs.map((r) => along / lenOf(r.flow, horizontal)), (across - (horizontal ? box.h : box.w)) / perSize) : best.m
   const before = runs.filter((r) => r.side === 'before')
   const after = runs.filter((r) => r.side === 'after')
   // across: the lines before, the figure, the lines after, together in the middle of the frame. The line before
@@ -424,6 +441,15 @@ function sizeOf(g: FieldGeometry, measure: number) {
 }
 
 /**
+ * Words tied to no unit (Stage 11): where the figure's units are strokes, no character of the figure but the
+ * whole is written as a character, and same-scale binds the units to the whole, not the words. The figure is
+ * found with the words at the unit's cell (so that it is as large as it can be), and the words then take the
+ * room it leaves, up to SEQUENCE_MAX_UNIT — never a size that makes the figure smaller (*failure: 雨の中の雨,
+ * the words a caption of dots' size under the figure with the page's room unused*).
+ */
+const free = (g: FieldGeometry) => !!g.detail?.strokeUnit
+
+/**
  * The figure and the rest of its title on the page. `figureAt` is the chosen figure in a frame. The rest goes
  * in the line (before and after the figure along the writing) or beside it (the lines before and after); of
  * the two, the one that leaves the figure larger, in the line when they are equal.
@@ -440,7 +466,8 @@ export function withTheTitle(t: LineInput, frame: PageRect, figureAt: FigureAt) 
   const m = best.flows.length ? best.flows[0].size : 0
   causes.push({ property: 'extent', value: { rest: t.rest, way: best.way }, because: seq ? { kind: 'constraint', id: seq.id } : { kind: 'const', name: 'SEQUENCE_MAX_UNIT' } })
   if (best.way === 'beside') causes.push({ property: 'extent', value: { beside: best.flows.length }, because: { kind: 'const', name: 'FRAME_MARGIN' } })
-  causes.push({ property: 'unitSize', value: { rest: r1(m) }, because: same ? { kind: 'constraint', id: same.id } : { kind: 'const', name: 'SEQUENCE_MAX_UNIT' } })
+  causes.push({ property: 'unitSize', value: { rest: r1(m) }, because: same && !free(best.g) ? { kind: 'constraint', id: same.id } : { kind: 'const', name: 'SEQUENCE_MAX_UNIT' } })
+  if (free(best.g)) causes.push({ property: 'unitSize', value: { rest: r1(m), room: best.way }, because: { kind: 'const', name: 'FRAME_MARGIN' } })
   for (const r of best.runs)
     for (const b of r.flow.behaviours) {
       if (b.kind === 'line') continue

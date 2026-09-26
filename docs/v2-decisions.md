@@ -1,4 +1,4 @@
-# Generator v2: local decisions (spec-1 stages 3–10)
+# Generator v2: local decisions (spec-1 stages 3–11)
 
 spec-1 is the architecture. These are the local decisions its stages needed, with the reason for each. None
 names a word; none was made to pass a benchmark case.
@@ -215,3 +215,51 @@ failure it answers.
 - **Not settled here**: a long title whose figure is a field of small units writes its words small (the unit's
   size); the whole's size had made the figure small instead. Latin and digits in vertical writing are walked as
   any character (Good morning!). Both left visible in the evaluation, not tuned away.
+
+## Stage 11 — the release candidate audit
+
+Every known issue and TODO was gathered and classed (release blocker, worth fixing, a known limitation v2.0 can
+be published with, deferred). What was fixed is fixed by a rule of a type, of a script or of writing; nothing
+names a word, and no Stage 4 gate was loosened. The evaluation added two sets: `robustness` (every kind of
+input: empty, spaces, symbols, emoji, Hangul, variation selectors, a title of sixteen, a reading of 65) and
+`scripts` (two characters of each pair of scripts, for the relations between the title's glyphs).
+
+- **A relation between the title's own glyphs must be one the structure does not deny** (§4, inter_containment).
+  Measured in the face alone, one glyph fits in another across scripts and within one where the structure says
+  otherwise (*failure: 1⊂年, r⊂G, T⊂字, 天⊂東, L⊂O, ナ⊂カ — each the primary of a public page*). Three gates,
+  each a gate the structure or the addition already had, applied to the pair:
+  - `inter:structure-names-inner`: where structure-1 knows the outer character, its leaves (followed down, with
+    the supplement's named characters and the written-as forms, 囗→口) must hold the inner one; it fails only when
+    the structure denies it, never when it is silent (a Latin letter has no structure: the gate says nothing);
+  - `inter:delta-share` and `inter:delta-pieces`: what the outer adds to the inner is an addition, and must pass
+    the addition's own gates (ADDITION_MAX_DELTA_SHARE, ADDITION_MAX_DELTA_PIECES; no constant added).
+  Similarity is untouched (工≈エ, 大≈犬 stay). Cross-script relations are not banned: F⊂E, P⊂R, 3⊂8, 川⊂州 pass.
+  Lost with the bad ones: 二⊂三 in 一、二、三 (the addition 0.343 of the ink), which the addition gate refuses.
+- **A character of the relation inside a longer word is written by its word** (plan, field, layout). The figure
+  takes as its own only the relation's characters that are a word by themselves (v1's tokens); one inside a word
+  stays in the rest, and the figure writes its form only, as a repeat (*failure: 春はあけぼの — the け of あけぼの
+  written by the field's first unit, the word read あ | け | ぼの across the page*).
+- **The rest is written in its words**: a space the title writes between two runs of the rest stays in the one
+  run, and a line never breaks inside a word in letters or a number, which reads as two words without a hyphen
+  (*failure: Good morning! — Good and morning! placed as two runs, morning! broken into morn | ing!*).
+- **Where the figure's units are strokes, the rest takes the room the figure leaves** (TODO-10), up to
+  SEQUENCE_MAX_UNIT, and FRAME_MARGIN is named as the cause of its size; a figure of character units keeps the
+  rest at its unit (*failure: 雨の中の雨 — the rest at 48 in the 1000 frame, a caption under the figure*).
+- **Writing direction** (`writingOf`): v1 writes a title mostly in katakana horizontally; its script reader has
+  no class for Latin letters, so a title in them was stood upright letter by letter. v2 counts Latin letters with
+  katakana (*failure: Good morning!, A to Z in a column*). Digits and symbols count for neither side, as in v1.
+  v1's reading is not changed.
+- **The Rationale**: the geometry candidates carry the final geometry, with the causes of the rest's size and
+  room; `observation.missing` records, per character, the structure, ink, resonance row or glyph not found, each
+  apart and nothing filled in; axes-1 is named by the sha256 of its shards (`AXES_1_SHA256`), as the other tables;
+  a title whose characters have no structure says so in the selection's reason.
+- **Pinned pages** (§16 stage 11): `tests/fixtures/v2-expected.json` holds the sha256 of each page's marks as node
+  composes it (without the relations between the title's glyphs, which need the face in a browser). It is an
+  expected value, never read by src/.
+- **TODO-11** (origin data): kept as a known limitation of v2.0. No source was deterministic, pinnable, of a
+  recorded provenance and a clear licence at once; the three that label formation agree on half the jōyō kanji.
+  What follows on the page (田, 回 GlyphItself where spec-1 expects Absent; 困 GlyphItself) is in
+  `docs/v2-resources.md`, with the table of external resources and what publication needs.
+- **Not settled here**: similarity pages (大と太, 木と本 …) share one texture, as one type under one rule; a title
+  in digits (2026) stays vertical; 琳 stays Absent (its addition 0.268). Relations between the title's glyphs are
+  measured in the browser, so the Chrome 153 evaluation can differ from the cloud's Chromium 141 there.

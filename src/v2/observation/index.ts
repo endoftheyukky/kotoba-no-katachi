@@ -43,8 +43,17 @@ export interface RuntimeObservation {
   structure: ReadonlyMap<string, CharStructure | null>
   ink: ReadonlyMap<string, AlignEntry | null>
   resonance: ReadonlyMap<string, ResonanceRow | null>
+  /** the title's characters the reading face has no glyph for (added at Stage 11; absent where the face was not measured) */
+  faceLacks?: readonly string[]
   data: DataVersions
 }
+
+/**
+ * axes-1 as v1 published it (§11.3: the Rationale names each table by id and sha256; added at Stage 11, where
+ * it had been written 'v1'): the sha256 of its shards' own sha256s (meta.json), joined in file order, the way
+ * structure-1, align-1 and resonance-1 name themselves. A test checks it against the files.
+ */
+export const AXES_1_SHA256 = 'f74cadff4844b70df9949a90565a5e40a46155d4ae39a8b9675cdf98e89f0ee5'
 
 export interface ObserveArgs {
   input: TitleInput
@@ -54,6 +63,8 @@ export interface ObserveArgs {
   tables: TitleTables
   /** the id and sha256 of axes-1 as published */
   axesVersion?: string
+  /** the title's characters the reading face has no glyph for, where the face was measured */
+  faceLacks?: readonly string[]
 }
 
 export function observe(a: ObserveArgs): RuntimeObservation {
@@ -76,11 +87,12 @@ export function observe(a: ObserveArgs): RuntimeObservation {
     structure,
     ink,
     resonance,
+    ...(a.faceLacks ? { faceLacks: a.faceLacks } : {}),
     data: {
       'structure-1': { id: 'structure-1', sha256: t.structure.manifest.sha256 },
       'align-1': { id: 'align-1', sha256: t.align.manifest.sha256 },
       'resonance-1': { id: 'resonance-1', sha256: t.resonance.manifest.sha256 },
-      'axes-1': { id: 'axes-1', sha256: a.axesVersion ?? 'v1' },
+      'axes-1': { id: 'axes-1', sha256: a.axesVersion ?? AXES_1_SHA256 },
     },
   }
 }

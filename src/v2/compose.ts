@@ -16,12 +16,13 @@ import type { RuntimeObservation } from './observation'
 import { plan } from './plan'
 import { leavesOf, resonate } from './resonance'
 import type { V2Composition } from './types/layout'
+import type { Rationale } from './types/rationale'
 
 /** a whole title's axes, where the whole table is at hand (tests, tools): the site reads it by the title's characters */
 export const axesOf = (text: string, table: MeaningTable | null) => (table ? meaningOf(text, table) : null)
 
 export function composeV2(o: RuntimeObservation): V2Composition & { trace: Trace } {
-  const language = o.language
+  const language = writingOf(o.language)
   const t = o.tables
   const din = { language, structure: t.structure, align: t.align, relations: o.titleRelations }
   const discoveries = discover(din)
@@ -30,9 +31,9 @@ export function composeV2(o: RuntimeObservation): V2Composition & { trace: Trace
   const evidence = resonate(discoveries, selection, t.resonance, leavesOf(t.structure), own)
   const set = constrain(discoveries, selection, evidence, language)
   const primary = selection.primary ? discoveries.find((d) => d.id === selection.primary) ?? null : null
-  const p = plan(set.constraints, primary, language.graphemes)
+  const p = plan(set.constraints, primary, language.graphemes, language)
   const g = geometry({ plan: p.plan, constraints: set.constraints, primary, align: t.align, language, rest: p.rest, meaning: o.axes })
-  const draft = layout({ plan: p.plan, geometry: g.geometry, primary, align: t.align, language })
+  const draft = layout({ plan: p.plan, geometry: g.geometry, primary, align: t.align, language, rest: p.rest })
   const structure: Record<string, string | null> = {}
   for (const gr of language.graphemes) {
     const s = o.structure.get(gr.char)
@@ -46,7 +47,7 @@ export function composeV2(o: RuntimeObservation): V2Composition & { trace: Trace
       version: 'v2',
       spec: 'spec-1',
       data: o.data,
-      observation: { structure, inkNotes: [] },
+      observation: { structure, inkNotes: [], missing: missingOf(o) },
       discoveries: discoveries.map((d) => {
         const failed = gates(d, din)
         return { id: d.id, eligible: failed.length === 0, failed }
@@ -58,10 +59,47 @@ export function composeV2(o: RuntimeObservation): V2Composition & { trace: Trace
       plan: p.plan.rule,
       geometries: g.candidates,
       geometry: g.chosen,
-      layout: { marks: draft.marks.length, notes: p.rest.length ? [`the rest of the title (graphemes ${p.rest.join(', ')}) in the line the figure stands in (TODO-10)`] : [] },
+      layout: {
+        marks: draft.marks.length,
+        notes: [
+          ...(language.direction !== o.language.direction ? ['written horizontally: Latin letters and katakana are most of the title (v2 writing, Stage 11)'] : []),
+          ...(p.rest.length ? [`the rest of the title (graphemes ${p.rest.join(', ')}) in the line the figure stands in (TODO-10)`] : []),
+        ],
+      },
     },
     trace: { discoveries: discoveries.length, primary, constraints: set.constraints.length, plan: p.plan.rule, geometry: g.geometry },
   }
+}
+
+/**
+ * The direction a v2 page is written in (Stage 11). v1 writes a title mostly in katakana, the script of borrowed
+ * words, horizontally, and everything else vertically; its script reader has no class for Latin letters, so a
+ * title in Latin was stood upright letter by letter in a column (Good morning!, A to Z). v2 counts Latin letters
+ * with katakana, for the same reason v1 gives: a title mostly in them is written horizontally. v1's reading is
+ * not changed; digits and symbols count for neither side, as in v1.
+ */
+export function writingOf(language: RuntimeObservation['language']): RuntimeObservation['language'] {
+  if (language.direction === 'horizontal') return language
+  const n = (f: (c: string, s: string) => boolean) => language.graphemes.filter((g) => f(g.char, g.script)).length
+  const borrowed = n((c, s) => s === 'katakana' || /^\p{Script=Latin}+$/u.test(c))
+  const own = n((_, s) => s === 'hiragana' || s === 'kanji')
+  return borrowed > own ? { ...language, direction: 'horizontal' } : language
+}
+
+/** per character of the title, what the tables and the face do not hold (each kind apart, nothing filled in) */
+function missingOf(o: RuntimeObservation): Rationale['observation']['missing'] {
+  const out: { char: string; missing: ('structure' | 'ink' | 'resonance' | 'glyph')[] }[] = []
+  const lacks = new Set(o.faceLacks ?? [])
+  for (const c of [...new Set(o.language.graphemes.map((g) => g.char))]) {
+    if (!c.trim()) continue
+    const m: ('structure' | 'ink' | 'resonance' | 'glyph')[] = []
+    if (o.tables.structure.lookup(c).status !== 'found') m.push('structure')
+    if (!o.ink.get(c)) m.push('ink')
+    if (!o.resonance.get(c)) m.push('resonance')
+    if (lacks.has(c)) m.push('glyph')
+    if (m.length) out.push({ char: c, missing: m })
+  }
+  return out
 }
 
 export interface Trace {

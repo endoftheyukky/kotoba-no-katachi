@@ -97,5 +97,6 @@ docs/           技術ドキュメント
 
 - 字体：Noto Sans JP / Noto Serif JP（SIL Open Font License 1.1。npm の `@fontsource/noto-sans-jp`、`@fontsource/noto-serif-jp` から配布）
 - 意味の表 `public/semantic/axes-1/`：chiVe v1.3 mc90（Copyright (c) 2024 Works Applications Co., Ltd.）から導いた表。Apache License 2.0（同じディレクトリの `LICENSE-chiVe.txt`、`NOTICE.txt`）
+- generator v2 の表 `public/v2/`（未公開）：BabelStone IDS、KANJIDIC2（EDRDG、CC BY-SA 4.0）、Noto Sans JP の測定値、日本語 WordNet（NICT ほか）、chiVe から導いた表。出典・ライセンス・帰属は `docs/v2-resources.md`
 
 制作：Yuki Sunaga

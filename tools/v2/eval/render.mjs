@@ -21,7 +21,8 @@ export default async function ({ evaluate, load }) {
       const url = await evaluate(`window.v2eval.sheet(${JSON.stringify(res.slice(s * per, (s + 1) * per).map((r) => ({ ...r })))}, ${name === 'public' ? 8 : 6}, ${name === 'public' ? 220 : 300})`)
       writeFileSync(join(out, `sheet-${name}-${s}.png`), Buffer.from(url.split(',')[1], 'base64'))
     }
-    summary[name] = res.map(({ png, draft, ...r }) => r)
+    summary[name] = res.map(({ png, draft, rationale, ...r }) => r)
+    writeFileSync(join(out, `rationale-${name}.json`), JSON.stringify(res.map((r) => ({ text: r.text, reading: r.reading, rationale: r.rationale ?? null }))))
     writeFileSync(join(out, `drafts-${name}.json`), JSON.stringify(res.map((r) => ({ text: r.text, marks: r.draft?.marks ?? null }))))
   }
   writeFileSync(join(out, 'summary.json'), JSON.stringify(summary, null, 1))

@@ -9,7 +9,9 @@ import { soundness } from '../../../src/poem/invariants'
 import { renderCanvas } from '../../../src/render/png'
 import { normalizeTitle } from '../../../src/title'
 import { fetchSource } from '../../../src/v2/observation/tables'
-import { writeV2 } from '../../../src/v2/runtime'
+import { observeTitle } from '../../../src/v2/runtime'
+import { composeV2 } from '../../../src/v2/compose'
+import { covers, uncovered } from '../../../src/glyph/coverage'
 import type { RuntimeObservation } from '../../../src/v2/observation'
 
 // the runtime path, as the site would run it: tables fetched by shard, the face measured here
@@ -19,7 +21,18 @@ const env = { source: fetchSource(import.meta.env.BASE_URL), glyphs: lib, meanin
 async function one(text: string, reading: string | undefined, px: number) {
   const input = normalizeTitle({ text, reading })
   if (typeof input === 'string') return { text, error: input }
-  const { observation, composition: comp } = await writeV2(input, env)
+  // v2/runtime writeV2, step by step, timed (Stage 11: a public page must not wait on anything unusual)
+  const t0 = performance.now()
+  const observation = await observeTitle(input, env)
+  const t1 = performance.now()
+  const comp = composeV2(observation)
+  const t2 = performance.now()
+  await lib.prepare([...new Set(comp.draft.marks.map((m) => m.char).filter((c) => covers('sans', c)))])
+  const t3 = performance.now()
+  // the site refuses a title with a character the face lacks before it composes (main.ts read): composed here all
+  // the same, to show that v2 does not fail on it, and not drawn
+  const lacks = uncovered(input.text)
+  if (lacks.length) return { text, reading: reading ?? '', error: `refused by the site (the face has no glyph for ${lacks.join(' ')}); composed: ${comp.rationale.plan}, ${comp.draft.marks.length} marks`, time: { observe: Math.round(t1 - t0), compose: Math.round(t2 - t1), prepare: Math.round(t3 - t2), total: Math.round(t3 - t0) }, plan: comp.rationale.plan, rationale: comp.rationale } as unknown as Result
   const canvas = renderCanvas(comp.draft, lib, px)
   const a = await analyze(input)
   const plan = comp.rationale.plan
@@ -37,7 +50,15 @@ async function one(text: string, reading: string | undefined, px: number) {
   })
   const inv = soundness(a, checked, { repetition: plan !== 'Sequence' && plan !== 'Absent', absent: [] })
   const g = comp.trace.geometry
+  const r3 = (v: number) => Math.round(v * 1000) / 1000
   return {
+    time: { observe: Math.round(t1 - t0), compose: Math.round(t2 - t1), prepare: Math.round(t3 - t2), total: Math.round(t3 - t0) },
+    uncovered: uncovered(input.text),
+    relations: observation.titleRelations.map((r) => ({ inner: r.inner, outer: r.outer, kind: r.kind, score: r3(r.score), residue: r3(r.residue.share) })),
+    causes: g.causes.map((c) => `${c.property}:${c.because.kind}`),
+    whitespaceCauses: g.whitespace.map((w) => w.cause.kind),
+    satisfies: g.satisfies,
+    rationale: comp.rationale,
     collide: collisions(comp.draft.marks, observation),
     read: observation.tables.read,
     text, reading: reading ?? '',

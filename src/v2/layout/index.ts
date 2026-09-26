@@ -26,6 +26,8 @@ export interface LayoutArgs {
   primary: Discovery | null
   align: AlignIndex
   language: LanguageAnalysis
+  /** the title's graphemes the plan does not realise (Stage 11): a character of the relation among them is written by its word, and the figure writes its form only */
+  rest?: readonly number[]
 }
 
 const r2 = (v: number) => Math.round(v * 100) / 100
@@ -39,7 +41,13 @@ export function layout(a: LayoutArgs): Draft {
   // (an inter-character relation lies across two of them), else the relation's first
   const own = p ? p.graphemes[0] : -1
   const indexOf = (char: string) => (p ? p.graphemes.find((i) => a.language.graphemes[i]?.char === char) ?? own : own)
+  const inRest = new Set(a.rest ?? [])
   const title = (char: string, x: number, y: number, size: number, grapheme: number, role: Mark['role'] = 'nucleus'): Mark => ({ char, face: 'sans', x: r2(x), y: r2(y), size: r2(size), grapheme, role })
+  // a character of the figure: the title's own, unless its word writes it in the line (then the figure writes its form)
+  const figure = (char: string, x: number, y: number, size: number, grapheme: number): Mark =>
+    inRest.has(grapheme)
+      ? { char, face: 'sans', x: r2(x), y: r2(y), size: r2(size), role: 'body', derived: { grammar: 'material', kind: 'repeat', from: grapheme, note: 'the character of the relation, written by its word in the line' } }
+      : title(char, x, y, size, grapheme)
   const unit = (char: string, x: number, y: number, size: number, note: string, extra: Partial<Mark> = {}): Mark => ({
     char, face: 'sans', x: r2(x), y: r2(y), size: r2(size), role: 'grain',
     derived: { grammar: 'material', kind: 'form', from: own >= 0 ? own : undefined, note }, ...extra,
@@ -68,12 +76,12 @@ export function layout(a: LayoutArgs): Draft {
           if (sp && sp.row === r && sp.col === c) {
             if (sp.role === 'singleton' && g.singleton?.point) {
               // the derived character with its base part on this cell (align: base-part)
-              marks.push(title(sp.item, g.singleton.point.x, g.singleton.point.y, u * g.singleton.scale, indexOf(sp.item)))
-            } else marks.push(title(sp.item, at.x, at.y, u, indexOf(sp.item)))
+              marks.push(figure(sp.item, g.singleton.point.x, g.singleton.point.y, u * g.singleton.scale, indexOf(sp.item)))
+            } else marks.push(figure(sp.item, at.x, at.y, u, indexOf(sp.item)))
             continue
           }
           if (inter && inter.row === r && inter.cols.includes(c)) {
-            marks.push(first ? title(inter.item, at.x, at.y, u, indexOf(inter.item)) : again(inter.item, at.x, at.y, u, 'the derived character among its base, once more'))
+            marks.push(first ? figure(inter.item, at.x, at.y, u, indexOf(inter.item)) : again(inter.item, at.x, at.y, u, 'the derived character among its base, once more'))
             first = false
             continue
           }
@@ -88,7 +96,7 @@ export function layout(a: LayoutArgs): Draft {
           const at = cellAt(grid, r, c)
           marks.push(unit(d.unit!, at.x, at.y, g.unitSize, 'a unit of the base field (structure-1)'))
         }
-      ;(d.points ?? []).forEach((q, i) => marks.push(i === 0 ? title(d.band!.item, q.x, q.y, g.unitSize, indexOf(d.band!.item)) : again(d.band!.item, q.x, q.y, g.unitSize, 'the band of the derived character')))
+      ;(d.points ?? []).forEach((q, i) => marks.push(i === 0 ? figure(d.band!.item, q.x, q.y, g.unitSize, indexOf(d.band!.item)) : again(d.band!.item, q.x, q.y, g.unitSize, 'the band of the derived character')))
       break
     }
     case 'NestedRegions':
@@ -112,7 +120,7 @@ export function layout(a: LayoutArgs): Draft {
           if (face?.cell && face.cell.row === r && face.cell.col === c) continue
           marks.push(unit(ring.innerItem, ring.inner.x + (c + 0.5) * istep, ring.inner.y + (r + 0.5) * istep, u, 'the contained (structure-1)'))
         }
-      if (face) marks.push(title(face.item, face.x, face.y, face.size, indexOf(face.item)))
+      if (face) marks.push(figure(face.item, face.x, face.y, face.size, indexOf(face.item)))
       break
     }
     case 'GlyphItself': {

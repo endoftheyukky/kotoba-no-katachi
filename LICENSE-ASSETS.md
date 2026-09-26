@@ -26,6 +26,18 @@
   Applications Co., Ltd.）から導いた表。Apache License 2.0（`LICENSE-chiVe.txt`、
   `NOTICE.txt`）
 
+generator v2（まだ公開していない版。`public/v2/`）の表：
+
+- `public/v2/structure-1/` — BabelStone IDS（事実の集合として著作権の対象外）と、
+  KANJIDIC2（Electronic Dictionary Research and Development Group、
+  https://www.edrdg.org/edrdg/licence.html 、Creative Commons Attribution-ShareAlike
+  4.0）から導いた表。KANJIDIC2 から導いた部分（学年1–10の字の集合による字の階層）と、
+  `src/v2/structure/scope-1.json` の `grade` は、CC BY-SA 4.0 に従います
+- `public/v2/align-1/` — Noto Sans JP 500 の測定値（字形は含みません）
+- `public/v2/resonance-1/` — 日本語 WordNet（NICT ほか。Japanese WordNet licence）と
+  chiVe v1.3 mc90（Apache License 2.0）から導いた表（`NOTICE.txt`）
+- 詳細と、公開前に必要なこと：`docs/v2-resources.md`
+
 ---
 
 The source code is MIT-licensed (`LICENSE`). The name 「ことばのかたち」, the
