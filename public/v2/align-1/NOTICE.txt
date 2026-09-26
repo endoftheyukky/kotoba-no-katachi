@@ -1,0 +1,6 @@
+align-1 — where the components of structure-1 lie in the reading face, for generator v2 of ことばのかたち.
+
+Made by tools/v2/align.mjs from:
+  structure-1 (public/v2/structure-1, sha256 9e60d412d42dc87f98673cf89e2ff17768eb5a01dff7ab9b640b3143b300b83f), itself made from BabelStone IDS and KANJIDIC2 (see its NOTICE).
+  Noto Sans JP 500 (@fontsource/noto-sans-jp 5.3.0), SIL Open Font License 1.1, as measured in Chrome/153.0.8010.50.
+    The table holds measurements of the face (positions, scales, shares of ink), not its outlines.
