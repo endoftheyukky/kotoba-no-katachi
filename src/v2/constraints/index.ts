@@ -166,7 +166,16 @@ export function constrain(discoveries: readonly Discovery[], selection: Selectio
           add({ kind: 'split', at: tokenStart(marker), by: 'coordination', because: { discovery: d.id }, why: 'the coordination parts its members' }, `coordination:${d.tokens.join(',')}`)
           break
         }
-        case 'reduplication': add({ kind: 'recurrence', members: d.graphemes, unit: 'token', value: d.id, because: { discovery: d.id }, why: 'a unit repeated in immediate succession' }, `redup:${d.graphemes.join(',')}`); break
+        case 'reduplication': {
+          // the graphemes that repeat, as v1 read them (ぴょこ | ぴょこ in かえるぴょこぴょこ), not the whole word they are in
+          const inWord = new Set(d.graphemes)
+          for (const r of language.relations)
+            if (r.kind === 'reduplication' && r.occurrences.flat().every((g) => inWord.has(g))) {
+              const members = r.occurrences.flat()
+              add({ kind: 'recurrence', members, unit: 'token', value: d.id, because: { discovery: d.id }, why: `${r.value} repeated in immediate succession` }, `redup:${members.join(',')}`)
+            }
+          break
+        }
         case 'mirror': add({ kind: 'recurrence', members: d.graphemes, unit: 'grapheme', value: 'mirror', because: { discovery: d.id }, why: 'the title reads the same backwards' }, 'mirror'); break
         case 'echo': add({ kind: 'recurrence', members: [...new Set(d.graphemes)], unit: d.unit ?? 'mora', value: d.id.split(':').pop()!, because: { discovery: d.id }, why: `a ${d.unit ?? 'mora'} returns` }, `echo:${d.id}`); break
         case 'voicing': {

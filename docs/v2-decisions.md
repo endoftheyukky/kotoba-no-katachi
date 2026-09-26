@@ -1,4 +1,4 @@
-# Generator v2: local decisions (spec-1 stages 3–9)
+# Generator v2: local decisions (spec-1 stages 3–10)
 
 spec-1 is the architecture. These are the local decisions its stages needed, with the reason for each. None
 names a word; none was made to pass a benchmark case.
@@ -165,3 +165,53 @@ names the failure it answers.
   v1's inkHit as the mark its kept ink is; v1's code is unchanged.
 - **Added types**: FieldGrid, FieldDetail `grid`, `titleUnit`, `interfaceAt.cell`; FieldProperty `pitch`,
   `titleUnit`. No constant added.
+
+
+## Stage 10 — the runtime, a longer title, and the flow of a line
+
+The evaluation pages were composed on the runtime path and looked at against Stage 9's (re-drawn from 7304a99
+in the same browser). Every rule below is a rule of a type or of writing, never of a word; each names the
+failure it answers.
+
+- **RuntimeObservation** (§2, §11.3): a title reads only the shards of structure-1, align-1 and resonance-1 it
+  can reach (its characters and their components, followed down); a shard not read throws when asked. The page
+  from those shards equals the page from the whole tables for every public title and the benchmark, and Stage 9's
+  pages are unchanged by the move (checked byte for byte). Nothing is built or recomputed at run time.
+- **The flow of a line** (§9.3, v1's trace: its geometry, not its parameters; field/flow.ts). A line is walked
+  one character a step, and each shape it takes names its constraint:
+  - `line` (sequence); `stair` (a split inside a word: inflection, negation); `verse` (a split between words:
+    relation word, coordination) — a new line from the head, but only where the lines still read as lines (the
+    longest no shorter than the lines are wide); else `gap`, a half step of white along the one line (*failure:
+    私 | の, 手 | と足 — lines of one character side by side read across, backwards in vertical writing*).
+  - `return` (a reduplication): each repeat begins a line beside the unit it repeats (ころ | ころ; かえる ぴょこ
+    | ぴょこ). Its members are the graphemes that repeat as v1 read them, not the whole word (*failure: the
+    reduplication in かえるぴょこぴょこ was lost and the line bent instead*). A character doubled inside a longer
+    word is not a word said again (ささやき, 特許許可): no return. A reduplication is never bent: bent upright, its
+    repeat reads backwards.
+  - `curve` (§9.3 v1 `turns`): (span ÷ line) × (k − 1) ÷ k turns spread over the steps; a mirror closes the
+    line (1). Only a sound that comes back: the same mora with a sound of its own heard again after another
+    (かなしいかな), a voicing, a mirror; not ー or っ (their sound is their neighbour's: コーヒー), not a mora
+    doubled in place (ささ), not a vowel or onset alone; only on a line of three characters or more (*failure:
+    curves on weak echoes, and on two characters where no curve can be seen*).
+  - `wrap` (the page): where a line meets the end of its room it breaks at its last word's beginning (v1's
+    tokens) or split inside a word, into even lines of two characters at least, no wider across than they are
+    long; a line never opens on a closing symbol, a mark or a small kana (the character before goes down with
+    it, else it hangs) (*failure: a long title's rest in one-character lines, which read as a row, backwards*).
+- **A longer title** (TODO-10, §9.3: "the word's SpatialPlan is one item of the line"): the figure is the anchor
+  and the rest continues from it, in one of two arrangements, the one that leaves the figure larger:
+  - in the line: the runs before and after the figure along the writing, each from the character next to it in
+    the figure; the figure as long as the runs still fit at the rest's size;
+  - beside: where the figure's own characters stand together in the title, the words before it on the line before
+    (above; right in vertical writing), the words after on the next (below; left), from the head of the page, as
+    writing goes on when a line is full; the figure keeps the page's length and gives way across.
+  The rest is written at the figure's unit — a character unit's size, or for stroke units the lattice cell a unit
+  stands in — at most SEQUENCE_MAX_UNIT; smaller only where even the smallest figure leaves no room (*failure:
+  written at the whole where the units were strokes, the words tied the figure to their own size: 私の影を踏まない
+  でください！ had its figure at 1.4% of the frame at Stage 9, 雨 in 今日も明日も雨が降るでしょう 2%*).
+- **Where the figure's unit is the title's character** (木と林と森, 川または州), the unit at that point writes it
+  (`titleUnits`, points rather than cells, since a figure's units are not always on a grid).
+- **Added types**: FieldDetail `flow`, `flows`, `titleUnits` (replacing `titleUnit`); flow behaviours `line`,
+  `stair`, `verse`, `gap`, `return`, `curve`, `space`, `wrap`. No constant added.
+- **Not settled here**: a long title whose figure is a field of small units writes its words small (the unit's
+  size); the whole's size had made the figure small instead. Latin and digits in vertical writing are walked as
+  any character (Good morning!). Both left visible in the evaluation, not tuned away.

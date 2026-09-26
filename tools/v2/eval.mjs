@@ -19,6 +19,13 @@ const sets = {
   benchmark: [...'雨闇淋林州血囚辻悲'].map((text) => ({ text })),
   controls: [...'海問品森玉晶轟好男国閣日'].map((text) => ({ text })),
   boundary: [...'琳田回魁噴虜看'].map((text) => ({ text })),
+  // the flows of a line, at their edges (Stage 10): a mirror, a mora heard again after another, a mora doubled
+  // in place, a reduplication, a long line; for looking only
+  sequence: [
+    { text: 'たけやぶやけた' }, { text: 'しんぶんし' }, { text: 'とまと' }, { text: 'かなしいかな' },
+    { text: '東京特許許可局', reading: 'とうきょうとっきょきょかきょく' }, { text: 'すもももももももものうち' },
+    { text: 'かえるぴょこぴょこ' }, { text: 'ささやき' }, { text: 'コーヒー' }, { text: 'きのうのきょうのあした' },
+  ],
   public: [...STUDY_TITLES, ...HOLDOUT_TITLES, ...PROBE_TITLES, ...DIFFICULT_WORDS, ...EDGE_TITLES].map((t) => ({ text: t.text, ...(t.reading ? { reading: t.reading } : {}) })),
 }
 const work = mkdtempSync(join(tmpdir(), 'kotoba-v2-eval-'))
