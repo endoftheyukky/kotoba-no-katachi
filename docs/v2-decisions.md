@@ -1,4 +1,4 @@
-# Generator v2: local decisions (spec-1 stages 3–4)
+# Generator v2: local decisions (spec-1 stages 3–5)
 
 spec-1 is the architecture. These are the local decisions its stages needed, with the reason for each. None
 names a word; none was made to pass a benchmark case.
@@ -37,3 +37,16 @@ names a word; none was made to pass a benchmark case.
   the primary; a secondary is a candidate that shares a term with the primary and passed its own gates.
 - **Known deviation**: 琳's 𤣩 holds 26.8% of the ink, over ADDITION_MAX_DELTA_SHARE (0.25, provisional, TODO-4/5);
   the benchmark expects an addition. Left visible in the tests, not tuned away.
+
+## Stage 5 — Semantic Resonance
+
+- **Sources**: Japanese WordNet (L0, one or two typed links) and chiVe v1.3 mc90 (L1 percentiles, cleaned as for
+  axes-1). No model at run time; nothing past L1 is ever written.
+- **Character-origin data is not chosen (TODO-11)**: no origin, component-whole or lexical-candidate evidence, and
+  so no F demotion yet (田・回 keep their enclosure until the source is chosen).
+- **Schemas**: pre-v2's eleven fixed anchor sets (which avoid every benchmark character); L1 only for the two
+  active pairs (enclosure × CONTAINER, character repetition × MULTITUDE) at percentile ≥ 90. L0 schema paths may
+  reach a schema's nouns and its head noun (PATH: 道, CENTER: 中心 …).
+- **Part-referent**: when the resource names a component of the whole as the unit (林 has-member 木), only those
+  rows; else every has-part / has-member row (雨 has-part 雨滴).
+- **The nine semantic axes** are not read by Discovery or Resonance; they stay an auxiliary whole-word quantity.

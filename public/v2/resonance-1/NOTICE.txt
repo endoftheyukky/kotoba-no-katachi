@@ -1,0 +1,9 @@
+resonance-1 — typed semantic evidence (L0 / L1) for generator v2 of ことばのかたち.
+
+Made by tools/v2/resonance.py from:
+  Japanese WordNet (wnjpn.db.gz, sha256 64a14dcfe3ba296566e91a70a2fc0616e85cf2ee7b7fd8cdcbc66c8b12a505a5).
+    Japanese WordNet (c) 2009-2011 NICT, 2012-2015 Francis Bond and 2016-2024 Francis Bond, Takayuki Kuribayashi.
+    Used under the Japanese WordNet licence; this notice is kept as it requires.
+  chiVe v1.3 mc90 (Works Applications), Apache License 2.0 (sha256 885c7db3b8cd8ad1311ac32eafc874007f45010791b3c1f1e934a2aa0c7d22b0).
+    The table holds percentiles computed from the vectors, not the vectors.
+  scope-1 and structure-1 (this repository).
