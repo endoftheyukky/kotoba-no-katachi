@@ -11,7 +11,7 @@
  *                                (represents): the character is on the page as its parts, apart
  *   v2.0: one face (the reading face, sans), black on white, still
  */
-import { cellAt } from '../field'
+import { cellAt } from '../field/grid'
 import { CONSTANTS } from '../spec'
 import type { Discovery } from '../types/discovery'
 import type { FieldGeometry } from '../types/field'
@@ -48,9 +48,6 @@ export function layout(a: LayoutArgs): Draft {
     char, face: 'sans', x: r2(x), y: r2(y), size: r2(size), role: 'body',
     derived: { grammar: 'material', kind: 'repeat', from: indexOf(char), note },
   })
-  // a unit of a field, or — the one cell FieldGeometry names — the title's own character the unit is
-  const fieldUnit = (char: string, r: number, c: number, x: number, y: number, size: number, note: string): Mark =>
-    d.titleUnit && d.titleUnit.row === r && d.titleUnit.col === c ? title(char, x, y, size, d.titleUnit.grapheme, 'body') : unit(char, x, y, size, note)
 
   switch (a.plan.rule) {
     case 'FieldSingleton':
@@ -80,7 +77,7 @@ export function layout(a: LayoutArgs): Draft {
             first = false
             continue
           }
-          marks.push(fieldUnit(d.unit!, r, c, at.x, at.y, u, 'a unit of the field (structure-1)'))
+          marks.push(unit(d.unit!, at.x, at.y, u, 'a unit of the field (structure-1)'))
         }
       break
     }
@@ -150,7 +147,10 @@ export function layout(a: LayoutArgs): Draft {
     case 'Absent':
       break
   }
-  // lines: the words (Sequence, Absent) and the rest of a longer title (TODO-10)
+  // a flow: the title's graphemes, each at its point (Sequence; the rest of a longer title)
+  for (const f of [...(d.flow ? [d.flow] : []), ...(d.flows ?? [])])
+    for (const p of f.points) marks.push(title(a.language.graphemes[p.grapheme].char, p.x, p.y, f.size, p.grapheme, 'body'))
+  // lines: the words (Absent) and the rest of a longer title (TODO-10)
   for (const line of [...(d.line ? [d.line] : []), ...(d.rest ?? [])]) {
     const step = line.role === 'context' ? line.size * CONSTANTS.UNIT_SPACING.value : line.size
     let at = 0
@@ -162,6 +162,12 @@ export function layout(a: LayoutArgs): Draft {
       marks.push(title(ch, x, y, line.size, gi, line.role === 'context' ? 'context' : 'body'))
       at += 1
     }
+  }
+  // a unit that is itself a character of the title writes it, at the point FieldGeometry names; the others repeat it
+  for (const t of d.titleUnits ?? []) {
+    const char = a.language.graphemes[t.grapheme].char
+    const i = marks.findIndex((m) => m.derived && !m.keep && m.char === char && Math.abs(m.x - t.x) < 0.6 && Math.abs(m.y - t.y) < 0.6)
+    if (i >= 0) marks[i] = title(char, marks[i].x, marks[i].y, marks[i].size, t.grapheme, 'body')
   }
   return { marks }
 }

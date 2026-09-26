@@ -28,6 +28,11 @@ import type { Meaning } from '../../language/semantic/axes'
 import type { AlignIndex } from '../align/lookup'
 import type { AlignEntry } from '../align/table'
 import { CONSTANTS } from '../spec'
+import { flowOf, type Flow } from './flow'
+import { cellAt } from './grid'
+import { withTheTitle } from './title'
+
+export { cellAt }
 import type { Constraint, ConstraintKind } from '../types/constraints'
 import type { Discovery } from '../types/discovery'
 import type { Cause, CauseRef, FieldDetail, FieldGeometry, FieldGrid, FieldProperty, GeometrySelection, PageRect, Visibility } from '../types/field'
@@ -113,10 +118,6 @@ function gridFit(rect: PageRect, cols: number, rows: number, pitch: { x: number;
   return { u, box, grid, at: (row: number, col: number) => cellAt(grid, row, col) }
 }
 
-/** the centre of a cell of a grid (Layout reads the same function) */
-export function cellAt(g: FieldGrid, row: number, col: number): { x: number; y: number } {
-  return { x: g.x0 + (col + 0.5) * g.sx + Math.floor(col / g.n) * g.gap, y: g.y0 + (row + 0.5) * g.sy }
-}
 
 /** the visibility band of a difference among `count` units reaching `reach` page units (§8.2, TODO-4) */
 export function visibilityOf(count: number, reach: number): Visibility {
@@ -308,7 +309,8 @@ function fieldSingleton(input: FieldInput, frame: PageRect, interleave: boolean)
   if (gi !== null) {
     const cell = firstCell(cols, rows, input.language.direction === 'vertical', takes)
     if (cell) {
-      detail = { ...detail, titleUnit: { grapheme: gi, ...cell } }
+      const at2 = at(cell.row, cell.col)
+      detail = { ...detail, titleUnits: [{ grapheme: gi, x: r1(at2.x), y: r1(at2.y) }] }
       b.set('titleUnit', cell, b.c('major'))
     }
   }
@@ -608,52 +610,46 @@ function wholeEmerges(input: FieldInput, frame: PageRect): FieldGeometry | null 
 
 // ------------------------------------------------------------------ the words in a line; nothing found
 
-/**
- * The period of a reduplication on the line (ころころ: ころ | ころ): the shortest run of its members that repeats,
- * or null. Only a repetition in immediate succession has one; an echo, a mirror or a voicing does not.
- */
-function periodOf(input: FieldInput, c: Constraint): number[] {
-  if (c.kind !== 'recurrence' || c.unit !== 'token') return []
-  const ms = [...c.members].sort((a, b) => a - b)
-  const ch = ms.map((g) => input.language.graphemes[g]?.char)
-  for (let p = 1; p <= ms.length / 2; p++) {
-    if (ms.length % p) continue
-    if (ch.every((x, i) => x === ch[i % p])) return ms.filter((_, i) => i > 0 && i % p === 0)
+/** a flow laid on the page at a measure, its box's centre at a point */
+function placeFlow(f: Flow, m: number, at: { x: number; y: number }): { points: { grapheme: number; x: number; y: number }[]; rect: PageRect } {
+  const cx = (f.box.x0 + f.box.x1) / 2
+  const cy = (f.box.y0 + f.box.y1) / 2
+  return {
+    points: f.points.map((p) => ({ grapheme: p.grapheme, x: r1(at.x + (p.x - cx) * m), y: r1(at.y + (p.y - cy) * m) })),
+    rect: { x: at.x + (f.box.x0 - cx) * m, y: at.y + (f.box.y0 - cy) * m, w: (f.box.x1 - f.box.x0) * m, h: (f.box.y1 - f.box.y0) * m },
   }
-  return []
 }
 
-function lineOf(input: FieldInput, frame: PageRect, graphemes: readonly number[], role: 'word' | 'context'): FieldDetail['line'] {
-  const splits = input.constraints.filter((c) => c.kind === 'split').map((c) => (c.kind === 'split' ? c.at : -1))
-  // a reduplication parts at each return of its unit, as a split parts the line (the same half unit)
-  const returns = input.constraints.flatMap((c) => periodOf(input, c))
-  const axis = input.language.direction === 'vertical' ? 'vertical' : 'horizontal'
-  const breaks = graphemes.filter((g) => (splits.includes(g) || returns.includes(g)) && g !== graphemes[0])
-  const units = graphemes.length + breaks.length * 0.5
-  const along = axis === 'horizontal' ? frame.w : frame.h
-  const size = Math.min(along / units, Math.min(frame.w, frame.h) * K('SEQUENCE_MAX_UNIT'))
-  const len = size * units
-  const rect: PageRect = axis === 'horizontal' ? { x: frame.x + (frame.w - len) / 2, y: frame.y + (frame.h - size) / 2, w: len, h: size } : { x: frame.x + (frame.w - size) / 2, y: frame.y + (frame.h - len) / 2, w: size, h: len }
-  return { graphemes, breaks, rect, size: r1(size), axis, role }
+/** the flow's properties with their causes, and what it keeps */
+function flowCauses(b: Build, f: Flow) {
+  for (const x of f.behaviours) {
+    if (x.kind === 'line') continue
+    const cause: CauseRef = x.because === 'page' ? { kind: 'const', name: 'FRAME_MARGIN' } : { kind: 'constraint', id: x.because }
+    b.causes.push({ property: x.kind === 'curve' ? 'orientation' : 'whitespace', value: { [x.kind]: x.at }, because: cause })
+    if (x.because !== 'page' && !b.satisfies.includes(x.because)) b.satisfies.push(x.because)
+  }
 }
 
 function sequence(input: FieldInput, frame: PageRect): FieldGeometry | null {
   const s = input.constraints.find((c) => c.kind === 'sequence')
   if (s?.kind !== 'sequence') return null
   const b = new Build(input.constraints)
-  const line = lineOf(input, frame, s.graphemes, 'word')!
-  b.set('extent', line.rect, b.c('sequence'))
-  b.set('count', s.graphemes.length, b.c('sequence'))
-  b.set('unitSize', line.size, b.c('sequence'), b.const('SEQUENCE_MAX_UNIT'))
-  b.set('orientation', line.axis === 'horizontal' ? 'rows' : 'columns', b.c('sequence'))
-  // a break is caused by the split or the reduplication it stands for; a recurrence the line does not show is not kept
-  const splitAt = new Set(input.constraints.flatMap((c) => (c.kind === 'split' ? [c.at] : [])))
-  const shown = input.constraints.filter((c) => c.kind === 'recurrence' && periodOf(input, c).some((g) => line.breaks.includes(g)))
-  if (line.breaks.some((g) => splitAt.has(g))) b.causes.push({ property: 'whitespace', value: { breaks: line.breaks.filter((g) => splitAt.has(g)) }, because: b.c('split')! })
-  for (const c of shown) b.causes.push({ property: 'whitespace', value: { breaks: periodOf(input, c) }, because: { kind: 'constraint', id: c.id } })
-  b.keep('sequence', 'split')
-  for (const c of shown) if (!b.satisfies.includes(c.id)) b.satisfies.push(c.id)
-  return b.done({ name: 'the words in a line', extent: line.rect, count: s.graphemes.length, unitSize: line.size, orientation: line.axis === 'horizontal' ? 'rows' : 'columns', detail: { line } })
+  const f = flowOf(s.graphemes, input.constraints, input.language)
+  const bw = Math.max(1, f.box.x1 - f.box.x0)
+  const bh = Math.max(1, f.box.y1 - f.box.y0)
+  // a character at the measure of one written as itself, smaller only as far as the frame asks
+  const m = Math.min(K('SEQUENCE_MAX_UNIT') * Math.min(frame.w, frame.h), frame.w / bw, frame.h / bh)
+  const placed = placeFlow(f, m, { x: frame.x + frame.w / 2, y: frame.y + frame.h / 2 })
+  b.set('extent', placed.rect, b.c('sequence'))
+  b.set('count', f.points.length, b.c('sequence'))
+  b.set('unitSize', r1(m), b.c('sequence'), b.const('SEQUENCE_MAX_UNIT'))
+  b.set('orientation', input.language.direction === 'vertical' ? 'columns' : 'rows', b.c('sequence'))
+  b.keep('sequence')
+  flowCauses(b, f)
+  return b.done({
+    name: 'the words in a line', extent: placed.rect, count: f.points.length, unitSize: r1(m), orientation: input.language.direction === 'vertical' ? 'columns' : 'rows',
+    detail: { flow: { points: placed.points, size: r1(m), behaviours: [...new Set(f.behaviours.map((x) => x.kind))] } },
+  })
 }
 
 function absent(input: FieldInput): FieldGeometry {
@@ -721,120 +717,11 @@ export function geometry(input: FieldInput): GeometrySelection & { geometry: Fie
   let candidates = first.length ? [...first, ...(['FieldSingleton', 'FieldInterleave', 'WholeEmerges', 'CrossRoads', 'NestedRegions'].includes(input.plan.rule) ? [fullDense(first[0])] : [])] : [absent(input)]
   let chosen = pick(candidates)
   if (!input.rest.length || chosen.name === 'nothing found') return { candidates, chosen: chosen.name, geometry: chosen }
-  const primaryAt = input.primary?.graphemes[0] ?? 0
-  const before = input.rest.filter((g) => g < primaryAt)
-  const after = input.rest.filter((g) => g > primaryAt)
-  const horizontal = input.language.direction !== 'vertical'
-  const measure = Math.min(FRAME.w, FRAME.h) * K('SEQUENCE_MAX_UNIT')
-  const along = horizontal ? FRAME.w : FRAME.h
-  const f0 = horizontal ? FRAME.x : FRAME.y
-  const lines = (before.length ? 1 : 0) + (after.length ? 1 : 0)
-  // the size of a character the figure writes: its unit, or — where the units are strokes — the whole
-  const sizeOf = (g: FieldGeometry) => Math.min(g.detail?.strokeUnit && g.singleton ? g.unitSize * g.singleton.scale : g.unitSize, measure)
-  const frameOf = (len: number): PageRect => {
-    const start = f0 + (along - len) / 2
-    return horizontal ? { x: start, y: FRAME.y, w: len, h: FRAME.h } : { x: FRAME.x, y: start, w: FRAME.w, h: len }
-  }
-  // the longest figure whose rest still fits beside it at the figure's measure (that measure grows with the
-  // figure, the room beside it shrinks): where they cross. A rest too long to fit even so is written at the room
-  const perChar = (before.length + after.length) * K('UNIT_SPACING') + lines * 0.5
-  const at = (len: number) => {
-    const g = byRule(input, frameOf(len))
-    if (!g.length) return null
-    const c = pick(g)
-    const room = (along - (figureLength(c, horizontal) ?? len)) / perChar
-    return { g, c, want: sizeOf(c), room }
-  }
-  let lo = along * 0.1
-  let hi = along
-  for (let i = 0; i < 24; i++) {
-    const len = (lo + hi) / 2
-    const x = at(len)
-    if (!x) break
-    if (x.want <= x.room) lo = len
-    else hi = len
-  }
-  const best = at(lo)
-  let size = measure
-  if (best) {
-    candidates = [...best.g, ...candidates.filter((c) => c.name.includes('dense'))]
-    chosen = best.c
-    size = Math.max(0, Math.min(best.want, best.room))
-  }
-  const fig = figureSpan(chosen, horizontal) ?? { lo: f0 + along / 2, hi: f0 + along / 2 }
-  // centre the figure and its words together on the writing axis
-  const nB = before.length * size * K('UNIT_SPACING') + (before.length ? 0.5 * size : 0)
-  const nA = after.length * size * K('UNIT_SPACING') + (after.length ? 0.5 * size : 0)
-  const shift = f0 + (along - (nB + (fig.hi - fig.lo) + nA)) / 2 + nB - fig.lo
-  chosen = shiftGeometry(chosen, horizontal ? shift : 0, horizontal ? 0 : shift)
-  const lineAt = (gs: readonly number[], from: number): NonNullable<FieldDetail['line']> => {
-    const len = gs.length * size * K('UNIT_SPACING')
-    const rect: PageRect = horizontal ? { x: from, y: FRAME.y + (FRAME.h - size) / 2, w: len, h: size } : { x: FRAME.x + (FRAME.w - size) / 2, y: from, w: size, h: len }
-    return { graphemes: gs, breaks: [], rect, size: r1(size), axis: horizontal ? 'horizontal' : 'vertical', role: 'context' }
-  }
-  const lo2 = fig.lo + shift
-  const hi2 = fig.hi + shift
-  const rest = [
-    before.length ? lineAt(before, lo2 - 0.5 * size - before.length * size * K('UNIT_SPACING')) : null,
-    after.length ? lineAt(after, hi2 + 0.5 * size) : null,
-  ].filter((x): x is NonNullable<FieldDetail['line']> => !!x)
-  const seq = input.constraints.find((c) => c.kind === 'sequence')
-  const same = input.constraints.find((c) => c.kind === 'same-scale')
-  chosen = {
-    ...chosen,
-    detail: { ...chosen.detail, ...(rest.length ? { rest } : {}) } as FieldDetail,
-    causes: [
-      ...chosen.causes,
-      { property: 'extent', value: { rest: input.rest }, because: seq ? { kind: 'constraint', id: seq.id } : { kind: 'const', name: 'SEQUENCE_MAX_UNIT' } },
-      { property: 'unitSize', value: { rest: r1(size) }, because: same ? { kind: 'constraint', id: same.id } : { kind: 'const', name: 'SEQUENCE_MAX_UNIT' } },
-    ],
-  }
-  return { candidates, chosen: chosen.name, geometry: chosen }
-}
-
-/** the figure's span on the writing axis: its extent, or the character itself */
-function figureSpan(g: FieldGeometry, horizontal: boolean): { lo: number; hi: number } | null {
-  const r = g.extent ?? g.detail?.parts?.[0]?.rect ?? null
-  if (!r) return null
-  let lo = horizontal ? r.x : r.y
-  let hi = horizontal ? r.x + r.w : r.y + r.h
-  // a singleton reaches out of the field on the delta's side (淋's 氵): the figure is as long as its ink
-  for (const w of g.whitespace) if (w.cause.kind === 'constraint' && w.cause.id.startsWith('c:boundary-side')) {
-    const s = g.singleton
-    if (s?.point) {
-      const half = (g.unitSize * s.scale) / 2
-      lo = Math.min(lo, (horizontal ? s.point.x : s.point.y) - half)
-      hi = Math.max(hi, (horizontal ? s.point.x : s.point.y) + half)
-    }
-  }
-  return { lo, hi }
-}
-function figureLength(g: FieldGeometry, horizontal: boolean): number | null {
-  const s = figureSpan(g, horizontal)
-  return s ? s.hi - s.lo : null
-}
-
-/** a geometry moved on the page (the figure and everything that stands with it) */
-function shiftGeometry(g: FieldGeometry, dx: number, dy: number): FieldGeometry {
-  if (!dx && !dy) return g
-  const R = (r: PageRect): PageRect => ({ x: r1(r.x + dx), y: r1(r.y + dy), w: r.w, h: r.h })
-  const P = <T extends { x: number; y: number }>(p: T): T => ({ ...p, x: r1(p.x + dx), y: r1(p.y + dy) })
-  const d = g.detail
-  return {
-    ...g,
-    extent: g.extent ? R(g.extent) : null,
-    ...(g.inner ? { inner: g.inner.map(R) } : {}),
-    ...(g.singleton ? { singleton: { ...g.singleton, ...(g.singleton.point ? { point: P(g.singleton.point) } : {}) } } : {}),
-    whitespace: g.whitespace.map((w) => ({ ...w, region: R(w.region) })),
-    detail: d && {
-      ...d,
-      ...(d.grid ? { grid: { ...d.grid, x0: r1(d.grid.x0 + dx), y0: r1(d.grid.y0 + dy) } } : {}),
-      ...(d.points ? { points: d.points.map(P) } : {}),
-      ...(d.ring ? { ring: { ...d.ring, inner: R(d.ring.inner) } } : {}),
-      ...(d.band ? { band: { ...d.band, rect: R(d.band.rect) } } : {}),
-      ...(d.parts ? { parts: d.parts.map((p) => ({ ...p, rect: R(p.rect) })) } : {}),
-      ...(d.line ? { line: { ...d.line, rect: R(d.line.rect) } } : {}),
-      ...(d.interfaceAt ? { interfaceAt: P(d.interfaceAt) } : {}),
-    },
-  }
+  const line = withTheTitle(input, FRAME, (f) => {
+    const got = byRule(input, f)
+    return got.length ? { chosen: pick(got), candidates: got } : null
+  })
+  if (!line) return { candidates, chosen: chosen.name, geometry: chosen }
+  candidates = [...line.candidates, ...candidates.filter((c) => c.name.includes('dense'))]
+  return { candidates, chosen: line.geometry.name, geometry: line.geometry }
 }

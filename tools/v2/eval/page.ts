@@ -2,60 +2,24 @@
 // the relations between a title's own glyphs read by v1 — draw them with v1's renderer, check them with v1's
 // invariants, and lay a contact sheet of them with what decided each. Never part of the site.
 import '../../../src/glyph/font-face'
-import { covers } from '../../../src/glyph/coverage'
-import { readRelations } from '../../../src/glyph/relation'
 import { GlyphLibrary } from '../../../src/glyph/source'
-import { parseTable } from '../../../src/language/semantic/axes'
+import { readMeaning } from '../../../src/language/semantic/load'
 import { analyze } from '../../../src/poem/compose'
 import { soundness } from '../../../src/poem/invariants'
 import { renderCanvas } from '../../../src/render/png'
 import { normalizeTitle } from '../../../src/title'
-import { alignIndex } from '../../../src/v2/align/lookup'
-import type { AlignManifest, AlignShard } from '../../../src/v2/align/table'
-import { composeV2, type V2Tables } from '../../../src/v2/compose'
-import { resonanceIndex, type ResonanceManifest, type ResonanceShard } from '../../../src/v2/resonance'
-import { structureIndex } from '../../../src/v2/structure/lookup'
-import type { StructureManifest, StructureShard } from '../../../src/v2/structure/table'
+import { fetchSource } from '../../../src/v2/observation/tables'
+import { writeV2 } from '../../../src/v2/runtime'
+import type { RuntimeObservation } from '../../../src/v2/observation'
 
+// the runtime path, as the site would run it: tables fetched by shard, the face measured here
 const lib = new GlyphLibrary()
-
-async function json<T>(url: string): Promise<T> {
-  const r = await fetch(url)
-  if (!r.ok) throw new Error(`${url}: ${r.status}`)
-  return (await r.json()) as T
-}
-
-let tables: V2Tables | null = null
-async function load(): Promise<V2Tables> {
-  if (tables) return tables
-  const sm = await json<StructureManifest>('/v2/structure-1/manifest.json')
-  const am = await json<AlignManifest>('/v2/align-1/manifest.json')
-  const rm = await json<ResonanceManifest>('/v2/resonance-1/manifest.json')
-  const ss = await Promise.all(sm.shards.files.map((f) => json<StructureShard>(`/v2/structure-1/${f.name}`)))
-  const as = await Promise.all(am.shards.files.map((f) => json<AlignShard>(`/v2/align-1/${f.name}`)))
-  const rs = await Promise.all(rm.shards.files.map((f) => json<ResonanceShard>(`/v2/resonance-1/${f.name}`)))
-  const ax = await Promise.all(Array.from({ length: 64 }, (_, i) => fetch(`/semantic/axes-1/${String(i).padStart(2, '0')}.tsv`).then((r) => r.text())))
-  tables = {
-    structure: structureIndex(sm, ss),
-    align: alignIndex(am, as),
-    resonance: resonanceIndex(rm, rs),
-    axes: parseTable('axes-1', ax.join('\n')),
-    data: { 'structure-1': { id: 'structure-1', sha256: sm.sha256 }, 'align-1': { id: 'align-1', sha256: am.sha256 }, 'resonance-1': { id: 'resonance-1', sha256: rm.sha256 }, 'axes-1': { id: 'axes-1', sha256: 'v1' } },
-  }
-  return tables
-}
+const env = { source: fetchSource(import.meta.env.BASE_URL), glyphs: lib, meaning: (text: string) => readMeaning(text) }
 
 async function one(text: string, reading: string | undefined, px: number) {
-  const t = await load()
   const input = normalizeTitle({ text, reading })
   if (typeof input === 'string') return { text, error: input }
-  const chars = [...new Set([...input.text].filter((c) => c.trim() && covers('sans', c)))]
-  await lib.prepare(chars)
-  const glyphs = new Map(chars.map((c) => [c, lib.get(c).metrics]))
-  const relations = glyphs.size > 1 ? readRelations(glyphs) : []
-  const comp = composeV2(input, relations, t)
-  const need = [...new Set(comp.draft.marks.map((m) => m.char).filter((c) => covers('sans', c)))]
-  await lib.prepare(need)
+  const { observation, composition: comp } = await writeV2(input, env)
   const canvas = renderCanvas(comp.draft, lib, px)
   const a = await analyze(input)
   const plan = comp.rationale.plan
@@ -74,7 +38,8 @@ async function one(text: string, reading: string | undefined, px: number) {
   const inv = soundness(a, checked, { repetition: plan !== 'Sequence' && plan !== 'Absent', absent: [] })
   const g = comp.trace.geometry
   return {
-    collide: collisions(comp.draft.marks, t),
+    collide: collisions(comp.draft.marks, observation),
+    read: observation.tables.read,
     text, reading: reading ?? '',
     primary: comp.rationale.selection.primary,
     primaryType: comp.trace.primary?.type ?? null,
@@ -83,7 +48,7 @@ async function one(text: string, reading: string | undefined, px: number) {
     evidence: comp.rationale.resonance.map((e) => `${e.type} ${e.distance}`),
     plan,
     plans: comp.rationale.plans.map((p) => p.rule),
-    geometry: { name: g.name, count: g.count, cols: g.cols, rows: g.rows, unitSize: g.unitSize, visibility: g.visibility ?? null, extent: g.extent, whitespace: g.whitespace.length, unmotivated: g.unmotivated },
+    geometry: { name: g.name, count: g.count, cols: g.cols, rows: g.rows, unitSize: g.unitSize, visibility: g.visibility ?? null, extent: g.extent, whitespace: g.whitespace.length, unmotivated: g.unmotivated, flow: g.detail?.flow ?? null },
     marks: comp.draft.marks.length,
     invariants: { lost: inv.lost, overlaps: inv.overlaps, inkHits: inv.inkHits, infinite: inv.infinite },
     draft: comp.draft,
@@ -96,7 +61,7 @@ async function one(text: string, reading: string | undefined, px: number) {
  * inkHit only derived-on-title). The box: the glyph's ink half (align-1), or a keep's rects; a pair counts
  * when they share more than a tenth of the smaller box.
  */
-function collisions(marks: readonly import('../../../src/poem/types').Mark[], t: V2Tables): number {
+function collisions(marks: readonly import('../../../src/poem/types').Mark[], o: RuntimeObservation): number {
   const boxes = marks.map((m) => {
     if (m.keep?.length) {
       const k = m.size / 100
@@ -106,7 +71,7 @@ function collisions(marks: readonly import('../../../src/poem/types').Mark[], t:
       const ys = m.keep.flatMap((r) => [r.y + sy, r.y + r.h + sy])
       return { x0: m.x + Math.min(...xs) * k, x1: m.x + Math.max(...xs) * k, y0: m.y + Math.min(...ys) * k, y1: m.y + Math.max(...ys) * k }
     }
-    const h = t.align.entry(m.char)?.whole?.half ?? { w: 45, h: 45 }
+    const h = o.tables.align.entry(m.char)?.whole?.half ?? { w: 45, h: 45 }
     return { x0: m.x - (h.w / 100) * m.size, x1: m.x + (h.w / 100) * m.size, y0: m.y - (h.h / 100) * m.size, y1: m.y + (h.h / 100) * m.size }
   })
   let n = 0

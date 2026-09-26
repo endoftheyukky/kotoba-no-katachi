@@ -102,12 +102,16 @@ export interface FieldDetail {
   parts?: readonly { item: string; rect: PageRect; count: number }[]
   /** a line of the title's graphemes (Sequence, Absent, and the rest of a longer title) */
   line?: { graphemes: readonly number[]; breaks: readonly number[]; rect: PageRect; size: number; axis: 'horizontal' | 'vertical'; role: 'word' | 'context' }
+  /** the title's graphemes walked as a flow (field/flow.ts): each at its point, one size */
+  flow?: { points: readonly { grapheme: number; x: number; y: number }[]; size: number; behaviours: readonly string[] }
+  /** the rest of a longer title as flows, each attached to the figure (TODO-10) */
+  flows?: readonly { points: readonly { grapheme: number; x: number; y: number }[]; size: number; behaviours: readonly string[] }[]
   /** the rest of a longer title, beside the figure in reading order (TODO-10) */
   rest?: readonly { graphemes: readonly number[]; breaks: readonly number[]; rect: PageRect; size: number; axis: 'horizontal' | 'vertical'; role: 'word' | 'context' }[]
   /** the interface whole of NestedRegions: its point and size, in the contained field's cell it takes */
   interfaceAt?: { item: string; x: number; y: number; size: number; cell?: { row: number; col: number } }
-  /** a title character the field's unit is: the cell of the unit that writes it (the others repeat it) */
-  titleUnit?: { grapheme: number; row: number; col: number }
+  /** title characters the figure's unit is: the unit at each point writes it (the others repeat it) */
+  titleUnits?: readonly { grapheme: number; x: number; y: number }[]
 }
 
 /** §8.3: every candidate is kept; the chosen one has the fewest unmotivated properties, then the most satisfied */

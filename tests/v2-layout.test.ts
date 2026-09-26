@@ -4,47 +4,28 @@ import assert from 'node:assert/strict'
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, test } from 'node:test'
-import { parseTable } from '../src/language/semantic/axes'
 import type { Mark } from '../src/poem/types'
-import { normalizeTitle } from '../src/title'
-import { alignIndex } from '../src/v2/align/lookup'
-import type { AlignManifest, AlignShard } from '../src/v2/align/table'
-import { composeV2, type V2Tables } from '../src/v2/compose'
 import { FRAME } from '../src/v2/field'
-import { resonanceIndex, type ResonanceManifest, type ResonanceShard } from '../src/v2/resonance'
-import { structureIndex } from '../src/v2/structure/lookup'
-import type { StructureManifest, StructureShard } from '../src/v2/structure/table'
 import type { IdsNode } from '../src/v2/types/structure'
-
-const root = join(import.meta.dirname, '..')
-const load = <M extends { shards: { files: readonly { name: string }[] } }, S>(dir: string) => {
-  const manifest = JSON.parse(readFileSync(join(root, dir, 'manifest.json'), 'utf8')) as M
-  return { manifest, shards: manifest.shards.files.map((f) => JSON.parse(readFileSync(join(root, dir, f.name), 'utf8')) as S) }
-}
-const S = load<StructureManifest, StructureShard>('public/v2/structure-1')
-const A = load<AlignManifest, AlignShard>('public/v2/align-1')
-const R = load<ResonanceManifest, ResonanceShard>('public/v2/resonance-1')
-const axDir = join(root, 'public/semantic/axes-1')
-const tables: V2Tables = {
-  structure: structureIndex(S.manifest, S.shards),
-  align: alignIndex(A.manifest, A.shards),
-  resonance: resonanceIndex(R.manifest, R.shards),
-  axes: parseTable('axes-1', readdirSync(axDir).filter((f) => f.endsWith('.tsv')).sort().map((f) => readFileSync(join(axDir, f), 'utf8')).join('\n')),
-  data: { 'structure-1': { id: 'structure-1', sha256: S.manifest.sha256 }, 'align-1': { id: 'align-1', sha256: A.manifest.sha256 }, 'resonance-1': { id: 'resonance-1', sha256: R.manifest.sha256 }, 'axes-1': { id: 'axes-1', sha256: 'v1' } },
-}
-
-// the relations between a title's own glyphs are v1's reading in the browser (glyph metrics); the node tests
-// compose without them, the evaluation pages with them
-function compose(text: string, reading?: string) {
-  const t = normalizeTitle({ text, reading })
-  if (typeof t === 'string') throw new Error(t)
-  return composeV2(t, [], tables)
-}
+import { composeV2 } from '../src/v2/compose'
+import { composeNode, fileSource, observeNode, root } from './v2-node'
 
 const BENCHMARK = [...'雨闇淋林州血囚辻悲']
 const CONTROLS = [...'海問品森玉晶轟好男国閣日琳田回']
 const LONGER = ['雨の中の雨', '木と林と森', '川または州', '見えない', 'ころころ', '触る', '音楽', '国際空港', '私の影を踏まないでください！', 'あいうえお', 'Good morning!']
 const ALL = [...BENCHMARK, ...CONTROLS, ...LONGER]
+const EXTRA = ['淋', '海', '血', '州', '国際空港', 'ころころ', '月', 'あいうえお']
+// the relations between a title's own glyphs are v1's reading in the browser (glyph metrics); the node tests
+// compose without them, the evaluation pages with them
+const pages = new Map(await Promise.all([...new Set([...ALL, ...EXTRA])].map(async (t) => {
+  const o = await observeNode(t)
+  return [t, { o, c: composeV2(o) }] as const
+})))
+function compose(text: string) {
+  const p = pages.get(text)
+  if (!p) throw new Error(`not composed: ${text}`)
+  return p.c
+}
 
 function leaves(n: IdsNode, out: { char: string; tier: string }[] = []) {
   if (n.kind === 'leaf') out.push({ char: n.char, tier: n.tier })
@@ -53,10 +34,11 @@ function leaves(n: IdsNode, out: { char: string; tier: string }[] = []) {
 }
 /** the characters a page may write: the title's own, and the components its characters' structures guarantee (R4), never a variant alone */
 function allowed(text: string) {
+  const structureOf = pages.get(text)!.o.tables.structure
   const ok = new Set<string>([...text])
   const variants = new Set<string>()
   for (const c of new Set(text)) {
-    const s = tables.structure.lookup(c)
+    const s = structureOf.lookup(c)
     if (s.status !== 'found') continue
     for (const l of leaves(s.structure.tree)) (l.tier === 'variant' ? variants : ok).add(l.char)
   }
@@ -154,20 +136,35 @@ describe('Layout: §15.3 on every page', () => {
     assert.equal(new Set(sig).size, 4)
   })
 
-  test('a title\'s characters written as themselves share one size, beside a field (the rest of the title at the unit)', () => {
-    for (const t of ['川または州', '国際空港', '木と林と森']) {
+  test('the rest of a longer title: written once, at one size no larger than the figure\'s measure (TODO-10)', () => {
+    for (const t of ['川または州', '国際空港', '木と林と森', '雨の中の雨', '触る', '音楽']) {
       const { draft, trace } = compose(t)
-      const rest = draft.marks.filter((m) => m.role === 'context')
-      assert.ok(rest.length > 0, t)
-      for (const m of rest) assert.ok(Math.abs(m.size - Math.min(trace.geometry.unitSize, 0.16 * FRAME.w)) < 0.6, `${t}: ${m.char} ${m.size} against the unit ${trace.geometry.unitSize}`)
+      const flows = trace.geometry.detail!.flows ?? []
+      assert.ok(flows.length > 0, t)
+      const sizes = new Set(flows.map((f) => f.size))
+      assert.equal(sizes.size, 1, `${t}: one size for the rest`)
+      const g = trace.geometry
+      const measure = g.detail?.strokeUnit && g.singleton ? g.unitSize * g.singleton.scale : g.unitSize
+      for (const f of flows) assert.ok(f.size <= Math.min(measure, 0.16 * FRAME.w) + 0.6, `${t}: ${f.size} against ${measure}`)
+      for (const f of flows) for (const p of f.points) assert.equal(draft.marks.filter((m) => m.grapheme === p.grapheme).length, 1, `${t}: grapheme ${p.grapheme} written once`)
     }
   })
 
-  test('a reduplication parts its line at each return (ころ | ころ); the recurrence is kept only where the line shows it', () => {
+  test('a title\'s character the figure repeats as its unit is written by the figure\'s first unit of it (木と林と森: the title\'s 木 among the units of 林)', () => {
+    const { draft } = compose('木と林と森')
+    const ki = draft.marks.filter((m) => m.char === '木')
+    assert.equal(ki.filter((m) => m.grapheme === 0).length, 1)
+    assert.ok(ki.filter((m) => m.derived).length > 1)
+  })
+
+  test('a reduplication returns: each repeat a line of its own from the head (ころ | ころ); the recurrence is kept where the page shows it', () => {
     const c = compose('ころころ')
-    const line = c.trace.geometry.detail!.line!
-    assert.deepEqual([...line.breaks], [2])
-    assert.ok(c.rationale.constraints.some((x) => x.kind === 'recurrence'))
+    const f = c.trace.geometry.detail!.flow!
+    assert.ok(f.behaviours.includes('return'))
+    const [a, b] = [f.points.find((p) => p.grapheme === 0)!, f.points.find((p) => p.grapheme === 2)!]
+    assert.ok(Math.abs(a.y - b.y) < 0.6 && b.x < a.x, 'the repeat starts at the head, beside the first (vertical: to its left)')
+    const rec = c.rationale.constraints.filter((x) => x.kind === 'recurrence' && x.unit === 'token')
+    assert.ok(rec.length && c.trace.geometry.satisfies.includes(rec[0].id))
   })
 
   test('nothing found: the title once, the longer title longer, not smaller than a quarter of a one-character title', () => {
@@ -177,8 +174,8 @@ describe('Layout: §15.3 on every page', () => {
     for (const m of five) assert.ok(m.size >= one / 4 && m.size < one)
   })
 
-  test('the same title gives the same page', () => {
-    for (const t of ALL) assert.equal(JSON.stringify(compose(t).draft), JSON.stringify(compose(t).draft), t)
+  test('the same title gives the same page', async () => {
+    for (const t of ALL) assert.equal(JSON.stringify((await composeNode(t)).draft), JSON.stringify(compose(t).draft), t)
   })
 
   test('the composition reads no fixture and no benchmark list; no random number', () => {

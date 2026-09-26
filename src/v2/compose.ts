@@ -1,38 +1,29 @@
 /**
  * Generator v2 (spec-1 §1): Input → Observation → Discovery → Selection → Semantic Resonance →
  * Constraints → SpatialPlan → FieldGeometry → Layout → Rationale. Pure and deterministic over its
- * inputs: the title, v1's readings of it (language, and the relations between its own glyphs), and the
- * fixed tables. No random number, no model, no network here; the caller hands the tables in.
+ * Observation (observation/index.ts): the title, v1's readings of it (language, the relations between its
+ * own glyphs) and the fixed tables as far as the title reaches them. No random number, no model, no network
+ * here: v2/runtime.ts observes and hands the observation in.
  *
- * Not yet wired to the site (spec-1 §16 stages 10–12): CURRENT and VERSIONS stay v1.
+ * Not yet wired to the site's versions (spec-1 §16 stage 12): CURRENT and VERSIONS stay v1.
  */
-import type { GlyphRelation } from '../glyph/relation'
-import { analyzeLanguage } from '../language/analysis'
 import { meaningOf, type MeaningTable } from '../language/semantic/axes'
-import type { TitleInput } from '../title'
-import type { AlignIndex } from './align/lookup'
 import { constrain } from './constraints'
 import { discover, gates, select } from './discovery'
 import { geometry } from './field'
 import { layout } from './layout'
+import type { RuntimeObservation } from './observation'
 import { plan } from './plan'
-import { leavesOf, resonanceIndex, resonate } from './resonance'
-import type { StructureIndex } from './structure/lookup'
+import { leavesOf, resonate } from './resonance'
 import type { V2Composition } from './types/layout'
-import type { DataVersions } from './types/provenance'
 
-export interface V2Tables {
-  structure: StructureIndex
-  align: AlignIndex
-  resonance: ReturnType<typeof resonanceIndex>
-  /** axes-1: auxiliary only (§5.4); null where it is not at hand */
-  axes: MeaningTable | null
-  data: DataVersions
-}
+/** a whole title's axes, where the whole table is at hand (tests, tools): the site reads it by the title's characters */
+export const axesOf = (text: string, table: MeaningTable | null) => (table ? meaningOf(text, table) : null)
 
-export function composeV2(input: TitleInput, relations: readonly GlyphRelation[], t: V2Tables): V2Composition & { trace: Trace } {
-  const language = analyzeLanguage(input)
-  const din = { language, structure: t.structure, align: t.align, relations }
+export function composeV2(o: RuntimeObservation): V2Composition & { trace: Trace } {
+  const language = o.language
+  const t = o.tables
+  const din = { language, structure: t.structure, align: t.align, relations: o.titleRelations }
   const discoveries = discover(din)
   const selection = select(discoveries, din)
   const own = (g: number) => language.graphemes[g]?.char
@@ -40,22 +31,21 @@ export function composeV2(input: TitleInput, relations: readonly GlyphRelation[]
   const set = constrain(discoveries, selection, evidence, language)
   const primary = selection.primary ? discoveries.find((d) => d.id === selection.primary) ?? null : null
   const p = plan(set.constraints, primary, language.graphemes)
-  const meaning = t.axes ? meaningOf(input.text, t.axes) : null
-  const g = geometry({ plan: p.plan, constraints: set.constraints, primary, align: t.align, language, rest: p.rest, meaning })
+  const g = geometry({ plan: p.plan, constraints: set.constraints, primary, align: t.align, language, rest: p.rest, meaning: o.axes })
   const draft = layout({ plan: p.plan, geometry: g.geometry, primary, align: t.align, language })
   const structure: Record<string, string | null> = {}
   for (const gr of language.graphemes) {
-    const s = t.structure.lookup(gr.char)
-    if (!(gr.char in structure)) structure[gr.char] = s.status === 'found' ? s.structure.ids : null
+    const s = o.structure.get(gr.char)
+    if (!(gr.char in structure)) structure[gr.char] = s ? s.ids : null
   }
   return {
-    input,
+    input: o.input,
     version: 2,
     draft,
     rationale: {
       version: 'v2',
       spec: 'spec-1',
-      data: t.data,
+      data: o.data,
       observation: { structure, inkNotes: [] },
       discoveries: discoveries.map((d) => {
         const failed = gates(d, din)
@@ -68,7 +58,7 @@ export function composeV2(input: TitleInput, relations: readonly GlyphRelation[]
       plan: p.plan.rule,
       geometries: g.candidates,
       geometry: g.chosen,
-      layout: { marks: draft.marks.length, notes: p.rest.length ? [`the rest of the title (graphemes ${p.rest.join(', ')}) beside the figure, in reading order (TODO-10)`] : [] },
+      layout: { marks: draft.marks.length, notes: p.rest.length ? [`the rest of the title (graphemes ${p.rest.join(', ')}) in the line the figure stands in (TODO-10)`] : [] },
     },
     trace: { discoveries: discoveries.length, primary, constraints: set.constraints.length, plan: p.plan.rule, geometry: g.geometry },
   }
