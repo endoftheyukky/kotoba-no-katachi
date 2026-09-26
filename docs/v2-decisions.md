@@ -98,8 +98,8 @@ names a word; none was made to pass a benchmark case.
   - CrossRoads: 5 × 5 in the core's frame, roads empty, the whole at the crossing, the wrapper's zone white.
   - Separation: one mark per part (a 2 × 3 field of each is a candidate and loses), the seam SEAM_COEF × (1 +
     severance from axes-1, auxiliary and recorded as such).
-  - WholeEmerges: n × groups units, groups = 2 × 2^(part-referent L0, MULTITUDE L1). Two at least: the whole emerges
-    among another group of its units. The field's pitch is the units' own pitch inside the whole (its nearest-
+  - WholeEmerges: n × groups units, groups = 2 × 2^(part-referent L0, MULTITUDE L1) — **a misreading of §8.2,
+    corrected at Stage 9** (groups = n × 2^k). Two at least: the whole emerges among another group of its units. The field's pitch is the units' own pitch inside the whole (its nearest-
     neighbour distance), so the whole, at its size, stands with its units on the field's points (TODO-2 settled
     this way); the other units take the lattice points nearest the field's centre, clear of the whole's ink box;
     the field lies away from the whole's remainder (the whole closes where the remainder stands), else round it
@@ -115,3 +115,53 @@ names a word; none was made to pass a benchmark case.
   FALLBACK_OFFSET 0.85. **Added types**: CauseRef `fallback`; FieldGeometry `detail` (what each rule's page is
   made of, so that Layout decides nothing).
 
+
+## Stage 9 — Layout and the composition
+
+The first evaluation pages (benchmark, controls, boundary, the 131 public titles; `tools/v2/eval.mjs`) were
+looked at page by page. What they showed was fixed as rules of a type, never for a character; each rule below
+names the failure it answers.
+
+- **Layout decides nothing**: every position is FieldGeometry's (`detail.grid`, `points`, `parts`, `ring`,
+  `interfaceAt`, `titleUnit`, lines). The page is v1's Draft: v1's renderers and invariants read it unchanged.
+- **A title character keeps its own index**: a character of the relation is written with the title's own
+  grapheme of that character (an inter-character relation lies across two). Where the field's unit is itself a
+  title character (大 in 大と太), the field's first unit in reading order writes it and the others repeat it
+  (*failure: the base of an inter-character relation was only grain, and was lost*).
+- **The delta reaches TAU, whatever the band** (§8.2): the hidden band bounds the count; when no grid of the band
+  keeps the delta at TAU, the field is the largest that does, and the visibility target is recorded as unmet.
+  The delta is measured on the derived character as written (unit ÷ base scale for a singleton, the unit for an
+  interleave); Stage 8 had multiplied where it should divide (*failure: deltas too small to see*).
+- **A field's pitch is its unit's own ink** plus the gap UNIT_SPACING leaves (UNIT_SPACING − 1 of a unit), along
+  each axis: 川 stands in close columns, 皿 wide, 一 in close rows (*failure: every field had the same square
+  texture*). Rings and crossings keep square cells (two units, or a road, share them).
+- **WholeEmerges** (*failure: the whole dominated a thin ring of units; 雨's units hit each other and the whole*):
+  - groups = n × 2^k as §8.2 writes it (Stage 8 had 2 × 2^k; the same for n = 2, fewer for n > 2): 雨 32, 森 36, 品 9.
+  - the lattice is the units' own arrangement in the whole, a pitch per axis (§9.1 "a unit keeps its place"): the
+    smallest distance between unit centres along the axis (above a quarter of nn), else nn; never less than a
+    unit's own ink. The road (§9.1) is kept by the unit's own ink box against the whole's, not by a constant.
+- **Interface** (*failure: 闇, 囚 — the whole alone on the closed white read as a label*): the whole at
+  INTERFACE_SCALE takes the contained unit at the contained field's face toward the container, on the side
+  opposite the opening. The closed white between container and contained is now empty.
+- **Separation** (*failure: 悲 — the parts at their size in the glyph, at the frame's scale, read as an exploded
+  diagram*): each part is written as a character in its own right (the unsqueezed form, as §9.1 asks of
+  character units), all at one measure — the measure of a character written as itself (SEQUENCE_MAX_UNIT) —
+  in their order along the axis, the seam SEAM_COEF × (1 + severance) of the frame between them. The page holds
+  isolated components, not a glyph taken apart for explanation.
+- **One size for the title's characters on a page** (*failure: the rest of a longer title as tiny captions,
+  and words written over the figure*): the rest is written at the figure's measure — its unit, or the whole
+  where the units are strokes — at most SEQUENCE_MAX_UNIT; the figure gives way along the writing axis just as
+  far as that needs (where the figure's measure and the room beside it cross); a half unit parts the words from
+  the figure, as a split parts a line. A rest too long to fit even so is written at the room left. Provisional:
+  how a figure stands in a line is TODO-10 (Stage 10, v1's trace, §9.3).
+- **Sequence**: a reduplication (a recurrence of a token) parts its line at each return of its unit (ころ | ころ),
+  the same half unit as a split. A recurrence the line does not show (an echo, a mirror, a voicing) is no longer
+  counted as satisfied (*failure: a constraint claimed but not realised*).
+- **Nothing found**: the title keeps the ink of a one-character title (its line's area FALLBACK_SPAN² of the
+  page): a longer title is written longer, not smaller (*failure: long fallback titles shrank to a caption*).
+- **Evaluation** (development only, never read by `src/`): v1's invariants (lost, overlap, inkHit, finite) on
+  every page, plus `collide` (any two marks whose ink boxes share more than a tenth of the smaller: v1's overlap
+  skips pairs of very different sizes). A stroke unit (the whole at its size, cut to one island) is checked by
+  v1's inkHit as the mark its kept ink is; v1's code is unchanged.
+- **Added types**: FieldGrid, FieldDetail `grid`, `titleUnit`, `interfaceAt.cell`; FieldProperty `pitch`,
+  `titleUnit`. No constant added.

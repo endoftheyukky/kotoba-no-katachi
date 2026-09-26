@@ -34,6 +34,8 @@ export interface Cause {
 export type FieldProperty =
   | 'extent' | 'inner' | 'count' | 'rows' | 'cols' | 'unitSize'
   | 'groups' | 'orientation' | 'singleton' | 'whitespace' | 'visibility' | 'scale'
+  // added at Stage 9
+  | 'pitch' | 'titleUnit'
 
 export type Visibility = 'immediate' | 'hidden' | 'too-small' | 'too-many'
 
@@ -66,8 +68,20 @@ export interface FieldGeometry {
   detail?: FieldDetail
 }
 
+/** a field's grid on the page: the first cell's corner, the pitch along each axis, columns in groups of n with a gap */
+export interface FieldGrid {
+  x0: number
+  y0: number
+  sx: number
+  sy: number
+  n: number
+  gap: number
+}
+
 /** the rule-specific parts of a geometry, all already caused by the properties above */
 export interface FieldDetail {
+  /** the grid a field's units stand on (FieldSingleton, FieldInterleave, RegionSplit, CrossRoads) */
+  grid?: FieldGrid
   /** the unit a field repeats (a character, or a stroke unit cut from the whole) */
   unit?: string
   /** a stroke unit: the whole it is cut from, and the islands of its ink that are the units (align-1 ink) */
@@ -90,8 +104,10 @@ export interface FieldDetail {
   line?: { graphemes: readonly number[]; breaks: readonly number[]; rect: PageRect; size: number; axis: 'horizontal' | 'vertical'; role: 'word' | 'context' }
   /** the rest of a longer title, beside the figure in reading order (TODO-10) */
   rest?: readonly { graphemes: readonly number[]; breaks: readonly number[]; rect: PageRect; size: number; axis: 'horizontal' | 'vertical'; role: 'word' | 'context' }[]
-  /** the interface whole of NestedRegions: its point and size */
-  interfaceAt?: { item: string; x: number; y: number; size: number }
+  /** the interface whole of NestedRegions: its point and size, in the contained field's cell it takes */
+  interfaceAt?: { item: string; x: number; y: number; size: number; cell?: { row: number; col: number } }
+  /** a title character the field's unit is: the cell of the unit that writes it (the others repeat it) */
+  titleUnit?: { grapheme: number; row: number; col: number }
 }
 
 /** §8.3: every candidate is kept; the chosen one has the fewest unmotivated properties, then the most satisfied */

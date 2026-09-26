@@ -114,8 +114,8 @@ describe('FieldGeometry: the benchmark (§15.2)', () => {
     assert.ok(cause(x, 'whitespace').some((c) => c.because.kind === 'const' && c.because.name === 'SEAM_COEF'))
   })
 
-  test('雨 林 森 品: the whole once, among n × (groups − 1) of its units, none on the whole\'s ink', () => {
-    const want: Record<string, { n: number; groups: number }> = { 雨: { n: 4, groups: 4 }, 林: { n: 2, groups: 8 }, 森: { n: 3, groups: 8 }, 品: { n: 3, groups: 2 } }
+  test('雨 林 森 品: the whole once, among n × (groups − 1) of its units (groups = n × 2^evidence, §8.2), none on the whole\'s ink', () => {
+    const want: Record<string, { n: number; groups: number }> = { 雨: { n: 4, groups: 8 }, 林: { n: 2, groups: 8 }, 森: { n: 3, groups: 12 }, 品: { n: 3, groups: 3 } }
     for (const [c, w] of Object.entries(want)) {
       const { x } = fielded(c)
       const pts = x.detail!.points!
