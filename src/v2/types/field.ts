@@ -22,6 +22,8 @@ export type CauseRef =
   | { kind: 'evidence'; id: EvidenceId | ResonanceId }
   | { kind: 'const'; name: ConstName }
   | { kind: 'aux'; table: 'axes-1'; axis: SemanticAxis }
+  /** added at Stage 8: a property of the fallback page, caused by nothing having been found (§10) */
+  | { kind: 'fallback'; reason: string }
 
 export interface Cause {
   property: FieldProperty
@@ -60,6 +62,36 @@ export interface FieldGeometry {
   causes: readonly Cause[]
   satisfies: readonly string[]
   unmotivated: readonly string[]
+  /** added at Stage 8: what each rule's page is made of, decided here so that Layout decides nothing */
+  detail?: FieldDetail
+}
+
+/** the rule-specific parts of a geometry, all already caused by the properties above */
+export interface FieldDetail {
+  /** the unit a field repeats (a character, or a stroke unit cut from the whole) */
+  unit?: string
+  /** a stroke unit: the whole it is cut from, and the islands of its ink that are the units (align-1 ink) */
+  strokeUnit?: { whole: string; islands: readonly number[] }
+  /** unit points on the page, where a field is not a full grid (WholeEmerges: the lattice round the whole) */
+  points?: readonly { x: number; y: number }[]
+  /** grid cells left empty: the roads of CrossRoads, the clearance round an emerging whole */
+  empty?: readonly { row: number; col: number }[]
+  /** a mark that takes cells in place of units: the singleton, the emerging whole, the crossing */
+  span?: { item: string; row: number; col: number; rows: number; cols: number; role: 'singleton' | 'whole' | 'interface' }
+  /** a derived character written among the units of a row, at these column positions (FieldInterleave) */
+  interleave?: { item: string; row: number; cols: readonly number[] }
+  /** container units stand on these sides of the page's field (NestedRegions) */
+  ring?: { item: string; sides: readonly ('top' | 'bottom' | 'left' | 'right')[]; inner: PageRect; innerCols: number; innerRows: number; innerItem: string }
+  /** a band of the derived character on the delta's side (RegionSplit) */
+  band?: { item: string; rect: PageRect; count: number }
+  /** regions each holding marks of one item (Separation, the parts; GlyphItself, the whole) */
+  parts?: readonly { item: string; rect: PageRect; count: number }[]
+  /** a line of the title's graphemes (Sequence, Absent, and the rest of a longer title) */
+  line?: { graphemes: readonly number[]; breaks: readonly number[]; rect: PageRect; size: number; axis: 'horizontal' | 'vertical'; role: 'word' | 'context' }
+  /** the rest of a longer title, beside the figure in reading order (TODO-10) */
+  rest?: readonly { graphemes: readonly number[]; breaks: readonly number[]; rect: PageRect; size: number; axis: 'horizontal' | 'vertical'; role: 'word' | 'context' }[]
+  /** the interface whole of NestedRegions: its point and size */
+  interfaceAt?: { item: string; x: number; y: number; size: number }
 }
 
 /** §8.3: every candidate is kept; the chosen one has the fewest unmotivated properties, then the most satisfied */

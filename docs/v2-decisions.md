@@ -83,3 +83,35 @@ names a word; none was made to pass a benchmark case.
 - **Unmotivated in a candidate**: RegionSplit's band where the delta is a difference (no zone); Frame's ring of
   container units where the extent is the character (no page evidence).
 
+## Stage 8 — FieldGeometry
+
+- **Every property is set with its cause** (a constraint, evidence, a named constant, the auxiliary axes, or — on
+  the fallback page only — `fallback`: nothing was found). A property set without one is unmotivated; the chosen
+  geometry has none. The whole frame, dense, is kept as §8.3's comparison candidate and always loses.
+- **Minimum carrier, by rule**:
+  - a difference (FieldSingleton, FieldInterleave): the smallest grid in the base's frame whose count is in the
+    hidden band (more than IMMEDIATE, at most ⌊√(IMMEDIATE × HIDDEN)⌋) with the delta reaching TAU; a field reads
+    as one from three rows. The derived character stands at the edge on the delta's side, its base part on a unit.
+  - a zone (RegionSplit): three along the band and the smallest field beside it (immediate).
+  - an enclosure at page scale: a one-unit ring of the container on its closed sides, one unit of closed white,
+    the smallest inner field (3 × 3), the whole at the interface (INTERFACE_SCALE) opposite the opening.
+  - CrossRoads: 5 × 5 in the core's frame, roads empty, the whole at the crossing, the wrapper's zone white.
+  - Separation: one mark per part (a 2 × 3 field of each is a candidate and loses), the seam SEAM_COEF × (1 +
+    severance from axes-1, auxiliary and recorded as such).
+  - WholeEmerges: n × groups units, groups = 2 × 2^(part-referent L0, MULTITUDE L1). Two at least: the whole emerges
+    among another group of its units. The field's pitch is the units' own pitch inside the whole (its nearest-
+    neighbour distance), so the whole, at its size, stands with its units on the field's points (TODO-2 settled
+    this way); the other units take the lattice points nearest the field's centre, clear of the whole's ink box;
+    the field lies away from the whole's remainder (the whole closes where the remainder stands), else round it
+    (TODO-1).
+  - GlyphItself: one mark, GLYPH_ITSELF_SCALE of the frame (a stylistic constant).
+  - Sequence: the title once along the writing direction, a half-unit break at each split; a character is at
+    most SEQUENCE_MAX_UNIT of the frame (a stylistic constant).
+  - Absent: the title once, FALLBACK_SPAN of the page, FALLBACK_OFFSET of the way from the centre toward the
+    corner where reading ends (v1's pages that found nothing, §10; TODO-9).
+- **The rest of a longer title** (TODO-10, Stage 10): the figure's frame gives way along the writing axis and the
+  other graphemes are written once, in reading order, at the figure's unit size (same scale), before and after it.
+- **Added constants** (spec.ts, versioned): GLYPH_ITSELF_SCALE 0.72, SEQUENCE_MAX_UNIT 0.16, FALLBACK_SPAN 0.16,
+  FALLBACK_OFFSET 0.85. **Added types**: CauseRef `fallback`; FieldGeometry `detail` (what each rule's page is
+  made of, so that Layout decides nothing).
+

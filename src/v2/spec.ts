@@ -84,6 +84,15 @@ export const CONSTANTS = {
   STROKE_REPETITION_MIN: { value: 3, todo: null },
   /** L1: a schema percentile at or above this */
   L1_MIN_PERCENTILE: { value: 90, todo: null },
+  // added at Stage 8, the page's few stylistic constants (docs/v2-decisions.md)
+  /** GlyphItself: the character's side, as a share of the frame */
+  GLYPH_ITSELF_SCALE: { value: 0.72, todo: 'TODO-5' },
+  /** Sequence and the rest of a title: a character is at most this share of the frame */
+  SEQUENCE_MAX_UNIT: { value: 0.16, todo: 'TODO-5' },
+  /** Absent: the title's span, as a share of the page (v1's pages that found nothing: about 16%) */
+  FALLBACK_SPAN: { value: 0.16, todo: 'TODO-9' },
+  /** Absent: how far out from the centre toward the corner where reading ends (v1: about 0.85) */
+  FALLBACK_OFFSET: { value: 0.85, todo: 'TODO-9' },
 } as const satisfies Record<string, { value: number; todo: TodoId | null }>
 
 export type ConstName = keyof typeof CONSTANTS
