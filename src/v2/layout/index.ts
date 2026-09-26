@@ -9,11 +9,16 @@
  *                                a stroke unit is the whole cut to one island of its ink (keep)
  *   the parts of a composition   written as themselves, together standing for the title's character
  *                                (represents): the character is on the page as its parts, apart
- *   v2.0: one face (the reading face, sans), black on white, still
+ *   the face                     by the layer a mark is on the page (layout/face.ts): the words to be read
+ *                                in the writing face (serif), everything the geometry stands on in the reading
+ *                                face (sans); black on white, still
  */
 import { cellAt } from '../field/grid'
 import { CONSTANTS } from '../spec'
+import { faceOf, tally } from './face'
+import type { Face } from '../../glyph/font'
 import type { Discovery } from '../types/discovery'
+import type { FaceCause, FaceRecord, MarkLayer } from '../types/layout'
 import type { FieldGeometry } from '../types/field'
 import type { PlanCandidate } from '../types/plan'
 import type { AlignIndex } from '../align/lookup'
@@ -28,11 +33,18 @@ export interface LayoutArgs {
   language: LanguageAnalysis
   /** the title's graphemes the plan does not realise (Stage 11): a character of the relation among them is written by its word, and the figure writes its form only */
   rest?: readonly number[]
+  /** the title's characters the writing face has no glyph of its own for (observed; absent where the faces were not measured) */
+  writingLacks?: readonly string[]
 }
 
 const r2 = (v: number) => Math.round(v * 100) / 100
 
 export function layout(a: LayoutArgs): Draft {
+  return { marks: layoutWithFaces(a).marks }
+}
+
+/** the page and, per layer, which face it was written in and why (the Rationale's layout.faces) */
+export function layoutWithFaces(a: LayoutArgs): { marks: Mark[]; faces: FaceRecord[] } {
   const g = a.geometry
   const d = g.detail ?? {}
   const marks: Mark[] = []
@@ -42,17 +54,25 @@ export function layout(a: LayoutArgs): Draft {
   const own = p ? p.graphemes[0] : -1
   const indexOf = (char: string) => (p ? p.graphemes.find((i) => a.language.graphemes[i]?.char === char) ?? own : own)
   const inRest = new Set(a.rest ?? [])
-  const title = (char: string, x: number, y: number, size: number, grapheme: number, role: Mark['role'] = 'nucleus'): Mark => ({ char, face: 'sans', x: r2(x), y: r2(y), size: r2(size), grapheme, role })
+  const lacks = new Set(a.writingLacks ?? [])
+  const faces: { layer: MarkLayer; face: Face; because: FaceCause }[] = []
+  const layers = new WeakMap<Mark, MarkLayer>()
+  const on = (layer: MarkLayer, m: Mark): Mark => {
+    layers.set(m, layer)
+    return m
+  }
+  const title = (char: string, x: number, y: number, size: number, grapheme: number, role: Mark['role'] = 'nucleus', layer: MarkLayer = 'figure'): Mark =>
+    on(layer, { char, face: 'sans', x: r2(x), y: r2(y), size: r2(size), grapheme, role })
   // a character of the figure: the title's own, unless its word writes it in the line (then the figure writes its form)
   const figure = (char: string, x: number, y: number, size: number, grapheme: number): Mark =>
     inRest.has(grapheme)
-      ? { char, face: 'sans', x: r2(x), y: r2(y), size: r2(size), role: 'body', derived: { grammar: 'material', kind: 'repeat', from: grapheme, note: 'the character of the relation, written by its word in the line' } }
+      ? on('repeat', { char, face: 'sans', x: r2(x), y: r2(y), size: r2(size), role: 'body', derived: { grammar: 'material', kind: 'repeat', from: grapheme, note: 'the character of the relation, written by its word in the line' } })
       : title(char, x, y, size, grapheme)
-  const unit = (char: string, x: number, y: number, size: number, note: string, extra: Partial<Mark> = {}): Mark => ({
+  const unit = (char: string, x: number, y: number, size: number, note: string, extra: Partial<Mark> = {}): Mark => on('unit', {
     char, face: 'sans', x: r2(x), y: r2(y), size: r2(size), role: 'grain',
     derived: { grammar: 'material', kind: 'form', from: own >= 0 ? own : undefined, note }, ...extra,
   })
-  const again = (char: string, x: number, y: number, size: number, note: string): Mark => ({
+  const again = (char: string, x: number, y: number, size: number, note: string): Mark => on('repeat', {
     char, face: 'sans', x: r2(x), y: r2(y), size: r2(size), role: 'body',
     derived: { grammar: 'material', kind: 'repeat', from: indexOf(char), note },
   })
@@ -157,7 +177,7 @@ export function layout(a: LayoutArgs): Draft {
   }
   // a flow: the title's graphemes, each at its point (Sequence; the rest of a longer title)
   for (const f of [...(d.flow ? [d.flow] : []), ...(d.flows ?? [])])
-    for (const p of f.points) marks.push(title(a.language.graphemes[p.grapheme].char, p.x, p.y, f.size, p.grapheme, 'body'))
+    for (const p of f.points) marks.push(title(a.language.graphemes[p.grapheme].char, p.x, p.y, f.size, p.grapheme, 'body', 'words'))
   // lines: the words (Absent) and the rest of a longer title (TODO-10)
   for (const line of [...(d.line ? [d.line] : []), ...(d.rest ?? [])]) {
     const step = line.role === 'context' ? line.size * CONSTANTS.UNIT_SPACING.value : line.size
@@ -167,7 +187,7 @@ export function layout(a: LayoutArgs): Draft {
       const ch = a.language.graphemes[gi].char
       const x = line.axis === 'horizontal' ? line.rect.x + (at + 0.5) * step : line.rect.x + line.rect.w / 2
       const y = line.axis === 'horizontal' ? line.rect.y + line.rect.h / 2 : line.rect.y + (at + 0.5) * step
-      marks.push(title(ch, x, y, line.size, gi, line.role === 'context' ? 'context' : 'body'))
+      marks.push(title(ch, x, y, line.size, gi, line.role === 'context' ? 'context' : 'body', 'words'))
       at += 1
     }
   }
@@ -175,7 +195,15 @@ export function layout(a: LayoutArgs): Draft {
   for (const t of d.titleUnits ?? []) {
     const char = a.language.graphemes[t.grapheme].char
     const i = marks.findIndex((m) => m.derived && !m.keep && m.char === char && Math.abs(m.x - t.x) < 0.6 && Math.abs(m.y - t.y) < 0.6)
-    if (i >= 0) marks[i] = title(char, marks[i].x, marks[i].y, marks[i].size, t.grapheme, 'body')
+    if (i >= 0) marks[i] = title(char, marks[i].x, marks[i].y, marks[i].size, t.grapheme, 'body', 'unit')
   }
-  return { marks }
+  // the face, last: it moves nothing (layout/face.ts)
+  const written = marks.map((m) => {
+    const layer = layers.get(m)!
+    // a cut is always a reading of ink (Layout cuts no word; kept explicit)
+    const f = m.keep || m.shift || m.minus ? { face: 'sans' as const, because: 'reading' as const } : faceOf(layer, m.char, m.size, lacks)
+    faces.push({ layer, ...f })
+    return f.face === m.face ? m : { ...m, face: f.face }
+  })
+  return { marks: written, faces: tally(faces) }
 }

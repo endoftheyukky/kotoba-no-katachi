@@ -1,4 +1,4 @@
-# Generator v2: local decisions (spec-1 stages 3–11)
+# Generator v2: local decisions (spec-1 stages 3–11, and after)
 
 spec-1 is the architecture. These are the local decisions its stages needed, with the reason for each. None
 names a word; none was made to pass a benchmark case.
@@ -263,3 +263,22 @@ input: empty, spaces, symbols, emoji, Hangul, variation selectors, a title of si
 - **Not settled here**: similarity pages (大と太, 木と本 …) share one texture, as one type under one rule; a title
   in digits (2026) stays vertical; 琳 stays Absent (its addition 0.268). Relations between the title's glyphs are
   measured in the browser, so the Chrome 153 evaluation can differ from the cloud's Chromium 141 there.
+
+## After Stage 11 — the writing face (Safe Hybrid)
+
+Decided by SwoN on 2026-09-26, after the Typography + Visual Vocabulary Study: v2.0 is not all in the reading
+face. This settles the face contrast of TODO-8 for v2.0 and replaces spec-1 §9.4's "v2.0 はすべて読みの字体 sans"
+(the spec file is the owner's; the amendment is theirs to write). v1's principle (poem/face.ts), applied to v2's
+layers (`src/v2/layout/face.ts`):
+
+- **The words to be read are written in the writing face** (Noto Serif JP 300): a Sequence's flow (line, stair,
+  verse, return, gap, curve), the rest of a longer title, an Absent page's words, a context line.
+- **Everything the geometry stands on stays in the reading face** (Noto Sans JP 500): the figure's characters,
+  the units of a field, of a whole or of a container, stroke units, the parts of a Separation, repeats, anything
+  cut. Their places, sizes and cuts were read in the reading face (align-1, structure-1); align-1 is unchanged.
+- A word stays in the reading face where the writing face has no glyph of its own for it (observed at run time,
+  `writingLacks`, v1's `writable`), or below SMALLEST_WRITING (35, v1's value, named in appendix A).
+- **The face moves nothing**: every position, size, count and cut is the page Stage 11 wrote (the pinned pages
+  match with every face set back to sans). The Rationale records, per layer, the face and its cause
+  (`layout.faces`). The evaluation measures a serif word's collision box by its own ink.
+- Not done: expressive geometry (curve tangency, mora spacing: the study's C1, C2) is not adopted.

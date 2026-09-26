@@ -45,6 +45,11 @@ export interface RuntimeObservation {
   resonance: ReadonlyMap<string, ResonanceRow | null>
   /** the title's characters the reading face has no glyph for (added at Stage 11; absent where the face was not measured) */
   faceLacks?: readonly string[]
+  /**
+   * the title's characters the writing face (Noto Serif JP 300) has no glyph of its own for, as v1 reads it
+   * (poem/face.ts writable; added after Stage 11 with the writing face; absent where the faces were not measured)
+   */
+  writingLacks?: readonly string[]
   data: DataVersions
 }
 
@@ -65,6 +70,8 @@ export interface ObserveArgs {
   axesVersion?: string
   /** the title's characters the reading face has no glyph for, where the face was measured */
   faceLacks?: readonly string[]
+  /** the title's characters the writing face has no glyph of its own for, where the faces were measured */
+  writingLacks?: readonly string[]
 }
 
 export function observe(a: ObserveArgs): RuntimeObservation {
@@ -88,6 +95,7 @@ export function observe(a: ObserveArgs): RuntimeObservation {
     ink,
     resonance,
     ...(a.faceLacks ? { faceLacks: a.faceLacks } : {}),
+    ...(a.writingLacks ? { writingLacks: a.writingLacks } : {}),
     data: {
       'structure-1': { id: 'structure-1', sha256: t.structure.manifest.sha256 },
       'align-1': { id: 'align-1', sha256: t.align.manifest.sha256 },

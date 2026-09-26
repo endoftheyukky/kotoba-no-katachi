@@ -93,6 +93,9 @@ export const CONSTANTS = {
   FALLBACK_SPAN: { value: 0.16, todo: 'TODO-9' },
   /** Absent: how far out from the centre toward the corner where reading ends (v1: about 0.85) */
   FALLBACK_OFFSET: { value: 0.85, todo: 'TODO-9' },
+  // added after Stage 11, with the writing face (layout/face.ts, docs/v2-decisions.md)
+  /** the smallest word written in the writing face, page units: v1's SMALLEST_WRITING (poem/face.ts), 3.5% of the page */
+  SMALLEST_WRITING: { value: 35, todo: null },
 } as const satisfies Record<string, { value: number; todo: TodoId | null }>
 
 export type ConstName = keyof typeof CONSTANTS

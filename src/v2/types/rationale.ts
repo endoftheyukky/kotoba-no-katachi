@@ -5,6 +5,7 @@
 import type { Constraint } from './constraints'
 import type { DiscoveryId } from './discovery'
 import type { FieldGeometry } from './field'
+import type { FaceRecord } from './layout'
 import type { PlanCandidate, RuleName } from './plan'
 import type { DataVersions } from './provenance'
 import type { ExcludedAssociation, SemanticEvidence } from './resonance'
@@ -35,5 +36,10 @@ export interface Rationale {
   plan: RuleName
   geometries: readonly FieldGeometry[]
   geometry: string
-  layout: { marks: number; notes: readonly string[] }
+  layout: {
+    marks: number
+    /** added after Stage 11: per layer of the page, the face its marks were written in and why (layout/face.ts) */
+    faces: readonly FaceRecord[]
+    notes: readonly string[]
+  }
 }

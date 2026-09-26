@@ -11,7 +11,7 @@ import { meaningOf, type MeaningTable } from '../language/semantic/axes'
 import { constrain } from './constraints'
 import { discover, gates, select } from './discovery'
 import { geometry } from './field'
-import { layout } from './layout'
+import { layoutWithFaces } from './layout'
 import type { RuntimeObservation } from './observation'
 import { plan } from './plan'
 import { leavesOf, resonate } from './resonance'
@@ -33,7 +33,8 @@ export function composeV2(o: RuntimeObservation): V2Composition & { trace: Trace
   const primary = selection.primary ? discoveries.find((d) => d.id === selection.primary) ?? null : null
   const p = plan(set.constraints, primary, language.graphemes, language)
   const g = geometry({ plan: p.plan, constraints: set.constraints, primary, align: t.align, language, rest: p.rest, meaning: o.axes })
-  const draft = layout({ plan: p.plan, geometry: g.geometry, primary, align: t.align, language, rest: p.rest })
+  const laid = layoutWithFaces({ plan: p.plan, geometry: g.geometry, primary, align: t.align, language, rest: p.rest, writingLacks: o.writingLacks })
+  const draft = { marks: laid.marks }
   const structure: Record<string, string | null> = {}
   for (const gr of language.graphemes) {
     const s = o.structure.get(gr.char)
@@ -61,6 +62,7 @@ export function composeV2(o: RuntimeObservation): V2Composition & { trace: Trace
       geometry: g.chosen,
       layout: {
         marks: draft.marks.length,
+        faces: laid.faces,
         notes: [
           ...(language.direction !== o.language.direction ? ['written horizontally: Latin letters and katakana are most of the title (v2 writing, Stage 11)'] : []),
           ...(p.rest.length ? [`the rest of the title (graphemes ${p.rest.join(', ')}) in the line the figure stands in (TODO-10)`] : []),

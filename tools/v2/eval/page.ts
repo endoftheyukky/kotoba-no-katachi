@@ -9,7 +9,7 @@ import { soundness } from '../../../src/poem/invariants'
 import { renderCanvas } from '../../../src/render/png'
 import { normalizeTitle } from '../../../src/title'
 import { fetchSource } from '../../../src/v2/observation/tables'
-import { observeTitle } from '../../../src/v2/runtime'
+import { observeTitle, prepareFaces } from '../../../src/v2/runtime'
 import { composeV2 } from '../../../src/v2/compose'
 import { covers, uncovered } from '../../../src/glyph/coverage'
 import type { RuntimeObservation } from '../../../src/v2/observation'
@@ -27,7 +27,7 @@ async function one(text: string, reading: string | undefined, px: number) {
   const t1 = performance.now()
   const comp = composeV2(observation)
   const t2 = performance.now()
-  await lib.prepare([...new Set(comp.draft.marks.map((m) => m.char).filter((c) => covers('sans', c)))])
+  await prepareFaces(lib, comp.draft.marks)
   const t3 = performance.now()
   // the site refuses a title with a character the face lacks before it composes (main.ts read): composed here all
   // the same, to show that v2 does not fail on it, and not drawn
@@ -79,7 +79,8 @@ async function one(text: string, reading: string | undefined, px: number) {
 
 /**
  * Marks whose ink boxes cover each other (any roles; v1's overlap skips pairs of very different sizes and
- * inkHit only derived-on-title). The box: the glyph's ink half (align-1), or a keep's rects; a pair counts
+ * inkHit only derived-on-title). The box: the glyph's ink half (align-1; a word in the writing face, its own ink
+ * measured in this browser), or a keep's rects; a pair counts
  * when they share more than a tenth of the smaller box.
  */
 function collisions(marks: readonly import('../../../src/poem/types').Mark[], o: RuntimeObservation): number {
@@ -92,7 +93,9 @@ function collisions(marks: readonly import('../../../src/poem/types').Mark[], o:
       const ys = m.keep.flatMap((r) => [r.y + sy, r.y + r.h + sy])
       return { x0: m.x + Math.min(...xs) * k, x1: m.x + Math.max(...xs) * k, y0: m.y + Math.min(...ys) * k, y1: m.y + Math.max(...ys) * k }
     }
-    const h = o.tables.align.entry(m.char)?.whole?.half ?? { w: 45, h: 45 }
+    // a word in the writing face: its own ink, measured here (align-1 is the reading face's)
+    const serif = m.face === 'serif' ? lib.get(m.char, 'serif').metrics.half : null
+    const h = serif ?? o.tables.align.entry(m.char)?.whole?.half ?? { w: 45, h: 45 }
     return { x0: m.x - (h.w / 100) * m.size, x1: m.x + (h.w / 100) * m.size, y0: m.y - (h.h / 100) * m.size, y1: m.y + (h.h / 100) * m.size }
   })
   let n = 0
