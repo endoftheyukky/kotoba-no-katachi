@@ -45,5 +45,13 @@ export type Constraint =
   | (Base<'whole-emerges'> & { whole: string })
   | (Base<'remainder-site'> & { remainder: string })
   | (Base<'demoted'> & { by: 'origin:pictograph' })
+  // the words and their sound (added at Stage 6: §7.2's Sequence rule names lexical and phonological
+  // Discoveries as its source without a constraint of theirs; these carry them, and never a structure's)
+  /** the title's graphemes keep their reading order along one line */
+  | (Base<'sequence'> & { graphemes: readonly number[] })
+  /** the same unit returns: these graphemes answer each other on the line (an echo, a reduplication, a mirror) */
+  | (Base<'recurrence'> & { members: readonly number[]; unit: 'mora' | 'vowel' | 'onset' | 'grapheme' | 'token'; value: string })
+  /** a break the language makes: before this grapheme the line parts (stem | ending, a negation, a relation word, a coordination) */
+  | (Base<'split'> & { at: number; by: 'inflection' | 'negation' | 'relation-word' | 'coordination' })
 
 export type ConstraintKind = Constraint['kind']

@@ -1,4 +1,4 @@
-# Generator v2: local decisions (spec-1 stages 3–5)
+# Generator v2: local decisions (spec-1 stages 3–9)
 
 spec-1 is the architecture. These are the local decisions its stages needed, with the reason for each. None
 names a word; none was made to pass a benchmark case.
@@ -50,3 +50,22 @@ names a word; none was made to pass a benchmark case.
 - **Part-referent**: when the resource names a component of the whole as the unit (林 has-member 木), only those
   rows; else every has-part / has-member row (雨 has-part 雨滴).
 - **The nine semantic axes** are not read by Discovery or Resonance; they stay an auxiliary whole-word quantity.
+
+## Stage 6 — Constraints
+
+- **§6's table, by the primary's type**, each constraint naming its Discovery (and the evidence it rests on).
+  A title with no primary has no structural constraint; a title with nothing has no constraint at all, and that is
+  kept as a result, not an error.
+- **Gaps in §6, filled without a new architecture**:
+  - partial_enclosure without a crossing (辺 迫 …: 34 of 35) gets extent(glyph): the wrapper is a form never
+    written alone (R4), so the character itself carries the relation (GlyphItself, §7.2).
+  - inter_containment (川 ⊂ 州) is an addition between two written characters (v1 relate: the outer is the inner
+    and a residue): major(inner), difference(outer), boundary-side from the residue's centroid (else interleave),
+    visibility(hidden). inter_similarity (人 ≈ 入): the same with interleave(1).
+- **The words and the sound** (added constraint kinds `sequence`, `split`, `recurrence`): §7.2's Sequence names
+  lexical and phonological Discoveries as its source but §6 gives them no constraint. They are auxiliary only: they
+  never stand for a structure, and a structural primary is never replaced by them.
+- **Evidence**: radical-meaning (L0) on the delta turns an addition's difference into a zone; part-referent (L0)
+  and MULTITUDE (L1) are named as causes of a repetition's count; CONTAINER (L1) makes an enclosure's extent the
+  page. Without evidence every constraint still stands.
+
