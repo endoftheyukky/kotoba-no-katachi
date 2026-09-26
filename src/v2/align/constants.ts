@@ -61,6 +61,16 @@ export const ALIGN = {
   AMBIGUITY_SPAN: { value: 0.5, source: 'a place that loses half of the ink the component explains is no rival to it' },
   /** aligned, not approximate: ambiguity at most this (a rival costs at least a quarter of the component's ink) */
   AMBIGUITY_MAX: { value: 0.5, source: 'the midpoint of the span: aligned when the best rival costs at least a quarter of the ink' },
+  /** alike islands: shapes on a 16 × 16 grid over each island's box at least this alike (IoU) */
+  ALIKE_SHAPE: { value: 0.55, source: 'the pre-v2 reading of alike islands (雨: four dots, 森: three 木)' },
+  /** alike islands: shares of the ink within this share of the larger */
+  ALIKE_SHARE: { value: 0.5, source: 'the pre-v2 reading of alike islands' },
+  /** a crossing: both runs of ink at least this share of the ink box */
+  CROSS_RUN: { value: 0.35, source: 'the pre-v2 reading of crossings (十, 辻)' },
+  /** a crossing: each run reaching at least this share of the ink box on both sides of the cell */
+  CROSS_ARM: { value: 0.12, source: 'the pre-v2 reading of crossings: straight through, not a corner or a T' },
+  /** crossing cells within this distance (em) are one crossing */
+  CROSS_JOIN: { value: 10, source: 'about a stroke and its edge' },
   /** a residual piece smaller than this share of the whole's ink is a sliver, not a form (v1 glyph/relation SLIVER) */
   SLIVER: { value: 0.03, source: 'v1 src/glyph/relation.ts' },
 } as const

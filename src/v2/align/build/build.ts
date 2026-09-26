@@ -9,11 +9,12 @@ import type { IdsNode } from '../../types/structure'
 import { A } from '../constants'
 import type { AlignEntry, AlignReason, AlignRow, Residual } from '../table'
 import { boxOf, brokenNodes, commonOp, fitTree, searchLeaf, unplacedSibling, joint, leavesOf, measures, placedMask, refine, violations, wholeOf, type Candidate, type Choice, type FitNode, type Whole } from './fit'
-import { CELLS, type Glyph } from './raster'
+import { inkOf } from './ink'
+import { CELLS, type Glyph, type Measured } from './raster'
 import { regionName } from './regions'
 import { rectOf, residual } from './residual'
 
-export const TOOL_VERSION = '1'
+export const TOOL_VERSION = '2'
 
 const r2 = (v: number) => Math.round(v * 100) / 100
 const r3 = (v: number) => Math.round(v * 1000) / 1000
@@ -159,12 +160,15 @@ function rowsOf(w: Whole, root: FitNode, choice: Choice): { rows: AlignRow[]; ex
 }
 
 /** the align-1 entry of one character */
-export function alignEntry(entry: StructureEntry, glyphOf: (char: string) => Glyph | null): AlignEntry {
+export function alignEntry(entry: StructureEntry, glyphOf: (char: string) => Glyph | null, measuredOf: (char: string) => Measured | undefined = () => undefined): AlignEntry {
   const char = entry.char
   const provenance: Provenance[] = [{ kind: 'table', table: 'structure-1', key: char }]
-  if (!entry.structure) return { char, status: 'no-structure', provenance, rows: [] }
+  const m = measuredOf(char)
+  const ink = m?.covered ? inkOf(m) : undefined
+  const inkProvenance: Provenance[] = ink ? [MEASURE, { kind: 'v1', module: 'glyph/parts', detail: 'islands' }] : []
+  if (!entry.structure) return { char, status: 'no-structure', provenance: [...provenance, ...inkProvenance], ink, rows: [] }
   const tree = entry.structure.tree
-  if (tree.kind === 'leaf') return { char, status: 'atomic', provenance, rows: [] }
+  if (tree.kind === 'leaf') return { char, status: 'atomic', provenance: [...provenance, ...inkProvenance], ink, rows: [] }
   const g = glyphOf(char)
   if (!g) {
     const rows: AlignRow[] = []
@@ -184,5 +188,5 @@ export function alignEntry(entry: StructureEntry, glyphOf: (char: string) => Gly
   const { root, choice: fitted } = fitTree(tree, w, glyphOf)
   const choice = refine(root, w, fitted)
   const { rows, explained, unexplained } = rowsOf(w, root, choice)
-  return { char, status: 'fitted', provenance: [...provenance, MEASURE], whole: { half: { w: r2(g.half.w), h: r2(g.half.h) }, ink: g.cells }, explained, unexplained, rows }
+  return { char, status: 'fitted', provenance: [...provenance, MEASURE, ...inkProvenance.slice(1)], ink, whole: { half: { w: r2(g.half.w), h: r2(g.half.h) }, ink: g.cells }, explained, unexplained, rows }
 }

@@ -259,6 +259,33 @@ describe('align-1: the benchmark (values as the fixtures expect them; never an i
   })
 })
 
+describe('align-1: the whole glyph\'s own ink (islands, alike groups, crossings)', () => {
+  test('every entry whose glyph is in the face has its ink read; alike groups name islands; the source is v1 glyph/parts', () => {
+    assert.equal(manifest.render.measure.islands?.module, 'src/glyph/parts.ts')
+    assert.equal(manifest.render.measure.islands?.sha256, sha(readFileSync(join(root, 'src/glyph/parts.ts'))), 'v1 islands unchanged since the table was made')
+    for (const s of shards)
+      for (const e of Object.values(s.entries)) {
+        if (e.status === 'whole-not-in-face') {
+          assert.equal(e.ink, undefined, e.char)
+          continue
+        }
+        assert.ok(e.ink, e.char)
+        for (const g of e.ink.alike) {
+          assert.ok(g.members.length >= 2 && g.members.every((i) => i >= 0 && i < e.ink!.islands.length), e.char)
+        }
+      }
+  })
+
+  test('雨: four alike dots; 森 and 品: three alike units; 十 and 辻: a crossing (辻\'s inside 十\'s place)', () => {
+    assert.ok(entry('雨').ink!.alike.some((g) => g.members.length === 4))
+    assert.ok(entry('森').ink!.alike.some((g) => g.members.length === 3))
+    assert.ok(entry('品').ink!.alike.some((g) => g.members.length === 3))
+    assert.equal(entry('十').ink!.crossings.length, 1)
+    const ju = box(row('辻', '1'))
+    assert.ok(entry('辻').ink!.crossings.some((c) => c.x > ju.x0 && c.x < ju.x1 && c.y > ju.y0 && c.y < ju.y1))
+  })
+})
+
 describe('align-1: the runtime lookup', () => {
   test('aligned, approximate, unavailable and not-found are four explicit results', () => {
     assert.equal(index.at('淋', '1').status, 'aligned')

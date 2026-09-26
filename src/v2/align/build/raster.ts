@@ -17,6 +17,8 @@ export interface Measured {
   pen?: { x: number; y: number }
   half?: { w: number; h: number }
   ink?: { w: number; h: number; left: number; top: number; px: number; bits: string }
+  /** v1 glyph/parts islands: box [x0, y0, x1, y1], share, centroid [x, y], shape on a 16 × 16 grid (hex) */
+  islands?: { box: [number, number, number, number]; share: number; centroid: [number, number]; shape: string }[]
 }
 
 export interface Glyph {

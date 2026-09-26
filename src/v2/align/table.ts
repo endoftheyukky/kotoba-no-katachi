@@ -154,6 +154,16 @@ export interface AlignEntry {
   explained?: number
   /** what none of them explains */
   unexplained?: Residual
+  /**
+   * The whole glyph's own ink, apart from any component (every entry whose glyph is in the face):
+   * v1 glyph/parts islands (keep: the island's box), groups of alike islands (indices into
+   * islands), and where a long horizontal and a long vertical run of ink cross.
+   */
+  ink?: {
+    islands: readonly Island[]
+    alike: readonly { members: readonly number[]; share: number }[]
+    crossings: readonly EmPoint[]
+  }
   rows: readonly AlignRow[]
 }
 
@@ -178,7 +188,7 @@ export interface RenderEnvironment {
   browser: { product: string; revision: string; userAgent: string; jsVersion: string }
   launcher: { file: string; sha256: string; flags: readonly string[] }
   page: { file: string; sha256: string }
-  measure: { module: string; sha256: string; pxPerEm: number; canvas: number; ink: string; box: string }
+  measure: { module: string; sha256: string; pxPerEm: number; canvas: number; ink: string; box: string; islands?: { module: string; sha256: string } }
   devicePixelRatio: number
   antialiasing: string
   platform: { os: string; arch: string }

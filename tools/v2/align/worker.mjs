@@ -19,6 +19,6 @@ const glyph = (c) => {
 const out = []
 for (const e of entries) {
   const t = performance.now()
-  out.push({ entry: alignEntry(e, glyph), ms: performance.now() - t })
+  out.push({ entry: alignEntry(e, glyph, (c) => measured.get(c)), ms: performance.now() - t })
 }
 parentPort.postMessage(out)

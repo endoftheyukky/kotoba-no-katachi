@@ -6,6 +6,7 @@
 import '../../../src/glyph/font-face'
 import { covers } from '../../../src/glyph/coverage'
 import { FACES } from '../../../src/glyph/font'
+import { islands } from '../../../src/glyph/parts'
 import { GlyphLibrary } from '../../../src/glyph/source'
 
 export interface Measured {
@@ -15,7 +16,12 @@ export interface Measured {
   half?: { w: number; h: number }
   /** the ink raster of v1 measure, one bit per pixel (alpha > 127, v1's ink), row-major, base64 */
   ink?: { w: number; h: number; left: number; top: number; px: number; bits: string }
+  /** v1 glyph/parts islands (connected ink, ≥ 3% of it): box, share, centroid, and the island's own ink on a SHAPE × SHAPE grid over its box (hex) */
+  islands?: { box: [number, number, number, number]; share: number; centroid: [number, number]; shape: string }[]
 }
+
+/** the grid an island's shape is compared on (the pre-v2 reading of alike islands) */
+const SHAPE = 16
 
 const lib = new GlyphLibrary()
 
@@ -33,7 +39,29 @@ async function measure(chars: string[]): Promise<Measured[]> {
   return chars.map((c) => {
     if (!inFace.includes(c)) return { c, covered: false }
     const m = lib.get(c).metrics
-    return { c, covered: true, pen: m.pen, half: m.half, ink: { w: m.ink.w, h: m.ink.h, left: m.ink.left, top: m.ink.top, px: m.ink.px, bits: pack(m.ink.data) } }
+    return { c, covered: true, pen: m.pen, half: m.half, ink: { w: m.ink.w, h: m.ink.h, left: m.ink.left, top: m.ink.top, px: m.ink.px, bits: pack(m.ink.data) }, islands: islandsOf(m) }
+  })
+}
+
+/** v1's islands, each with its own ink sampled on a SHAPE × SHAPE grid over its box */
+function islandsOf(m: ReturnType<GlyphLibrary['get']>['metrics']): NonNullable<Measured['islands']> {
+  const { w, h, data, left, top, px } = m.ink
+  const on = (a: number, b: number) => a >= 0 && b >= 0 && a < w && b < h && data[b * w + a] > 127
+  return islands(m).map((p) => {
+    const x0 = Math.min(...p.keep.map((r) => r.x))
+    const y0 = Math.min(...p.keep.map((r) => r.y))
+    const x1 = Math.max(...p.keep.map((r) => r.x + r.w))
+    const y1 = Math.max(...p.keep.map((r) => r.y + r.h))
+    const bits = new Uint8Array((SHAPE * SHAPE) / 8)
+    for (let j = 0; j < SHAPE; j++)
+      for (let i = 0; i < SHAPE; i++) {
+        const x = x0 + ((i + 0.5) / SHAPE) * (x1 - x0)
+        const y = y0 + ((j + 0.5) / SHAPE) * (y1 - y0)
+        const kept = p.keep.some((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h)
+        if (kept && on(Math.floor((x - left) / px), Math.floor((y - top) / px))) bits[(j * SHAPE + i) >> 3] |= 128 >> ((j * SHAPE + i) & 7)
+      }
+    const shape = [...bits].map((b) => b.toString(16).padStart(2, '0')).join('')
+    return { box: [x0, y0, x1, y1], share: p.share, centroid: [p.centroid.x, p.centroid.y], shape }
   })
 }
 
