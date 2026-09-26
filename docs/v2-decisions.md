@@ -69,3 +69,17 @@ names a word; none was made to pass a benchmark case.
   and MULTITUDE (L1) are named as causes of a repetition's count; CONTAINER (L1) makes an enclosure's extent the
   page. Without evidence every constraint still stands.
 
+## Stage 7 — SpatialPlan
+
+- **§7.2's rules as a relational grammar**: each rule applies only when its required constraints are present and
+  names the constraints it keeps and what it adds unasked (unmotivated). Selection is §7.3's order only.
+- **The words never replace a structure**: Sequence is a candidate only where the title has no structural
+  constraint. With a structural primary, the title's other graphemes (`rest`) stand beside the chosen plan in
+  reading order; how they compose into one sequence is TODO-10 (Stage 10).
+- **GlyphItself** also carries a partial enclosure without a crossing (wrapper-zone with extent(glyph)).
+- **ScaleTransfer** is a candidate for character units only (stroke units carried to page scale are the diagrams
+  pre-v2 met with 品 and 雨); WholeEmerges keeps more constraints and is the default (TODO-3), so ScaleTransfer is
+  recorded as a candidate and not chosen.
+- **Unmotivated in a candidate**: RegionSplit's band where the delta is a difference (no zone); Frame's ring of
+  container units where the extent is the character (no page evidence).
+
