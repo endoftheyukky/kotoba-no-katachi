@@ -1,0 +1,10 @@
+structure-1 — the structure of characters for generator v2 of ことばのかたち.
+
+Made by tools/v2/structure.mjs from:
+  BabelStone IDS (Andrew West), https://www.babelstone.co.uk/CJK/IDS.TXT, File Date 2025-06-27, sha256 cc2a0a97e6a51ed6ebe59870ef2af66e83f3c3c27387d79b4441bb2d791d78b1.
+    The file states that IDS sequences, as a collection of facts, are not eligible for copyright protection.
+  KANJIDIC2 (Electronic Dictionary Research and Development Group), http://www.edrdg.org/kanjidic/kanjidic2.xml.gz,
+    database_version 2026-268, sha256 aef74d1c86bad7ef03441e6c0ded48f0b0da3e2637e00bcc80f6e10488811c99; used under the EDRDG licence
+    (Creative Commons Attribution-ShareAlike 4.0): only the set of characters of grade 1–10 is read,
+    to decide which characters count as standalone characters.
+  scope-1 (src/v2/structure/scope-1.json, version 1): the characters the table holds.
