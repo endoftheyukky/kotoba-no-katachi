@@ -20,7 +20,8 @@ import type { Meaning } from '../language/semantic/axes'
 import type { TitleInput } from '../title'
 import { composeV2 } from './compose'
 import { observe, type RuntimeObservation } from './observation'
-import { tablesFor, type TableSource } from './observation/tables'
+import { serifInkFor, tablesFor, type TableSource } from './observation/tables'
+import type { Typography } from './typography/b3a'
 
 export interface V2Runtime {
   /** where the fixed tables are read from */
@@ -29,6 +30,8 @@ export interface V2Runtime {
   glyphs: GlyphLibrary
   /** axes-1 for the title (v1's language/semantic/load readMeaning), or null to write without it */
   meaning: ((text: string) => Promise<Meaning>) | null
+  /** B (default) or B3a, which reads serif-ink-1 (refused unless the canonical table is published) */
+  typography?: Typography
 }
 
 /** the title observed: what it is, read as facts (spec-1 §2) */
@@ -42,7 +45,9 @@ export async function observeTitle(input: TitleInput, env: V2Runtime): Promise<R
   await env.glyphs.prepare(own.filter((c) => covers('serif', c)), 'serif')
   // every grapheme's character, spaces too: Discovery asks the tables of each (not finding one is an answer)
   const [tables, axes] = await Promise.all([tablesFor(language.graphemes.map((g) => g.char), env.source), env.meaning ? env.meaning(input.text) : Promise.resolve(null)])
-  return observe({ input, language, titleRelations, axes, tables, faceLacks: own.filter((c) => !covers('sans', c)), writingLacks: own.filter((c) => !writes(env.glyphs, c)) })
+  // B3a: the writing face's observations are read from serif-ink-1, never measured here
+  const serif = env.typography === 'B3a' ? (await serifInkFor(tables, own, env.source)).index : undefined
+  return observe({ input, language, titleRelations, axes, tables, faceLacks: own.filter((c) => !covers('sans', c)), writingLacks: own.filter((c) => !writes(env.glyphs, c)), ...(serif ? { serif } : {}) })
 }
 
 /**
@@ -68,7 +73,7 @@ export async function prepareFaces(glyphs: GlyphLibrary, marks: readonly { char:
 /** the page of a title, ready to draw */
 export async function writeV2(input: TitleInput, env: V2Runtime) {
   const observation = await observeTitle(input, env)
-  const composition = composeV2(observation)
+  const composition = composeV2(observation, { typography: env.typography })
   await prepareFaces(env.glyphs, composition.draft.marks)
   return { observation, composition }
 }

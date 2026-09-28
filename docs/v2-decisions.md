@@ -282,3 +282,30 @@ layers (`src/v2/layout/face.ts`):
   match with every face set back to sans). The Rationale records, per layer, the face and its cause
   (`layout.faces`). The evaluation measures a serif word's collision box by its own ink.
 - Not done: expressive geometry (curve tangency, mora spacing: the study's C1, C2) is not adopted.
+
+## After Stage 11 — serif-ink-1 and B3a (prepared, not in use)
+
+Asked by SwoN on 2026-09-27; not a stage. B's "words serif, structure sans" is not taken as a principle: the
+direction is B3, the serif in principle, the sans only for a structure whose geometry stands on the sans's anatomy.
+B3a is the mainline candidate; B3b (WholeEmerges in the serif) is not adopted. Production stays B (c311b7c).
+
+- **The serif's observations are fixed data, never measured in the reader's browser**: serif-ink-1
+  (`docs/v2-serif-ink.md`), made by `npm run v2:serif-ink` on the canonical environment only (Windows, Chrome 153,
+  Noto Serif JP 5.3.0 at 300). align-1, structure-1 and resonance-1 are unchanged. serif-ink-1 is not a structure
+  source.
+- **B3a (`src/v2/typography/b3a.ts`) writes the structure in one face, all of it.** Sans: FieldSingleton (a base
+  part on a unit), WholeEmerges (the units' lattice and cuts), RegionSplit (the band, SwoN), anything cut, a
+  character the serif does not write (fixed record), a geometry that asks serif-ink-1 for a character it does not
+  hold where align-1 answered, an inter-character relation not read in the serif's own ink at RELATION_THRESHOLD,
+  and a serif geometry that is another rule's, keeps fewer constraints, has more unmotivated properties, or leaves
+  the visibility band the sans's was in. Otherwise the serif, laid out by the same FieldGeometry rules from
+  serif-ink-1. No title or character is named.
+- **FieldGeometry reads a face through a narrow view** (`types/ink.ts`): align-1 is such a view as it stands, and
+  serif-ink-1 gives the same view of the serif. The rules do not know which face they read.
+- **Gated**: `TYPOGRAPHY = 'B'`; `composeV2(o, { typography: 'B3a' })` refuses without the canonical table; the
+  loader refuses a table that is not canonical. B3a is not CURRENT and not a release candidate until the canonical
+  table exists and SwoN accepts it.
+- **Thinness is not corrected**: no heavier weight, no more characters, no density score. 犬, 玉 and the like are to
+  be looked at again on the canonical table.
+- **辻 / 十** is left open until the canonical table: in the Cloud check the serif fit places 十 wider than its own
+  crossbar (onto 辶's first stroke), which enlarges CrossRoads' unit by about a fifth. No 辻 or 十 rule.

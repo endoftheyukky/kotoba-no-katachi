@@ -25,8 +25,7 @@
  */
 import type { LanguageAnalysis } from '../../language/analysis'
 import type { Meaning } from '../../language/semantic/axes'
-import type { AlignIndex } from '../align/lookup'
-import type { AlignEntry } from '../align/table'
+import type { InkEntryView, InkView } from '../types/ink'
 import { CONSTANTS } from '../spec'
 import { flowOf, type Flow } from './flow'
 import { cellAt } from './grid'
@@ -49,7 +48,8 @@ export interface FieldInput {
   plan: PlanCandidate
   constraints: readonly Constraint[]
   primary: Discovery | null
-  align: AlignIndex
+  /** the face's ink the geometry is read in: align-1 (the reading face), or serif-ink-1 for a structure B3a draws in the serif */
+  align: InkView
   language: LanguageAnalysis
   /** the title's graphemes the plan does not realise (written beside it, reading order; TODO-10) */
   rest: readonly number[]
@@ -101,7 +101,7 @@ function fit(rect: PageRect, cols: number, rows: number): { u: number; step: num
  * UNIT_SPACING leaves (UNIT_SPACING − 1 of a unit). The field's texture is the unit's own proportion: a
  * wide unit gives a wide pitch, a flat one close rows (Stage 9: fields of every unit had read alike).
  */
-export function pitchOf(e: AlignEntry | null): { x: number; y: number } {
+export function pitchOf(e: InkEntryView | null): { x: number; y: number } {
   const gap = K('UNIT_SPACING') - 1
   const half = e?.whole?.half
   if (!half) return { x: K('UNIT_SPACING'), y: K('UNIT_SPACING') }
@@ -128,7 +128,7 @@ export function visibilityOf(count: number, reach: number): Visibility {
 }
 
 /** the whole character's em box mapped into a rect (uniform scale, centred) */
-function mapper(e: AlignEntry | null, rect: PageRect) {
+function mapper(e: InkEntryView | null, rect: PageRect) {
   const hw = e?.whole?.half.w ?? 50
   const hh = e?.whole?.half.h ?? 50
   const k = Math.min(rect.w / (2 * hw), rect.h / (2 * hh))
@@ -169,7 +169,7 @@ interface Difference {
   delta: { centroid: { x: number; y: number }; box: { x: number; y: number; w: number; h: number } | null; pieces: readonly { x: number; y: number }[] }
 }
 
-function differenceOf(p: Discovery | null, align: AlignIndex): Difference | null {
+function differenceOf(p: Discovery | null, align: InkView): Difference | null {
   if (p?.type === 'addition') {
     const e = align.entry(p.derived.char)
     const row = e?.rows.find((r) => r.depth === 1 && r.node.kind === 'leaf' && r.node.char === p.base.char)

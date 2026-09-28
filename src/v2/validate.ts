@@ -133,7 +133,7 @@ export const RESONANCE_TABLE: Readonly<Record<ResonanceOrigin, DataTableId>> = {
   'chive-schema': 'resonance-1',
 }
 
-export const TABLES: readonly DataTableId[] = ['structure-1', 'align-1', 'resonance-1', 'axes-1']
+export const TABLES: readonly DataTableId[] = ['structure-1', 'align-1', 'resonance-1', 'axes-1', 'serif-ink-1']
 export const V1_MODULES: readonly V1Module[] = [
   'title', 'language/analysis', 'language/segment', 'language/morae', 'language/phonology',
   'glyph/metrics', 'glyph/parts', 'glyph/interior', 'glyph/relation',

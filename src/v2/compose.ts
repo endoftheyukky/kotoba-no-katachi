@@ -15,13 +15,21 @@ import { layoutWithFaces } from './layout'
 import type { RuntimeObservation } from './observation'
 import { plan } from './plan'
 import { leavesOf, resonate } from './resonance'
+import { b3a, TYPOGRAPHY, type Typography } from './typography/b3a'
 import type { V2Composition } from './types/layout'
 import type { Rationale } from './types/rationale'
 
 /** a whole title's axes, where the whole table is at hand (tests, tools): the site reads it by the title's characters */
 export const axesOf = (text: string, table: MeaningTable | null) => (table ? meaningOf(text, table) : null)
 
-export function composeV2(o: RuntimeObservation): V2Composition & { trace: Trace } {
+/**
+ * `typography`: B (the Safe Hybrid, c311b7c) unless asked otherwise. B3a (typography/b3a.ts) needs the canonical
+ * serif-ink-1 in the observation and is refused without it: the serif's observations are never measured here nor
+ * filled in.
+ */
+export function composeV2(o: RuntimeObservation, opts: { typography?: Typography } = {}): V2Composition & { trace: Trace } {
+  const typography = opts.typography ?? TYPOGRAPHY
+  if (typography === 'B3a' && !o.serif) throw new Error('B3a: serif-ink-1 was not read (the canonical table is made by npm run v2:serif-ink on the canonical environment)')
   const language = writingOf(o.language)
   const t = o.tables
   const din = { language, structure: t.structure, align: t.align, relations: o.titleRelations }
@@ -32,8 +40,14 @@ export function composeV2(o: RuntimeObservation): V2Composition & { trace: Trace
   const set = constrain(discoveries, selection, evidence, language)
   const primary = selection.primary ? discoveries.find((d) => d.id === selection.primary) ?? null : null
   const p = plan(set.constraints, primary, language.graphemes, language)
-  const g = geometry({ plan: p.plan, constraints: set.constraints, primary, align: t.align, language, rest: p.rest, meaning: o.axes })
-  const laid = layoutWithFaces({ plan: p.plan, geometry: g.geometry, primary, align: t.align, language, rest: p.rest, writingLacks: o.writingLacks })
+  const serif = typography === 'B3a' ? o.serif! : null
+  const typed = serif ? b3a({ plan: p.plan, constraints: set.constraints, primary, align: t.align, serif, language, rest: p.rest, meaning: o.axes }) : null
+  const g = typed ? typed.geometry : geometry({ plan: p.plan, constraints: set.constraints, primary, align: t.align, language, rest: p.rest, meaning: o.axes })
+  // B3a: which words the serif writes is read from serif-ink-1's writing record, not measured
+  const writingLacks = serif ? [...new Set(language.graphemes.map((gr) => gr.char))].filter((c) => !serif.writable(c)) : o.writingLacks
+  const laid = typed
+    ? layoutWithFaces({ plan: p.plan, geometry: g.geometry, primary: typed.primary, align: typed.ink, language, rest: p.rest, writingLacks, ...(typed.structure === 'serif' ? { structure: 'serif' as const } : {}) })
+    : layoutWithFaces({ plan: p.plan, geometry: g.geometry, primary, align: t.align, language, rest: p.rest, writingLacks })
   const draft = { marks: laid.marks }
   const structure: Record<string, string | null> = {}
   for (const gr of language.graphemes) {
@@ -47,7 +61,7 @@ export function composeV2(o: RuntimeObservation): V2Composition & { trace: Trace
     rationale: {
       version: 'v2',
       spec: 'spec-1',
-      data: o.data,
+      data: serif ? { ...o.data, 'serif-ink-1': { id: 'serif-ink-1', sha256: serif.manifest.sha256 } } : o.data,
       observation: { structure, inkNotes: [], missing: missingOf(o) },
       discoveries: discoveries.map((d) => {
         const failed = gates(d, din)
@@ -60,6 +74,19 @@ export function composeV2(o: RuntimeObservation): V2Composition & { trace: Trace
       plan: p.plan.rule,
       geometries: g.candidates,
       geometry: g.chosen,
+      ...(typed
+        ? {
+            typography: {
+              mode: 'B3a' as const,
+              structure: typed.structure,
+              because: typed.because,
+              reads: typed.reads,
+              ...(typed.relation !== undefined
+                ? { relation: typed.relation && { kind: typed.relation.kind, inner: typed.relation.inner, outer: typed.relation.outer, score: typed.relation.score, dx: typed.relation.dx, dy: typed.relation.dy, scale: typed.relation.scale } }
+                : {}),
+            },
+          }
+        : {}),
       layout: {
         marks: draft.marks.length,
         faces: laid.faces,

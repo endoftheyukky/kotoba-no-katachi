@@ -50,6 +50,8 @@ export type FaceCause =
   | 'reading'
   /** a word the writing face has no glyph of its own for */
   | 'no-writing-glyph'
+  /** B3a: the structure written in the writing face, its geometry read in it (serif-ink-1; typography/b3a.ts) */
+  | 'structure'
   /** a word below SMALLEST_WRITING */
   | 'below-smallest-writing'
 

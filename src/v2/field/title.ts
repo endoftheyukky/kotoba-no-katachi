@@ -40,7 +40,7 @@ import type { Constraint } from '../types/constraints'
 import type { CauseRef, FieldDetail, FieldGeometry, PageRect } from '../types/field'
 import type { PlanCandidate } from '../types/plan'
 import type { Discovery } from '../types/discovery'
-import type { AlignIndex } from '../align/lookup'
+import type { InkView } from '../types/ink'
 import type { LanguageAnalysis } from '../../language/analysis'
 import { flowOf, type Flow } from './flow'
 
@@ -51,7 +51,7 @@ export interface LineInput {
   plan: PlanCandidate
   constraints: readonly Constraint[]
   primary: Discovery | null
-  align: AlignIndex
+  align: InkView
   language: LanguageAnalysis
   rest: readonly number[]
 }

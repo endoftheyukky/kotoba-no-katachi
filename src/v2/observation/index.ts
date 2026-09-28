@@ -28,6 +28,7 @@ import type { ResonanceRow } from '../resonance'
 import type { DataVersions } from '../types/provenance'
 import type { CharStructure } from '../types/structure'
 import type { TitleTables } from './tables'
+import type { SerifInkIndex } from '../serif/lookup'
 
 export interface RuntimeObservation {
   input: TitleInput
@@ -50,6 +51,11 @@ export interface RuntimeObservation {
    * (poem/face.ts writable; added after Stage 11 with the writing face; absent where the faces were not measured)
    */
   writingLacks?: readonly string[]
+  /**
+   * serif-ink-1 as far as the title reaches it (B3a only, after Stage 11): the writing face's fixed observations.
+   * Absent unless the canonical table was read; a page written with B never reads it.
+   */
+  serif?: SerifInkIndex
   data: DataVersions
 }
 
@@ -72,6 +78,8 @@ export interface ObserveArgs {
   faceLacks?: readonly string[]
   /** the title's characters the writing face has no glyph of its own for, where the faces were measured */
   writingLacks?: readonly string[]
+  /** serif-ink-1 for the title (B3a only) */
+  serif?: SerifInkIndex
 }
 
 export function observe(a: ObserveArgs): RuntimeObservation {
@@ -96,6 +104,7 @@ export function observe(a: ObserveArgs): RuntimeObservation {
     resonance,
     ...(a.faceLacks ? { faceLacks: a.faceLacks } : {}),
     ...(a.writingLacks ? { writingLacks: a.writingLacks } : {}),
+    ...(a.serif ? { serif: a.serif } : {}),
     data: {
       'structure-1': { id: 'structure-1', sha256: t.structure.manifest.sha256 },
       'align-1': { id: 'align-1', sha256: t.align.manifest.sha256 },

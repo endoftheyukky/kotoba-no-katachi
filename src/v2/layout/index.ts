@@ -21,7 +21,7 @@ import type { Discovery } from '../types/discovery'
 import type { FaceCause, FaceRecord, MarkLayer } from '../types/layout'
 import type { FieldGeometry } from '../types/field'
 import type { PlanCandidate } from '../types/plan'
-import type { AlignIndex } from '../align/lookup'
+import type { InkView } from '../types/ink'
 import type { LanguageAnalysis } from '../../language/analysis'
 import type { Draft, Mark } from '../../poem/types'
 
@@ -29,12 +29,17 @@ export interface LayoutArgs {
   plan: PlanCandidate
   geometry: FieldGeometry
   primary: Discovery | null
-  align: AlignIndex
+  align: InkView
   language: LanguageAnalysis
   /** the title's graphemes the plan does not realise (Stage 11): a character of the relation among them is written by its word, and the figure writes its form only */
   rest?: readonly number[]
   /** the title's characters the writing face has no glyph of its own for (observed; absent where the faces were not measured) */
   writingLacks?: readonly string[]
+  /**
+   * B3a only (typography/b3a.ts): the structure (figure, units, repeats) written in the writing face, its geometry
+   * read in it. Absent: the structure is in the reading face (B, c311b7c)
+   */
+  structure?: 'serif'
 }
 
 const r2 = (v: number) => Math.round(v * 100) / 100
@@ -44,7 +49,7 @@ export function layout(a: LayoutArgs): Draft {
 }
 
 /** the page and, per layer, which face it was written in and why (the Rationale's layout.faces) */
-export function layoutWithFaces(a: LayoutArgs): { marks: Mark[]; faces: FaceRecord[] } {
+export function layoutWithFaces(a: LayoutArgs): { marks: Mark[]; faces: FaceRecord[]; layers: MarkLayer[] } {
   const g = a.geometry
   const d = g.detail ?? {}
   const marks: Mark[] = []
@@ -201,9 +206,13 @@ export function layoutWithFaces(a: LayoutArgs): { marks: Mark[]; faces: FaceReco
   const written = marks.map((m) => {
     const layer = layers.get(m)!
     // a cut is always a reading of ink (Layout cuts no word; kept explicit)
-    const f = m.keep || m.shift || m.minus ? { face: 'sans' as const, because: 'reading' as const } : faceOf(layer, m.char, m.size, lacks)
+    const f = m.keep || m.shift || m.minus
+      ? { face: 'sans' as const, because: 'reading' as const }
+      : a.structure === 'serif' && layer !== 'words'
+        ? { face: 'serif' as const, because: 'structure' as const }
+        : faceOf(layer, m.char, m.size, lacks)
     faces.push({ layer, ...f })
     return f.face === m.face ? m : { ...m, face: f.face }
   })
-  return { marks: written, faces: tally(faces) }
+  return { marks: written, faces: tally(faces), layers: marks.map((m) => layers.get(m)!) }
 }

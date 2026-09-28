@@ -16,8 +16,10 @@ import { resonanceIndex, type ResonanceIndex, type ResonanceManifest, type Reson
 import { structureIndex, type StructureIndex } from '../structure/lookup'
 import type { StructureManifest, StructureShard } from '../structure/table'
 import type { IdsNode } from '../types/structure'
+import { checkManifest, serifInkIndex, serifShardOf, type SerifInkIndex } from '../serif/lookup'
+import type { SerifEntryShard, SerifRasterShard, SerifWriting } from '../serif/table'
 
-export type TableId = 'structure-1' | 'align-1' | 'resonance-1'
+export type TableId = 'structure-1' | 'align-1' | 'resonance-1' | 'serif-ink-1'
 
 /** where the tables are read from: the site (fetch) or, in the tests and tools, the files */
 export interface TableSource {
@@ -32,7 +34,7 @@ export interface TitleTables {
   /** every character the title can reach (its own and their components), in code point order */
   chars: readonly string[]
   /** the shards read, per table */
-  read: Readonly<Record<TableId, readonly number[]>>
+  read: Readonly<Record<Exclude<TableId, 'serif-ink-1'>, readonly number[]>>
 }
 
 type Sharded = { shards: { count: number; files: readonly { name: string }[] } }
@@ -107,6 +109,28 @@ export async function tablesFor(own: readonly string[], source: TableSource): Pr
     chars,
     read: { 'structure-1': S.read(), 'align-1': A.read(), 'resonance-1': R.read() },
   }
+}
+
+/**
+ * serif-ink-1 for a title (B3a only; after Stage 11): the entries of every character the title reaches (the
+ * geometry reads the whole and the components of the characters its plan names, as it reads align-1), the rasters
+ * of the title's own characters only (the serif relation lies between two of them), and the writing record. A
+ * table that is not canonical is refused before any shard is read.
+ */
+export async function serifInkFor(tables: Pick<TitleTables, 'chars'>, own: readonly string[], source: TableSource): Promise<{ index: SerifInkIndex; read: { entries: number[]; rasters: number[] } }> {
+  const manifest = await source.manifest('serif-ink-1')
+  checkManifest(manifest)
+  const count = manifest.shards.count
+  const want = (chars: Iterable<string>) => [...new Set([...chars].filter((c) => [...c].length === 1).map((c) => serifShardOf(c, count)))].sort((a, b) => a - b)
+  const entryShards = want(tables.chars)
+  const rasterShards = want(own)
+  const [es, rs, writing] = await Promise.all([
+    Promise.all(entryShards.map((n) => source.shard('serif-ink-1', manifest.shards.entries[n].name) as Promise<SerifEntryShard>)),
+    Promise.all(rasterShards.map((n) => source.shard('serif-ink-1', manifest.shards.rasters[n].name) as Promise<SerifRasterShard>)),
+    source.shard('serif-ink-1', manifest.writing.file) as Promise<SerifWriting>,
+  ])
+  const all = <S>(read: number[], got: S[]): S[] => Array.from({ length: count }, (_, n) => (read.includes(n) ? got[read.indexOf(n)] : (unread('serif-ink-1', n) as unknown as S)))
+  return { index: serifInkIndex(manifest, all(entryShards, es), all(rasterShards, rs), writing), read: { entries: entryShards, rasters: rasterShards } }
 }
 
 /** the site's tables: fetched once per visit, from the site itself (no outside service) */

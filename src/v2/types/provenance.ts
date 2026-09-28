@@ -9,8 +9,12 @@
 import type { SemanticAxis } from '../../language/semantic/axes'
 import type { ConstName } from '../spec'
 
-/** the fixed data tables a v2 generator version is pinned to (§11.3) */
-export type DataTableId = 'structure-1' | 'align-1' | 'resonance-1' | 'axes-1'
+/**
+ * the fixed data tables a v2 generator version is pinned to (§11.3). serif-ink-1 (after Stage 11) is read only by
+ * the serif-aware typography (B3a), and only once its canonical table exists: a page written without it does not
+ * name it.
+ */
+export type DataTableId = 'structure-1' | 'align-1' | 'resonance-1' | 'axes-1' | 'serif-ink-1'
 
 export interface DataVersion<K extends DataTableId = DataTableId> {
   id: K
@@ -18,7 +22,7 @@ export interface DataVersion<K extends DataTableId = DataTableId> {
   sha256: string
 }
 
-export type DataVersions = { readonly [K in DataTableId]: DataVersion<K> }
+export type DataVersions = { readonly [K in Exclude<DataTableId, 'serif-ink-1'>]: DataVersion<K> } & { readonly 'serif-ink-1'?: DataVersion<'serif-ink-1'> }
 
 /** the v1 modules v2 observes through, unchanged (§2.1) */
 export type V1Module =

@@ -36,6 +36,18 @@ export interface Rationale {
   plan: RuleName
   geometries: readonly FieldGeometry[]
   geometry: string
+  /**
+   * B3a only (after Stage 11, typography/b3a.ts): which face the structure is written in and why, and what each
+   * face's geometry read. Absent on a page written with B (c311b7c).
+   */
+  typography?: {
+    mode: 'B3a'
+    structure: 'serif' | 'sans'
+    because: string
+    reads: { sans: Readonly<Record<string, boolean>>; serif: Readonly<Record<string, boolean>> | null }
+    /** the relation between two of the title's characters as read in the serif (null: not read at the threshold) */
+    relation?: { kind: string; inner: string; outer: string; score: number; dx: number; dy: number; scale: number } | null
+  }
   layout: {
     marks: number
     /** added after Stage 11: per layer of the page, the face its marks were written in and why (layout/face.ts) */
